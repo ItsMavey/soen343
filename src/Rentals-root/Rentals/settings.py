@@ -40,7 +40,7 @@ INSTALLED_APPS = [
 
     # Libraries
     'address',
-    'phonenumber_field'
+    'phonenumber_field',
 
     # Our apps
     'users',
