@@ -5,7 +5,6 @@ from django.core.management.base import BaseCommand
 from booking.models import Car
 
 
-
 class Command(BaseCommand):
     help = 'Seeds the database with car data from a CSV'
 
