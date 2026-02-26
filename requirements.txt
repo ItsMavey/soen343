@@ -1,5 +1,4 @@
-asgiref==3.11.1
 Django==6.0.2
-sqlparse==0.5.5
-
-django-phonenumber-field
+django_phonenumber_field==8.4.0
+django-address==0.2.8
+django-phonenumber-field==8.4.0
