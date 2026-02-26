@@ -5,9 +5,14 @@
     <meta charset="UTF-8">
     <title>Title</title>
 
-    {% component_dependencies %}
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    {% component_css_dependencies %}
 </head>
 <body>
+    {% component "nav" %}{% endcomponent %}
 
+    {% block content %}{% endblock %}
+
+    {% component_js_dependencies %}
 </body>
 </html>
