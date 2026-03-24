@@ -26,6 +26,12 @@ class Vehicle(models.Model):
     vehicle_kind = models.CharField(max_length=10, choices=KIND_CHOICES)
     vehicle_status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STATUS_AVAILABLE)
     provider = models.CharField(max_length=100, blank=True, default="")
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="owned_vehicles",
+    )
 
     make = models.CharField(max_length=50)
     model = models.CharField(max_length=100)

@@ -11,4 +11,10 @@ urlpatterns = [
     path("reservations/<int:reservation_id>/payment/", views.reservation_payment, name="reservation_payment"),
     path("reservations/<int:reservation_id>/return/", views.return_vehicle, name="return_vehicle"),
     path("reservations/<int:reservation_id>/cancel/", views.cancel_reservation, name="cancel_reservation"),
+
+    # Provider fleet management
+    path("provider/fleet/", views.provider_fleet, name="provider_fleet"),
+    path("provider/fleet/add/", views.provider_add_vehicle, name="provider_add_vehicle"),
+    path("provider/fleet/<int:vehicle_id>/edit/", views.provider_edit_vehicle, name="provider_edit_vehicle"),
+    path("provider/fleet/<int:vehicle_id>/delete/", views.provider_delete_vehicle, name="provider_delete_vehicle"),
 ]
