@@ -1,23 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Reserve {{ vehicle.make }} {{ vehicle.model }} | TABAC DRIVE</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-    <style>
-        :root {
-            --color-bg: #0d0d0d; --color-surface: #1c1c1c; --color-surface-raised: #242424;
-            --color-border: rgba(255,255,255,0.08); --color-accent: #ff6b1a; --color-accent-hover: #ff8340;
-            --color-accent-glow: rgba(255,107,26,0.4); --color-text-primary: #f0ede6;
-            --color-text-secondary: #9a9590; --color-error: #ff6b6b;
-            --font-display: 'Cormorant Garamond', serif; --font-body: 'Outfit', sans-serif;
-        }
-        * { box-sizing: border-box; }
-        body { margin: 0; min-height: 100vh; font-family: var(--font-body); background: radial-gradient(circle at top right, #1b1b1b 0%, var(--color-bg) 45%); color: var(--color-text-primary); display: grid; place-items: center; padding: 1.5rem; }
-        a { color: var(--color-accent); text-decoration: none; }
+{% extends "base.html" %}
+
+{% block title %}Reserve {{ vehicle.make }} {{ vehicle.model }} | TABAC DRIVE{% endblock %}
+
+{% block nav_fleet %}active{% endblock %}
+
+{% block extra_style %}
+        .centered-wrap { min-height: calc(100vh - 65px); display: grid; place-items: center; padding: 1.5rem; }
         .card { width: 100%; max-width: 480px; background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 8px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
         .brand { font-family: var(--font-display); letter-spacing: 0.08em; font-size: 1.2rem; margin-bottom: 0.5rem; }
         .brand span { color: var(--color-accent); }
@@ -33,38 +21,40 @@
         button { width: 100%; margin-top: 0.5rem; border: none; border-radius: 4px; padding: 0.8rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: background 0.2s; }
         button:hover { background: var(--color-accent-hover); }
         .links { margin-top: 1rem; color: var(--color-text-secondary); font-size: 0.9rem; text-align: center; }
-    </style>
-</head>
-<body>
-<div class="card">
-    <div class="brand">TABAC <span>DRIVE</span></div>
-    <div class="vehicle-name">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</div>
-    <h1>Reserve</h1>
-    <div class="rate-badge">${{ vehicle.daily_rate }} / day &middot; {{ vehicle.get_vehicle_kind_display }}</div>
+        .links a { color: var(--color-accent); }
+{% endblock %}
 
-    {% if form.non_field_errors %}
-        <div class="non-field-errors">{{ form.non_field_errors }}</div>
-    {% endif %}
+{% block content %}
+<div class="centered-wrap">
+    <div class="card">
+        <div class="brand">TABAC <span>DRIVE</span></div>
+        <div class="vehicle-name">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</div>
+        <h1>Reserve</h1>
+        <div class="rate-badge">${{ vehicle.daily_rate }} / day &middot; {{ vehicle.get_vehicle_kind_display }}</div>
 
-    <hr class="divider">
+        {% if form.non_field_errors %}
+            <div class="non-field-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        <div class="field">
-            <label for="{{ form.start_date.id_for_label }}">Start Date</label>
-            {{ form.start_date }}
-            {{ form.start_date.errors }}
+        <hr class="divider">
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="field">
+                <label for="{{ form.start_date.id_for_label }}">Start Date</label>
+                {{ form.start_date }}
+                {{ form.start_date.errors }}
+            </div>
+            <div class="field">
+                <label for="{{ form.end_date.id_for_label }}">End Date</label>
+                {{ form.end_date }}
+                {{ form.end_date.errors }}
+            </div>
+            <button type="submit">Reserve &amp; Continue to Payment</button>
+        </form>
+        <div class="links">
+            <a href="{% url 'vehicle_detail' vehicle.id %}">&larr; Back to vehicle</a>
         </div>
-        <div class="field">
-            <label for="{{ form.end_date.id_for_label }}">End Date</label>
-            {{ form.end_date }}
-            {{ form.end_date.errors }}
-        </div>
-        <button type="submit">Reserve &amp; Continue to Payment</button>
-    </form>
-    <div class="links">
-        <a href="{% url 'vehicle_detail' vehicle.id %}">&larr; Back to vehicle</a>
     </div>
 </div>
-</body>
-</html>
+{% endblock %}

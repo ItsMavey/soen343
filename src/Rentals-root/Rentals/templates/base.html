@@ -1,18 +1,179 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block title %}TABAC DRIVE{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --color-bg: #0d0d0d;
+            --color-surface: #1c1c1c;
+            --color-surface-raised: #242424;
+            --color-border: rgba(255,255,255,0.07);
+            --color-accent: #ff6b1a;
+            --color-accent-hover: #ff8340;
+            --color-accent-glow: rgba(255,107,26,0.4);
+            --color-text-primary: #f0ede6;
+            --color-text-secondary: #9a9590;
+            --color-error: #ff6b6b;
+            --font-display: 'Cormorant Garamond', serif;
+            --font-body: 'Outfit', sans-serif;
+            --transition-base: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-body); font-weight: 300; min-height: 100vh; }
+        a { color: inherit; text-decoration: none; }
 
-    <link rel="stylesheet" href="{% static 'css/global.css' %}">
-    {% component_css_dependencies %}
+        /* ── Navbar ─────────────────────────────────────────────── */
+        .navbar-apex {
+            background: rgba(13,13,13,0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--color-border);
+            padding: 0.85rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .nav-brand span { color: var(--color-accent); }
+        .nav-links { display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
+        .nav-link-apex {
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--color-text-secondary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 2px;
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+        .nav-link-apex:hover { color: var(--color-text-primary); }
+        .nav-link-apex.active { color: var(--color-text-primary); }
+        .nav-divider { width: 1px; height: 16px; background: var(--color-border); margin: 0 0.25rem; }
+        .nav-username {
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            color: var(--color-text-secondary);
+            padding: 0.4rem 0.5rem;
+        }
+        .btn-nav-logout {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.35rem 0.9rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: var(--transition-base);
+            white-space: nowrap;
+        }
+        .btn-nav-logout:hover { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
+        .role-badge {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.2rem 0.55rem;
+            border-radius: 2px;
+        }
+        .role-badge-commuter  { background: rgba(255,107,26,0.1);  color: var(--color-accent);  border: 1px solid rgba(255,107,26,0.2); }
+        .role-badge-provider  { background: rgba(59,130,246,0.1);  color: #60a5fa;              border: 1px solid rgba(59,130,246,0.2); }
+        .role-badge-admin     { background: rgba(74,222,128,0.1);  color: #4ade80;              border: 1px solid rgba(74,222,128,0.2); }
+
+        /* ── Messages ───────────────────────────────────────────── */
+        .msg-bar { padding: 0.7rem 1rem; border-radius: 4px; margin-bottom: 1.2rem; font-size: 0.85rem; }
+        .msg-success { background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2); color: #4ade80; }
+        .msg-error   { background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.2);  color: #f87171; }
+        .msg-info    { background: rgba(96,165,250,0.08); border: 1px solid rgba(96,165,250,0.2); color: #60a5fa; }
+        .msg-warning { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); color: #fbbf24; }
+
+        {% block extra_style %}{% endblock %}
+    </style>
 </head>
 <body>
-    {% component "nav" %}{% endcomponent %}
 
-    {% block content %}{% endblock %}
+<nav class="navbar-apex">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between gap-3">
 
-    {% component_js_dependencies %}
+            <a href="{% url 'home' %}" class="nav-brand">TABAC <span>DRIVE</span></a>
+
+            <div class="nav-links">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'vehicle_list' %}"
+                       class="nav-link-apex {% block nav_fleet %}{% endblock %}">Fleet</a>
+
+                    <a href="{% url 'my_reservations' %}"
+                       class="nav-link-apex {% block nav_reservations %}{% endblock %}">Reservations</a>
+
+                    <a href="{% url 'parking' %}"
+                       class="nav-link-apex {% block nav_parking %}{% endblock %}">Parking</a>
+
+                    <a href="{% url 'transit' %}"
+                       class="nav-link-apex {% block nav_transit %}{% endblock %}">Transit</a>
+
+                    <div class="nav-divider d-none d-md-block"></div>
+
+                    <a href="{% url 'role_dashboard' %}"
+                       class="nav-link-apex {% block nav_dashboard %}{% endblock %}">Dashboard</a>
+
+                    <div class="nav-divider d-none d-lg-block"></div>
+
+                    {% if user.is_commuter %}
+                        <span class="role-badge role-badge-commuter d-none d-lg-block">Commuter</span>
+                    {% elif user.is_provider %}
+                        <span class="role-badge role-badge-provider d-none d-lg-block">Provider</span>
+                    {% elif user.is_city_admin %}
+                        <span class="role-badge role-badge-admin d-none d-lg-block">Admin</span>
+                    {% endif %}
+
+                    <span class="nav-username d-none d-lg-block">{{ user.username }}</span>
+
+                    <form method="post" action="{% url 'logout' %}" class="m-0 p-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-nav-logout">Logout</button>
+                    </form>
+
+                {% else %}
+                    <a href="{% url 'login' %}" class="nav-link-apex">Sign In</a>
+                    <a href="{% url 'register' %}" class="nav-link-apex">Register</a>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+    {% for message in messages %}
+        <div class="msg-bar
+            {% if message.tags == 'error' %}msg-error
+            {% elif message.tags == 'warning' %}msg-warning
+            {% elif message.tags == 'info' %}msg-info
+            {% else %}msg-success{% endif %}">
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>
+
+{% block content %}{% endblock %}
+
 </body>
 </html>
