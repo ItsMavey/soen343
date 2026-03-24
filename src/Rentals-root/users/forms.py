@@ -15,9 +15,18 @@ class UserRegistrationForm(forms.ModelForm):
     )
     confirm_password = forms.CharField(widget=forms.PasswordInput, label="Confirm password")
 
+    role = forms.ChoiceField(
+        choices=[
+            (User.ROLE_COMMUTER, "Commuter"),
+            (User.ROLE_PROVIDER, "Mobility Provider"),
+        ],
+        initial=User.ROLE_COMMUTER,
+        label="I am a",
+    )
+
     class Meta:
         model = User
-        fields = ["username", "email", "password", "confirm_password"]
+        fields = ["username", "email", "role", "password", "confirm_password"]
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -50,6 +59,7 @@ class UserRegistrationForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data["email"]
+        user.role = self.cleaned_data["role"]
         user.set_password(self.cleaned_data["password"])
         if commit:
             user.save()
