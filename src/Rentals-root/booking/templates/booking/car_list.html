@@ -1,60 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Search</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Browse Fleet | TABAC DRIVE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 1.5rem; background: #f5f5f5; color: #222; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
-        .row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; }
-        input, button { width: 100%; padding: 0.55rem; box-sizing: border-box; }
-        a { color: #1459cc; text-decoration: none; }
+        :root {
+            --color-bg: #0d0d0d;
+            --color-bg-alt: #141414;
+            --color-surface: #1c1c1c;
+            --color-surface-raised: #242424;
+            --color-border: rgba(255, 255, 255, 0.07);
+            --color-accent: #ff6b1a;
+            --color-accent-hover: #ff8340;
+            --color-accent-glow: rgba(255, 107, 26, 0.4);
+            --color-text-primary: #f0ede6;
+            --color-text-secondary: #9a9590;
+            --color-text-muted: #555250;
+            --font-display: 'Cormorant Garamond', Georgia, serif;
+            --font-body: 'Outfit', sans-serif;
+            --transition-base: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-body); font-weight: 300; }
+        a { color: inherit; text-decoration: none; }
+        h1, h2, h3 { font-family: var(--font-display); font-weight: 600; }
+
+        /* NAV */
+        .navbar-apex {
+            background: rgba(13,13,13,0.92);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--color-border);
+            padding: 1rem 0;
+        }
+        .nav-brand { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+        .nav-brand span { color: var(--color-accent); }
+        .nav-link-apex { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-secondary) !important; padding: 0.4rem 1rem !important; transition: var(--transition-base); }
+        .nav-link-apex:hover { color: var(--color-text-primary) !important; }
+        .btn-nav { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.55rem 1.3rem; background: var(--color-accent); color: #0d0d0d; border: none; border-radius: 2px; cursor: pointer; transition: var(--transition-base); }
+        .btn-nav:hover { background: var(--color-accent-hover); box-shadow: 0 8px 24px var(--color-accent-glow); }
+
+        /* PAGE */
+        .page-wrap { padding: 3rem 0 5rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+
+        /* FILTER */
+        .filter-card {
+            background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 1.4rem 1.6rem;
+            margin-bottom: 2.5rem;
+        }
+        .filter-label { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 0.4rem; }
+        .filter-input {
+            width: 100%; background: #141414; border: 1px solid var(--color-border);
+            color: var(--color-text-primary); border-radius: 3px; padding: 0.6rem 0.75rem;
+            font-family: var(--font-body); font-size: 0.9rem;
+        }
+        .filter-input:focus { outline: none; border-color: rgba(255,107,26,0.5); box-shadow: 0 0 0 3px rgba(255,107,26,0.1); }
+        .btn-filter { background: var(--color-accent); color: #0d0d0d; border: none; border-radius: 3px; padding: 0.62rem 1.6rem; font-family: var(--font-body); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: var(--transition-base); }
+        .btn-filter:hover { background: var(--color-accent-hover); }
+
+        /* CARDS */
+        .car-card {
+            background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface));
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            height: 100%;
+            display: flex; flex-direction: column;
+            transition: var(--transition-base);
+        }
+        .car-card:hover { border-color: rgba(255,107,26,0.25); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+        .car-year { font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 0.3rem; }
+        .car-name { font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .car-meta { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 1rem; }
+        .car-rate { font-size: 1.5rem; font-family: var(--font-display); font-weight: 600; margin-bottom: 0.4rem; }
+        .car-rate span { font-size: 0.8rem; font-family: var(--font-body); color: var(--color-text-secondary); font-weight: 300; }
+        .badge-available { display: inline-block; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 2px; margin-bottom: 1.2rem; }
+        .badge-available.yes { background: rgba(50,205,50,0.12); color: #4ade80; border: 1px solid rgba(50,205,50,0.2); }
+        .badge-available.no  { background: rgba(255,107,26,0.1); color: var(--color-accent); border: 1px solid rgba(255,107,26,0.2); }
+        .btn-card { margin-top: auto; display: block; text-align: center; padding: 0.65rem; background: transparent; color: var(--color-text-primary); border: 1px solid var(--color-border); border-radius: 3px; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; transition: var(--transition-base); }
+        .btn-card:hover { background: var(--color-accent); color: #0d0d0d; border-color: var(--color-accent); }
+
+        /* MESSAGES */
+        .msg-bar { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--color-text-secondary); }
     </style>
 </head>
 <body>
-<div class="container">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="card">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-        <h1 style="margin:0;">Search Vehicles</h1>
-        <a href="{% url 'my_reservations' %}" style="color:#1459cc;">My Reservations</a>
-    </div>
-    <div class="card">
-        <form method="get">
-            <div class="row">
-                <input type="text" name="query" placeholder="Make or model" value="{{ request.GET.query }}">
-                <input type="text" name="vehicle_type" placeholder="Vehicle type" value="{{ request.GET.vehicle_type }}">
-                <input type="text" name="fuel_type" placeholder="Fuel type" value="{{ request.GET.fuel_type }}">
-                <input type="number" step="0.01" name="min_rate" placeholder="Min rate" value="{{ request.GET.min_rate }}">
-                <input type="number" step="0.01" name="max_rate" placeholder="Max rate" value="{{ request.GET.max_rate }}">
-            </div>
-            <div style="margin-top: 0.6rem;">
-                <button type="submit">Filter</button>
-            </div>
-        </form>
-    </div>
 
-    <div class="grid">
-        {% for car in cars %}
-            <div class="card">
-                <h3>{{ car.year }} {{ car.make }} {{ car.model }}</h3>
-                <p>{{ car.vehicle_type }} · {{ car.get_fuel_type_display }}</p>
-                <p><strong>${{ car.daily_rate }}</strong> / day</p>
-                <p>Status: {% if car.is_available %}Available{% else %}Currently reserved{% endif %}</p>
-                <a href="{% url 'car_detail' car.id %}">View details</a>
+<nav class="navbar-apex">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between">
+            <a href="{% url 'home' %}" class="nav-brand">TABAC <span>DRIVE</span></a>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'my_reservations' %}" class="nav-link-apex">My Reservations</a>
+                {% if user.is_authenticated %}
+                    <span class="nav-link-apex d-none d-md-block">{{ user.username }}</span>
+                    <form method="post" action="{% url 'logout' %}" class="m-0 p-0">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link-apex bg-transparent border-0">Logout</button>
+                    </form>
+                {% endif %}
             </div>
-        {% empty %}
-            <div class="card">
-                <p>No vehicles found with current filters.</p>
-            </div>
-        {% endfor %}
+        </div>
+    </div>
+</nav>
+
+<div class="page-wrap">
+    <div class="container">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="msg-bar">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <p class="page-title">Browse Fleet</p>
+        <p class="page-subtitle">Find the right vehicle for your journey</p>
+
+        <div class="filter-card">
+            <form method="get">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-3">
+                        <label class="filter-label">Search</label>
+                        <input class="filter-input" type="text" name="query" placeholder="Make or model" value="{{ request.GET.query }}">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="filter-label">Type</label>
+                        <input class="filter-input" type="text" name="vehicle_type" placeholder="e.g. SUV" value="{{ request.GET.vehicle_type }}">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="filter-label">Fuel</label>
+                        <input class="filter-input" type="text" name="fuel_type" placeholder="e.g. Electric" value="{{ request.GET.fuel_type }}">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="filter-label">Min $/day</label>
+                        <input class="filter-input" type="number" step="0.01" name="min_rate" placeholder="0" value="{{ request.GET.min_rate }}">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="filter-label">Max $/day</label>
+                        <input class="filter-input" type="number" step="0.01" name="max_rate" placeholder="Any" value="{{ request.GET.max_rate }}">
+                    </div>
+                    <div class="col-12 col-md-1">
+                        <button class="btn-filter w-100" type="submit">Filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="row g-4">
+            {% for car in cars %}
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="car-card">
+                        <div class="car-year">{{ car.year }}</div>
+                        <div class="car-name">{{ car.make }} {{ car.model }}</div>
+                        <div class="car-meta">{{ car.vehicle_type }} &middot; {{ car.get_fuel_type_display }}</div>
+                        <div class="car-rate">${{ car.daily_rate }} <span>/ day</span></div>
+                        <div class="badge-available {% if car.is_available %}yes{% else %}no{% endif %}">
+                            {% if car.is_available %}Available{% else %}Reserved{% endif %}
+                        </div>
+                        <a href="{% url 'car_detail' car.id %}" class="btn-card">View Details</a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="msg-bar">No vehicles found matching your filters.</div>
+                </div>
+            {% endfor %}
+        </div>
+
     </div>
 </div>
+
 </body>
 </html>

@@ -1,31 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Payment | TABAC DRIVE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 1.5rem; background: #f5f5f5; color: #222; }
-        .container { max-width: 620px; margin: 0 auto; }
-        .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.2rem; }
-        .errorlist { color: #b00020; }
-        button { padding: 0.6rem 0.9rem; }
+        :root {
+            --color-bg: #0d0d0d; --color-surface: #1c1c1c; --color-surface-raised: #242424;
+            --color-border: rgba(255,255,255,0.08); --color-accent: #ff6b1a; --color-accent-hover: #ff8340;
+            --color-text-primary: #f0ede6; --color-text-secondary: #9a9590; --color-error: #ff6b6b;
+            --font-display: 'Cormorant Garamond', serif; --font-body: 'Outfit', sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; font-family: var(--font-body); background: radial-gradient(circle at top right, #1b1b1b 0%, var(--color-bg) 45%); color: var(--color-text-primary); display: grid; place-items: center; padding: 1.5rem; }
+        a { color: var(--color-accent); text-decoration: none; }
+        .card { width: 100%; max-width: 460px; background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 8px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+        .brand { font-family: var(--font-display); letter-spacing: 0.08em; font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .brand span { color: var(--color-accent); }
+        h1 { margin: 0 0 1.5rem; font-family: var(--font-display); font-size: 2rem; font-weight: 600; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid var(--color-border); font-size: 0.9rem; }
+        .summary-row:last-of-type { border-bottom: none; }
+        .summary-label { color: var(--color-text-secondary); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--color-border); }
+        .total-label { font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-secondary); }
+        .total-amount { font-family: var(--font-display); font-size: 2rem; font-weight: 600; color: var(--color-accent); }
+        .confirm-wrap { display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0 0.5rem; background: rgba(255,107,26,0.06); border: 1px solid rgba(255,107,26,0.15); border-radius: 4px; padding: 0.9rem 1rem; cursor: pointer; }
+        .confirm-wrap input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color: var(--color-accent); cursor: pointer; flex-shrink: 0; }
+        .confirm-wrap label { font-size: 0.85rem; color: var(--color-text-secondary); cursor: pointer; margin: 0; }
+        .errorlist { color: var(--color-error); font-size: 0.82rem; margin-top: 0.35rem; padding-left: 1.1rem; }
+        button { width: 100%; margin-top: 0.8rem; border: none; border-radius: 4px; padding: 0.85rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+        button:hover { background: var(--color-accent-hover); }
+        .links { margin-top: 1rem; color: var(--color-text-secondary); font-size: 0.9rem; text-align: center; }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="card">
-        <h1>Simulated Payment</h1>
-        <p>Reservation #{{ reservation.id }}</p>
-        <p>Total amount: <strong>${{ reservation.total_amount }}</strong></p>
-        <form method="post">
-            {% csrf_token %}
-            <label for="{{ form.confirm_payment.id_for_label }}">{{ form.confirm_payment }} Confirm payment</label>
-            {{ form.confirm_payment.errors }}
-            <div style="margin-top: 0.8rem;">
-                <button type="submit">Complete Payment</button>
-            </div>
-        </form>
+<div class="card">
+    <div class="brand">TABAC <span>DRIVE</span></div>
+    <h1>Payment</h1>
+
+    <div class="summary-row">
+        <span class="summary-label">Vehicle</span>
+        <span>{{ reservation.car.year }} {{ reservation.car.make }} {{ reservation.car.model }}</span>
+    </div>
+    <div class="summary-row">
+        <span class="summary-label">Dates</span>
+        <span>{{ reservation.start_date }} &rarr; {{ reservation.end_date }}</span>
+    </div>
+    <div class="summary-row">
+        <span class="summary-label">Reservation #</span>
+        <span>{{ reservation.id }}</span>
+    </div>
+
+    <div class="total-row">
+        <span class="total-label">Total Due</span>
+        <span class="total-amount">${{ reservation.total_amount }}</span>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="confirm-wrap">
+            {{ form.confirm_payment }}
+            <label for="{{ form.confirm_payment.id_for_label }}">I confirm this simulated payment of ${{ reservation.total_amount }}</label>
+        </div>
+        {{ form.confirm_payment.errors }}
+        <button type="submit">Complete Payment</button>
+    </form>
+    <div class="links">
+        <a href="{% url 'reservation_detail' reservation.id %}">View reservation details</a>
     </div>
 </div>
 </body>
