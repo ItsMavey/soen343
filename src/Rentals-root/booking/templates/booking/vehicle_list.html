@@ -103,7 +103,7 @@
                 <a href="{% url 'my_reservations' %}" class="nav-link-apex">My Reservations</a>
                 <a href="{% url 'parking' %}" class="nav-link-apex">Parking</a>
                 <a href="{% url 'transit' %}" class="nav-link-apex">Transit</a>
-                {% if user.is_provider or user.is_city_admin %}
+                {% if user.is_authenticated %}
                     <a href="{% url 'role_dashboard' %}" class="nav-link-apex">Dashboard</a>
                 {% endif %}
                 {% if user.is_authenticated %}

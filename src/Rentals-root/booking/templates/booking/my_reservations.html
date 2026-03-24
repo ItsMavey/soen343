@@ -59,7 +59,7 @@
             <a href="{% url 'home' %}" class="nav-brand">TABAC <span>DRIVE</span></a>
             <div class="d-flex align-items-center gap-3">
                 <a href="{% url 'vehicle_list' %}" class="nav-link-apex">Fleet</a>
-                {% if user.is_provider or user.is_city_admin %}
+                {% if user.is_authenticated %}
                     <a href="{% url 'role_dashboard' %}" class="nav-link-apex">Dashboard</a>
                 {% endif %}
                 {% if user.is_authenticated %}

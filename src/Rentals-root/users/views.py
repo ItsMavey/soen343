@@ -58,7 +58,14 @@ def role_dashboard(request):
         return redirect("provider_dashboard")
     if role == "ADMIN":
         return redirect("city_admin_dashboard")
-    return redirect("vehicle_list")
+    return redirect("commuter_dashboard")
+
+
+@login_required
+def commuter_dashboard(request):
+    if not request.user.is_commuter:
+        return redirect("role_dashboard")
+    return render(request, "users/commuter_dashboard.html")
 
 
 @login_required
