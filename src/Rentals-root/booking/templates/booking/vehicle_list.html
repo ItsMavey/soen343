@@ -133,11 +133,16 @@
                         <input class="filter-input" type="text" name="query" placeholder="Make or model" value="{{ request.GET.query }}">
                     </div>
                     <div class="col-6 col-md-2">
-                        <label class="filter-label">Type</label>
-                        <input class="filter-input" type="text" name="vehicle_type" placeholder="e.g. SUV" value="{{ request.GET.vehicle_type }}">
+                        <label class="filter-label">Kind</label>
+                        <select class="filter-input" name="vehicle_kind">
+                            <option value="">All Types</option>
+                            <option value="CAR" {% if request.GET.vehicle_kind == "CAR" %}selected{% endif %}>Car</option>
+                            <option value="BIKE" {% if request.GET.vehicle_kind == "BIKE" %}selected{% endif %}>Bike</option>
+                            <option value="SCOOTER" {% if request.GET.vehicle_kind == "SCOOTER" %}selected{% endif %}>Scooter</option>
+                        </select>
                     </div>
                     <div class="col-6 col-md-2">
-                        <label class="filter-label">Fuel</label>
+                        <label class="filter-label">Fuel (cars)</label>
                         <input class="filter-input" type="text" name="fuel_type" placeholder="e.g. Electric" value="{{ request.GET.fuel_type }}">
                     </div>
                     <div class="col-6 col-md-2">
@@ -156,17 +161,17 @@
         </div>
 
         <div class="row g-4">
-            {% for car in cars %}
+            {% for vehicle in vehicles %}
                 <div class="col-12 col-sm-6 col-lg-4">
                     <div class="car-card">
-                        <div class="car-year">{{ car.year }}</div>
-                        <div class="car-name">{{ car.make }} {{ car.model }}</div>
-                        <div class="car-meta">{{ car.vehicle_type }} &middot; {{ car.get_fuel_type_display }}</div>
-                        <div class="car-rate">${{ car.daily_rate }} <span>/ day</span></div>
-                        <div class="badge-available {% if car.is_available %}yes{% else %}no{% endif %}">
-                            {% if car.is_available %}Available{% else %}Reserved{% endif %}
+                        <div class="car-year">{{ vehicle.year }}</div>
+                        <div class="car-name">{{ vehicle.make }} {{ vehicle.model }}</div>
+                        <div class="car-meta">{{ vehicle.get_vehicle_kind_display }}</div>
+                        <div class="car-rate">${{ vehicle.daily_rate }} <span>/ day</span></div>
+                        <div class="badge-available {% if vehicle.is_available %}yes{% else %}no{% endif %}">
+                            {% if vehicle.is_available %}Available{% else %}Reserved{% endif %}
                         </div>
-                        <a href="{% url 'car_detail' car.id %}" class="btn-card">View Details</a>
+                        <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn-card">View Details</a>
                     </div>
                 </div>
             {% empty %}

@@ -58,7 +58,7 @@
         <div class="d-flex align-items-center justify-content-between">
             <a href="{% url 'home' %}" class="nav-brand">TABAC <span>DRIVE</span></a>
             <div class="d-flex align-items-center gap-3">
-                <a href="{% url 'car_list' %}" class="nav-link-apex">Fleet</a>
+                <a href="{% url 'vehicle_list' %}" class="nav-link-apex">Fleet</a>
                 {% if user.is_authenticated %}
                     <span class="nav-link-apex d-none d-md-block">{{ user.username }}</span>
                     <form method="post" action="{% url 'logout' %}" class="m-0 p-0">
@@ -88,7 +88,7 @@
                 <div class="col-12 col-lg-6">
                     <div class="res-card">
                         <div class="res-eyebrow">Reservation #{{ reservation.id }}</div>
-                        <div class="res-vehicle">{{ reservation.car.year }} {{ reservation.car.make }} {{ reservation.car.model }}</div>
+                        <div class="res-vehicle">{{ reservation.vehicle.year }} {{ reservation.vehicle.make }} {{ reservation.vehicle.model }}</div>
                         <div class="res-meta">{{ reservation.start_date }} &rarr; {{ reservation.end_date }}</div>
 
                         <div class="d-flex align-items-center justify-content-between mb-2">
@@ -114,7 +114,7 @@
                 <div class="col-12">
                     <div class="empty-state">
                         <p>You have no reservations yet.</p>
-                        <a href="{% url 'car_list' %}" class="btn-sm-primary">Browse Fleet</a>
+                        <a href="{% url 'vehicle_list' %}" class="btn-sm-primary">Browse Fleet</a>
                     </div>
                 </div>
             {% endfor %}

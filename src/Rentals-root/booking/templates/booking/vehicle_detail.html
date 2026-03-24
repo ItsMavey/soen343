@@ -52,7 +52,7 @@
         <div class="d-flex align-items-center justify-content-between">
             <a href="{% url 'home' %}" class="nav-brand">TABAC <span>DRIVE</span></a>
             <div class="d-flex align-items-center gap-3">
-                <a href="{% url 'car_list' %}" class="nav-link-apex">Fleet</a>
+                <a href="{% url 'vehicle_list' %}" class="nav-link-apex">Fleet</a>
                 <a href="{% url 'my_reservations' %}" class="nav-link-apex">My Reservations</a>
                 {% if user.is_authenticated %}
                     <form method="post" action="{% url 'logout' %}" class="m-0 p-0">
@@ -67,28 +67,35 @@
 
 <div class="page-wrap">
     <div class="container">
-        <a href="{% url 'car_list' %}" class="back-link d-inline-block mb-4">&larr; Back to Fleet</a>
+        <a href="{% url 'vehicle_list' %}" class="back-link d-inline-block mb-4">&larr; Back to Fleet</a>
 
         <div class="detail-card">
-            <div class="car-eyebrow">{{ car.year }} &middot; {{ car.vehicle_type }}</div>
-            <h1 class="car-title">{{ car.make }} {{ car.model }}</h1>
+            <div class="car-eyebrow">{{ vehicle.year }} &middot; {{ vehicle.get_vehicle_kind_display }}</div>
+            <h1 class="car-title">{{ vehicle.make }} {{ vehicle.model }}</h1>
 
-            <div class="badge-available {% if car.is_available %}yes{% else %}no{% endif %}">
-                {% if car.is_available %}Available{% else %}Currently Reserved{% endif %}
+            <div class="badge-available {% if vehicle.is_available %}yes{% else %}no{% endif %}">
+                {% if vehicle.is_available %}Available{% else %}{{ vehicle.get_vehicle_status_display }}{% endif %}
             </div>
 
             <div class="mb-3">
-                <div class="spec-row"><span class="spec-label">Fuel Type</span><span>{{ car.get_fuel_type_display }}</span></div>
-                <div class="spec-row"><span class="spec-label">Vehicle Type</span><span>{{ car.vehicle_type }}</span></div>
-                <div class="spec-row"><span class="spec-label">Rating</span><span>{{ car.rating }} / 5 &middot; {{ car.review_count }} reviews</span></div>
-                <div class="spec-row"><span class="spec-label">Total Trips</span><span>{{ car.total_trips }}</span></div>
+                {% if vehicle.vehicle_kind == "CAR" %}
+                    <div class="spec-row"><span class="spec-label">Fuel Type</span><span>{{ subtype.get_fuel_type_display }}</span></div>
+                    <div class="spec-row"><span class="spec-label">Body Style</span><span>{{ subtype.body_style }}</span></div>
+                {% elif vehicle.vehicle_kind == "BIKE" %}
+                    <div class="spec-row"><span class="spec-label">Bike Type</span><span>{{ subtype.get_bike_type_display }}</span></div>
+                    <div class="spec-row"><span class="spec-label">Motor</span><span>{% if subtype.has_motor %}Yes (E-Bike){% else %}No{% endif %}</span></div>
+                {% elif vehicle.vehicle_kind == "SCOOTER" %}
+                    <div class="spec-row"><span class="spec-label">Engine</span><span>{% if subtype.is_electric %}Electric{% else %}{{ subtype.engine_cc }}cc{% endif %}</span></div>
+                {% endif %}
+                <div class="spec-row"><span class="spec-label">Rating</span><span>{{ vehicle.rating }} / 5 &middot; {{ vehicle.review_count }} reviews</span></div>
+                <div class="spec-row"><span class="spec-label">Total Trips</span><span>{{ vehicle.total_trips }}</span></div>
             </div>
 
-            <div class="rate-display">${{ car.daily_rate }} <span>/ day</span></div>
+            <div class="rate-display">${{ vehicle.daily_rate }} <span>/ day</span></div>
 
             <div class="d-flex gap-3 flex-wrap">
-                <a href="{% url 'reserve_car' car.id %}" class="btn-primary-apex">Reserve This Vehicle</a>
-                <a href="{% url 'car_list' %}" class="btn-ghost-apex">Browse Fleet</a>
+                <a href="{% url 'reserve_vehicle' vehicle.id %}" class="btn-primary-apex">Reserve This Vehicle</a>
+                <a href="{% url 'vehicle_list' %}" class="btn-ghost-apex">Browse Fleet</a>
             </div>
         </div>
     </div>

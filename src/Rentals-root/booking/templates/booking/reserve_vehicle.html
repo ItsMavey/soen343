@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Reserve {{ car.make }} {{ car.model }} | TABAC DRIVE</title>
+    <title>Reserve {{ vehicle.make }} {{ vehicle.model }} | TABAC DRIVE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -38,9 +38,9 @@
 <body>
 <div class="card">
     <div class="brand">TABAC <span>DRIVE</span></div>
-    <div class="vehicle-name">{{ car.year }} {{ car.make }} {{ car.model }}</div>
+    <div class="vehicle-name">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</div>
     <h1>Reserve</h1>
-    <div class="rate-badge">${{ car.daily_rate }} / day &middot; {{ car.get_fuel_type_display }}</div>
+    <div class="rate-badge">${{ vehicle.daily_rate }} / day &middot; {{ vehicle.get_vehicle_kind_display }}</div>
 
     {% if form.non_field_errors %}
         <div class="non-field-errors">{{ form.non_field_errors }}</div>
@@ -63,7 +63,7 @@
         <button type="submit">Reserve &amp; Continue to Payment</button>
     </form>
     <div class="links">
-        <a href="{% url 'car_detail' car.id %}">&larr; Back to vehicle</a>
+        <a href="{% url 'vehicle_detail' vehicle.id %}">&larr; Back to vehicle</a>
     </div>
 </div>
 </body>

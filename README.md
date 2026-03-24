@@ -46,6 +46,7 @@
         </ul>
     </li>
     <li><a href="#project-setup">Project Setup</a></li>
+    <li><a href="#common-commands">Common Commands</a></li>
     <li><a href="#contributors">Contributors</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgements">Acknowledgements</a></li>
@@ -113,6 +114,44 @@ python manage.py runserver
 ```
 
 Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+***
+
+## Common Commands
+
+All commands run from `src/Rentals-root/`.
+
+#### Seed data
+
+```bash
+# Cars (from CSV)
+python manage.py seed_cars ..\..\dataset\CarRentalData.csv
+
+# Bikes (hardcoded fleet)
+python manage.py seed_bikes
+
+# Scooters (hardcoded fleet)
+python manage.py seed_scooters
+
+# Users (from CSV)
+python manage.py seed_user ..\..\dataset\person_10000.csv
+```
+
+#### User roles
+
+Users can register as **Commuter** or **Mobility Provider**. To assign the **City Admin** role:
+
+```bash
+python manage.py set_role <username> admin
+```
+
+Other valid roles: `commuter`, `provider`.
+
+#### Run tests
+
+```bash
+python manage.py test
+```
 
 ***
 
