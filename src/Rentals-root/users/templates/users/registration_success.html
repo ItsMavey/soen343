@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Successful</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            color: #222;
+        }
+        .container {
+            max-width: 520px;
+            margin: 6rem auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+        h1 {
+            margin-top: 0;
+        }
+        p {
+            color: #555;
+            line-height: 1.6;
+        }
+        a {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #1f6feb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Registration successful</h1>
+    <p>Your account has been created successfully.</p>
+    <a href="{% url 'home' %}">Return to home page</a>
+</div>
+</body>
+</html>

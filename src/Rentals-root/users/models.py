@@ -5,8 +5,9 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class User(AbstractUser):
+    email = models.EmailField(unique=True)
     address = AddressField(null=True, blank=True, on_delete=models.SET_NULL)
-    phone_number = PhoneNumberField(region="CA")
+    phone_number = PhoneNumberField(region="CA", blank=True, null=True)
 
     def __str__(self):
         return self.username
