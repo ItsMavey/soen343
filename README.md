@@ -45,6 +45,7 @@
             <li><a href="#tech-stack">Tech Stack</a></li>
         </ul>
     </li>
+    <li><a href="#project-setup">Project Setup</a></li>
     <li><a href="#contributors">Contributors</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgements">Acknowledgements</a></li>
@@ -83,6 +84,35 @@
 #### Technologies & Tools
 
 ![Django](https://img.shields.io/badge/django-%23092E20.svg?style=for-the-badge&logo=django&logoColor=white)
+
+***
+
+## Project Setup
+
+**Requirements:** Python 3.10+
+
+```bash
+# 1. Activate the virtual environment
+.\venv\Scripts\Activate
+
+# 2. Install dependencies
+cd src\Rentals-root
+pip install -r ..\..\requirements.txt
+
+# 3. Apply migrations
+python manage.py migrate
+
+# 4. Seed vehicle data
+python manage.py seed_cars ..\..\dataset\CarRentalData.csv
+
+# 5. (Optional) Create an admin account
+python manage.py createsuperuser
+
+# 6. Run the development server
+python manage.py runserver
+```
+
+Open [http://localhost:8000](http://localhost:8000) in your browser.
 
 ***
 
