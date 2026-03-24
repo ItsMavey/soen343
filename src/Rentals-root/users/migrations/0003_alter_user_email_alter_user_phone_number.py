@@ -4,6 +4,25 @@ import phonenumber_field.modelfields
 from django.db import migrations, models
 
 
+def normalize_duplicate_emails(apps, schema_editor):
+    User = apps.get_model("users", "User")
+    seen_emails = set()
+
+    for user in User.objects.all().order_by("id"):
+        current_email = (user.email or "").strip().lower()
+
+        if not current_email:
+            current_email = f"user{user.id}@placeholder.local"
+
+        if current_email in seen_emails:
+            current_email = f"user{user.id}_{current_email}"
+
+        seen_emails.add(current_email)
+        if user.email != current_email:
+            user.email = current_email
+            user.save(update_fields=["email"])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,6 +30,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(normalize_duplicate_emails, migrations.RunPython.noop),
         migrations.AlterField(
             model_name='user',
             name='email',
