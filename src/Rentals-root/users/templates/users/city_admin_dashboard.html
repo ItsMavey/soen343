@@ -80,9 +80,12 @@
             </div>
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="dash-card">
-                    <div class="dash-card-title">External Services <span class="coming-soon">Sprint 3</span></div>
-                    <div class="dash-card-desc">View and manage connected parking and public transit integrations.</div>
-                    <span class="btn-card-ghost">Coming Soon</span>
+                    <div class="dash-card-title">External Services</div>
+                    <div class="dash-card-desc">View connected parking lots and public transit stops and departures.</div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'parking' %}" class="btn-card-action">Parking</a>
+                        <a href="{% url 'transit' %}" class="btn-card-action">Transit</a>
+                    </div>
                 </div>
             </div>
             <div class="col-12 col-md-6 col-lg-4">

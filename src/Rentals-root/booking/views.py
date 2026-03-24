@@ -9,6 +9,7 @@ from django.utils import timezone
 from .factories import ProviderFactoryA, ProviderFactoryB
 from .forms import VehicleSearchForm, PaymentForm, ReservationForm, ProviderVehicleForm
 from .models import Vehicle, Car, Bike, Scooter, Reservation
+from .services import ParkingService, TransitFacade
 
 
 @login_required
@@ -283,3 +284,22 @@ def provider_delete_vehicle(request, vehicle_id):
         messages.success(request, "Vehicle removed from your fleet.")
         return redirect("provider_fleet")
     return render(request, "booking/provider_vehicle_confirm_delete.html", {"vehicle": vehicle})
+
+
+# ---------------------------------------------------------------------------
+# External Services
+# ---------------------------------------------------------------------------
+
+@login_required
+def parking(request):
+    lots = ParkingService().get_nearby_lots()
+    return render(request, "booking/parking.html", {"lots": lots})
+
+
+@login_required
+def transit(request):
+    facade = TransitFacade()
+    stops = facade.get_nearby_stops()
+    stop_id = request.GET.get("stop_id")
+    departures = facade.get_next_departures(stop_id) if stop_id else []
+    return render(request, "booking/transit.html", {"stops": stops, "departures": departures, "stop_id": stop_id})

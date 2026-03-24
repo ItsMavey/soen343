@@ -12,6 +12,10 @@ urlpatterns = [
     path("reservations/<int:reservation_id>/return/", views.return_vehicle, name="return_vehicle"),
     path("reservations/<int:reservation_id>/cancel/", views.cancel_reservation, name="cancel_reservation"),
 
+    # External services
+    path("parking/", views.parking, name="parking"),
+    path("transit/", views.transit, name="transit"),
+
     # Provider fleet management
     path("provider/fleet/", views.provider_fleet, name="provider_fleet"),
     path("provider/fleet/add/", views.provider_add_vehicle, name="provider_add_vehicle"),
