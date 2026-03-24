@@ -53,6 +53,7 @@ class Command(BaseCommand):
                         'phone_number': phone_obj,
                         'address': address_obj,
                         'is_active': True,
+                        'role': User.ROLE_COMMUTER,
                     }
                 )
 
