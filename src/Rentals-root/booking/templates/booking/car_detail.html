@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Details</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 1.5rem; background: #f5f5f5; color: #222; }
+        .container { max-width: 700px; margin: 0 auto; }
+        .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.2rem; }
+        a.button { display: inline-block; background: #1459cc; color: #fff; padding: 0.6rem 1rem; border-radius: 4px; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>{{ car.year }} {{ car.make }} {{ car.model }}</h1>
+        <p>Vehicle Type: {{ car.vehicle_type }}</p>
+        <p>Fuel Type: {{ car.get_fuel_type_display }}</p>
+        <p>Daily Rate: ${{ car.daily_rate }}</p>
+        <p>Availability: {% if car.is_available %}Available{% else %}Currently reserved{% endif %}</p>
+        <a class="button" href="{% url 'reserve_car' car.id %}">Reserve this vehicle</a>
+    </div>
+</div>
+</body>
+</html>

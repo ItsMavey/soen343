@@ -1070,7 +1070,7 @@
                     <a href="{% url 'login' %}" class="nav-link-apex d-none d-lg-block">Sign In</a>
                     <a href="{% url 'register' %}" class="nav-link-apex d-none d-lg-block">Register</a>
                 {% endif %}
-                <button class="btn-nav">Reserve Now</button>
+                <a href="{% url 'car_list' %}" class="btn-nav">Reserve Now</a>
             </div>
 
         </div>
@@ -1133,35 +1133,34 @@
      ============================================================ -->
 <section class="booking-strip">
     <div class="container">
-        <div class="booking-form">
+        <form class="booking-form" method="get" action="{% url 'car_list' %}">
 
             <div class="booking-field">
-                <label>Pick-Up Location</label>
-                <select>
-                    <option value="" disabled selected>Choose city or airport…</option>
-                    <option>Paris — CDG Airport</option>
-                    <option>Paris — City Centre</option>
-                    <option>Lyon — Saint-Exupéry</option>
-                    <option>Marseille — Provence</option>
-                    <option>Nice — Côte d'Azur</option>
+                <label>Vehicle Type</label>
+                <select name="vehicle_type">
+                    <option value="" selected>Any type</option>
+                    <option value="SUV">SUV</option>
+                    <option value="Sedan">Sedan</option>
+                    <option value="Luxury">Luxury</option>
+                    <option value="Sports">Sports</option>
                 </select>
             </div>
 
             <div class="booking-field">
-                <label>Pick-Up Date</label>
-                <input type="date"/>
+                <label>Min Daily Rate</label>
+                <input type="number" name="min_rate" step="0.01" placeholder="e.g. 50"/>
             </div>
 
             <div class="booking-field">
-                <label>Return Date</label>
-                <input type="date"/>
+                <label>Max Daily Rate</label>
+                <input type="number" name="max_rate" step="0.01" placeholder="e.g. 250"/>
             </div>
 
-            <button class="booking-submit">
+            <button class="booking-submit" type="submit">
                 <i class="bi bi-search"></i> Find Cars
             </button>
 
-        </div>
+        </form>
     </div>
 </section>
 

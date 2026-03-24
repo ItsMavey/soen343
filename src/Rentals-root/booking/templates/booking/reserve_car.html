@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserve Vehicle</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 1.5rem; background: #f5f5f5; color: #222; }
+        .container { max-width: 620px; margin: 0 auto; }
+        .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.2rem; }
+        .errorlist { color: #b00020; margin: 0.4rem 0; }
+        input { width: 100%; padding: 0.55rem; margin-bottom: 0.7rem; box-sizing: border-box; }
+        button { padding: 0.6rem 0.9rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>Reserve {{ car.year }} {{ car.make }} {{ car.model }}</h1>
+        {% if form.non_field_errors %}
+            <div class="errorlist">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <label for="{{ form.start_date.id_for_label }}">Start date</label>
+            {{ form.start_date }}
+            {{ form.start_date.errors }}
+
+            <label for="{{ form.end_date.id_for_label }}">End date</label>
+            {{ form.end_date }}
+            {{ form.end_date.errors }}
+
+            <button type="submit">Reserve and continue to payment</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

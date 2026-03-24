@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 1.5rem; background: #f5f5f5; color: #222; }
+        .container { max-width: 620px; margin: 0 auto; }
+        .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.2rem; }
+        .errorlist { color: #b00020; }
+        button { padding: 0.6rem 0.9rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>Simulated Payment</h1>
+        <p>Reservation #{{ reservation.id }}</p>
+        <p>Total amount: <strong>${{ reservation.total_amount }}</strong></p>
+        <form method="post">
+            {% csrf_token %}
+            <label for="{{ form.confirm_payment.id_for_label }}">{{ form.confirm_payment }} Confirm payment</label>
+            {{ form.confirm_payment.errors }}
+            <div style="margin-top: 0.8rem;">
+                <button type="submit">Complete Payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

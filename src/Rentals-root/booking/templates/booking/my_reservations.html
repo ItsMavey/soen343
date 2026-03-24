@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reservations</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 1.5rem; background: #f5f5f5; color: #222; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
+        .msg { padding: 0.6rem; margin-bottom: 0.7rem; border: 1px solid #d7d7d7; background: #fff; }
+        .btn { display: inline-block; padding: 0.45rem 0.8rem; border: none; background: #1459cc; color: #fff; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
+        .btn-danger { background: #c0392b; }
+        .meta { color: #555; font-size: 0.9rem; }
+        .status { font-weight: bold; }
+        .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
+        .nav { display: flex; gap: 0.7rem; margin-bottom: 1.2rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="msg">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="nav">
+        <a class="btn" href="{% url 'car_list' %}">Browse Vehicles</a>
+        <a class="btn" href="{% url 'home' %}">Home</a>
+    </div>
+
+    <h1>My Reservations</h1>
+
+    {% for reservation in reservations %}
+        <div class="card">
+            <strong>{{ reservation.car.year }} {{ reservation.car.make }} {{ reservation.car.model }}</strong>
+            <p class="meta">{{ reservation.start_date }} → {{ reservation.end_date }} &nbsp;·&nbsp; ${{ reservation.total_amount }} total</p>
+            <p>Status: <span class="status">{{ reservation.get_status_display }}</span></p>
+            <div class="actions">
+                <a class="btn" href="{% url 'reservation_detail' reservation.id %}">View Details</a>
+                {% if reservation.status == "PENDING" %}
+                    <a class="btn" href="{% url 'reservation_payment' reservation.id %}">Complete Payment</a>
+                    <form method="post" action="{% url 'cancel_reservation' reservation.id %}" style="margin:0;">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" type="submit"
+                                onclick="return confirm('Cancel this reservation?')">Cancel</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="card">
+            <p>You have no reservations yet. <a href="{% url 'car_list' %}">Browse vehicles</a> to get started.</p>
+        </div>
+    {% endfor %}
+</div>
+</body>
+</html>
