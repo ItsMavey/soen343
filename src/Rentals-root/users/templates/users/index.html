@@ -1070,7 +1070,7 @@
                     <a href="{% url 'login' %}" class="nav-link-apex d-none d-lg-block">Sign In</a>
                     <a href="{% url 'register' %}" class="nav-link-apex d-none d-lg-block">Register</a>
                 {% endif %}
-                <a href="{% url 'car_list' %}" class="btn-nav">Reserve Now</a>
+                <a href="{% url 'vehicle_list' %}" class="btn-nav">Reserve Now</a>
             </div>
 
         </div>
@@ -1133,7 +1133,7 @@
      ============================================================ -->
 <section class="booking-strip">
     <div class="container">
-        <form class="booking-form" method="get" action="{% url 'car_list' %}">
+        <form class="booking-form" method="get" action="{% url 'vehicle_list' %}">
 
             <div class="booking-field">
                 <label>Vehicle Type</label>
