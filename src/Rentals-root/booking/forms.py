@@ -2,11 +2,16 @@ import datetime
 
 from django import forms
 
+from .models import Vehicle
 
-class CarSearchForm(forms.Form):
+
+class VehicleSearchForm(forms.Form):
     query = forms.CharField(required=False, label="Search")
-    vehicle_type = forms.CharField(required=False)
-    fuel_type = forms.CharField(required=False)
+    vehicle_kind = forms.ChoiceField(
+        required=False,
+        choices=[("", "All Types")] + Vehicle.KIND_CHOICES,
+    )
+    fuel_type = forms.CharField(required=False, label="Fuel (cars only)")
     min_rate = forms.DecimalField(required=False, min_value=0)
     max_rate = forms.DecimalField(required=False, min_value=0)
 

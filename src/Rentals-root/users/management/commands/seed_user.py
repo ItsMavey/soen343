@@ -40,12 +40,16 @@ class Command(BaseCommand):
                 # Using get_or_create on username to avoid duplicates
                 username = f"{row['firstname'].lower()}.{row['lastname'].lower()}.{row.get('person_id', '0')}"
 
+                email = row.get('email', '').strip().lower()
+                if User.objects.filter(email=email).exists():
+                    continue
+
                 user, created = User.objects.get_or_create(
                     username=username,
                     defaults={
                         'first_name': row.get('firstname'),
                         'last_name': row.get('lastname'),
-                        'email': row.get('email'),
+                        'email': email,
                         'phone_number': phone_obj,
                         'address': address_obj,
                         'is_active': True,
