@@ -1,8 +1,9 @@
+import datetime
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -303,3 +304,78 @@ def transit(request):
     stop_id = request.GET.get("stop_id")
     departures = facade.get_next_departures(stop_id) if stop_id else []
     return render(request, "booking/transit.html", {"stops": stops, "departures": departures, "stop_id": stop_id})
+
+
+# ---------------------------------------------------------------------------
+# Analytics
+# ---------------------------------------------------------------------------
+
+@login_required
+def rental_analytics(request):
+    user = request.user
+    if not (user.is_provider or user.is_city_admin):
+        messages.error(request, "Access restricted.")
+        return redirect("role_dashboard")
+
+    if user.is_provider:
+        reservations = Reservation.objects.filter(vehicle__owner=user)
+        vehicles = Vehicle.objects.filter(owner=user)
+    else:
+        reservations = Reservation.objects.all()
+        vehicles = Vehicle.objects.all()
+
+    total = reservations.count()
+    confirmed = reservations.filter(
+        status__in=[Reservation.STATUS_CONFIRMED, Reservation.STATUS_RETURNED]
+    ).count()
+    returned = reservations.filter(status=Reservation.STATUS_RETURNED).count()
+    revenue = reservations.filter(
+        status__in=[Reservation.STATUS_CONFIRMED, Reservation.STATUS_RETURNED]
+    ).aggregate(total=Sum("total_amount"))["total"] or 0
+
+    by_kind = []
+    for kind_code, kind_label in Vehicle.KIND_CHOICES:
+        kind_res = reservations.filter(vehicle__vehicle_kind=kind_code)
+        kind_rev = kind_res.filter(
+            status__in=[Reservation.STATUS_CONFIRMED, Reservation.STATUS_RETURNED]
+        ).aggregate(total=Sum("total_amount"))["total"] or 0
+        by_kind.append({"kind": kind_label, "count": kind_res.count(), "revenue": kind_rev})
+
+    top_vehicles = vehicles.order_by("-total_trips")[:5]
+    thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
+    recent = reservations.filter(created_at__gte=thirty_days_ago).count()
+
+    return render(request, "booking/rental_analytics.html", {
+        "total": total,
+        "confirmed": confirmed,
+        "returned": returned,
+        "revenue": revenue,
+        "by_kind": by_kind,
+        "top_vehicles": top_vehicles,
+        "recent": recent,
+        "is_provider": user.is_provider,
+    })
+
+
+@login_required
+def gateway_analytics(request):
+    if not request.user.is_city_admin:
+        messages.error(request, "Access restricted to City Admins.")
+        return redirect("role_dashboard")
+
+    lots = ParkingService().get_nearby_lots()
+    stops = TransitFacade().get_nearby_stops()
+
+    total_spots = sum(lot.total_spots for lot in lots)
+    available_spots = sum(lot.available_spots for lot in lots)
+    occupied_spots = total_spots - available_spots
+    overall_occupancy = round(occupied_spots / total_spots * 100) if total_spots else 0
+
+    return render(request, "booking/gateway_analytics.html", {
+        "lots": lots,
+        "stops": stops,
+        "total_spots": total_spots,
+        "available_spots": available_spots,
+        "occupied_spots": occupied_spots,
+        "overall_occupancy": overall_occupancy,
+    })

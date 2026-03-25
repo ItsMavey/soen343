@@ -35,9 +35,12 @@
             </div>
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="dash-card">
-                    <div class="dash-card-title">Rental Analytics <span class="coming-soon">Sprint 3</span></div>
+                    <div class="dash-card-title">Rental Analytics</div>
                     <div class="dash-card-desc">Platform-wide rental statistics, revenue trends, and sustainability metrics.</div>
-                    <span class="btn-card-ghost">Coming Soon</span>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'rental_analytics' %}" class="btn-card-action">Rental Stats</a>
+                        <a href="{% url 'gateway_analytics' %}" class="btn-card-action">Gateway Stats</a>
+                    </div>
                 </div>
             </div>
         </div>

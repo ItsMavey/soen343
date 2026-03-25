@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Gateway Analytics | TABAC DRIVE{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_style %}
+        .page-wrap { padding: 4rem 0 5rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin: 0 0 1.2rem; }
+        .stat-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.5rem; }
+        .stat-val { font-family: var(--font-display); font-size: 2.4rem; font-weight: 600; color: var(--color-accent); line-height: 1; }
+        .stat-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-top: 0.3rem; }
+        .table-wrap { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--color-border); text-align: left; font-weight: 600; }
+        td { padding: 0.85rem 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.9rem; }
+        tr:last-child td { border-bottom: none; }
+        .occ-bar-wrap { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; margin-top: 0.4rem; width: 100%; }
+        .occ-bar { height: 6px; border-radius: 3px; }
+        .badge-avail { display: inline-block; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+        .badge-full { display: inline-block; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+        .back-link:hover { color: var(--color-accent); }
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="container">
+        <a href="{% url 'role_dashboard' %}" class="back-link">&larr; Dashboard</a>
+        <p class="page-title">Gateway Analytics</p>
+        <p class="page-subtitle">Aggregate metrics from external parking and transit services</p>
+
+        <!-- Parking summary -->
+        <div class="section-label">Parking — Summary</div>
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-val">{{ lots|length }}</div>
+                    <div class="stat-label">Lots Connected</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-val">{{ total_spots }}</div>
+                    <div class="stat-label">Total Spots</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-val">{{ available_spots }}</div>
+                    <div class="stat-label">Available Now</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-val">{{ overall_occupancy }}%</div>
+                    <div class="stat-label">Overall Occupancy</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parking lots breakdown -->
+        <div class="section-label">Parking — Per Lot</div>
+        <div class="table-wrap mb-5">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Lot</th>
+                        <th>Address</th>
+                        <th>Available / Total</th>
+                        <th>Rate/hr</th>
+                        <th style="width:20%">Occupancy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lot in lots %}
+                    <tr>
+                        <td>{{ lot.name }}</td>
+                        <td style="color:var(--color-text-secondary)">{{ lot.address }}</td>
+                        <td>
+                            {% if lot.available_spots == 0 %}
+                            <span class="badge-full">Full</span>
+                            {% else %}
+                            <span class="badge-avail">{{ lot.available_spots }} free</span>
+                            {% endif %}
+                            <span style="color:var(--color-text-secondary); font-size:0.8rem; margin-left:0.3rem;">/ {{ lot.total_spots }}</span>
+                        </td>
+                        <td>${{ lot.hourly_rate }}</td>
+                        <td>
+                            <div style="font-size:0.78rem; color:var(--color-text-secondary); margin-bottom:0.3rem;">{{ lot.occupancy_pct }}%</div>
+                            <div class="occ-bar-wrap">
+                                <div class="occ-bar" style="width:{{ lot.occupancy_pct }}%; background: {% if lot.occupancy_pct >= 90 %}#f87171{% elif lot.occupancy_pct >= 60 %}#fb923c{% else %}var(--color-accent){% endif %};"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Transit summary -->
+        <div class="section-label">Transit — Connected Stops</div>
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-val">{{ stops|length }}</div>
+                    <div class="stat-label">Stops Monitored</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stop ID</th>
+                        <th>Name</th>
+                        <th>Distance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stop in stops %}
+                    <tr>
+                        <td style="color:var(--color-text-secondary); font-size:0.8rem;">{{ stop.id }}</td>
+                        <td>{{ stop.name }}</td>
+                        <td>{{ stop.distance_m }} m</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
