@@ -20,6 +20,9 @@ urlpatterns = [
     path("analytics/rentals/", views.rental_analytics, name="rental_analytics"),
     path("analytics/gateway/", views.gateway_analytics, name="gateway_analytics"),
 
+    # Notifications
+    path("notifications/", views.notifications, name="notifications"),
+
     # Provider fleet management
     path("provider/fleet/", views.provider_fleet, name="provider_fleet"),
     path("provider/fleet/add/", views.provider_add_vehicle, name="provider_add_vehicle"),

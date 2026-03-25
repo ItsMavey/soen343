@@ -96,6 +96,10 @@
         .role-badge-commuter  { background: rgba(255,107,26,0.1);  color: var(--color-accent);  border: 1px solid rgba(255,107,26,0.2); }
         .role-badge-provider  { background: rgba(59,130,246,0.1);  color: #60a5fa;              border: 1px solid rgba(59,130,246,0.2); }
         .role-badge-admin     { background: rgba(74,222,128,0.1);  color: #4ade80;              border: 1px solid rgba(74,222,128,0.2); }
+        .nav-bell { position: relative; display: inline-flex; align-items: center; padding: 0.4rem 0.5rem; color: var(--color-text-secondary); transition: color 0.2s; }
+        .nav-bell:hover { color: var(--color-text-primary); }
+        .nav-bell svg { width: 16px; height: 16px; }
+        .bell-badge { position: absolute; top: 2px; right: 2px; background: var(--color-accent); color: #0d0d0d; font-size: 0.55rem; font-weight: 700; min-width: 14px; height: 14px; border-radius: 7px; display: flex; align-items: center; justify-content: center; padding: 0 3px; line-height: 1; }
 
         /* ── Messages ───────────────────────────────────────────── */
         .msg-bar { padding: 0.7rem 1rem; border-radius: 4px; margin-bottom: 1.2rem; font-size: 0.85rem; }
@@ -143,6 +147,16 @@
                     {% elif user.is_city_admin %}
                         <span class="role-badge role-badge-admin d-none d-lg-block">Admin</span>
                     {% endif %}
+
+                    <a href="{% url 'notifications' %}" class="nav-bell" title="Notifications">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        {% if unread_notifications %}
+                            <span class="bell-badge">{{ unread_notifications }}</span>
+                        {% endif %}
+                    </a>
 
                     <span class="nav-username d-none d-lg-block">{{ user.username }}</span>
 

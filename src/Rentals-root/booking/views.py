@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from .factories import ProviderFactoryA, ProviderFactoryB
 from .forms import VehicleSearchForm, PaymentForm, ReservationForm, ProviderVehicleForm
-from .models import Vehicle, Car, Bike, Scooter, Reservation
+from .models import Vehicle, Car, Bike, Scooter, Reservation, Notification
 from .pricing import select_strategy, SURGE_THRESHOLD
 from .services import ParkingService, TransitFacade
 from .states import InvalidTransitionError
@@ -490,3 +490,10 @@ def gateway_analytics(request):
         "occupied_spots": occupied_spots,
         "overall_occupancy": overall_occupancy,
     })
+
+
+@login_required
+def notifications(request):
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    notifs = Notification.objects.filter(user=request.user).select_related("vehicle")[:50]
+    return render(request, "booking/notifications.html", {"notifs": notifs})

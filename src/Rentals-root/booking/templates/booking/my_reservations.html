@@ -18,6 +18,7 @@
         .status-CONFIRMED { background: rgba(50,205,50,0.12); color: #4ade80; border: 1px solid rgba(50,205,50,0.2); }
         .status-RETURNED { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); }
         .status-CANCELLED { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .maintenance-warn { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; font-weight: 500; color: #fbbf24; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); border-radius: 4px; padding: 0.4rem 0.75rem; margin-bottom: 0.75rem; }
         .res-amount { font-family: var(--font-display); font-size: 1.3rem; color: var(--color-accent); }
         .divider { border: none; border-top: 1px solid var(--color-border); margin: 1rem 0; }
         .btn-sm-primary { display: inline-flex; align-items: center; padding: 0.5rem 1.1rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; border: none; border-radius: 2px; cursor: pointer; transition: var(--transition-base); font-family: inherit; }
@@ -44,6 +45,13 @@
                         <div class="res-eyebrow">Reservation #{{ reservation.id }}</div>
                         <div class="res-vehicle">{{ reservation.vehicle.year }} {{ reservation.vehicle.make }} {{ reservation.vehicle.model }}</div>
                         <div class="res-meta">{{ reservation.start_date }} &rarr; {{ reservation.end_date }}</div>
+
+                        {% if reservation.vehicle.vehicle_status == "MAINTENANCE" and reservation.status != "RETURNED" and reservation.status != "CANCELLED" %}
+                        <div class="maintenance-warn">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Vehicle is under maintenance — provider has been notified
+                        </div>
+                        {% endif %}
 
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <span class="status-badge status-{{ reservation.status }}">{{ reservation.get_status_display }}</span>
