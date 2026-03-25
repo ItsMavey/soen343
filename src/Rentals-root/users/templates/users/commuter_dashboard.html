@@ -63,7 +63,7 @@
                 </div>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <div class="dash-card">
+                <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
                     <div class="dash-card-title">Reliability Score</div>
                     <div class="dash-card-desc">Based on completed returns vs total reservations.</div>
                     <div class="stat-val">{{ reliability_score }}<span style="font-size:1rem;color:var(--color-text-secondary)">/100</span></div>
@@ -76,19 +76,19 @@
                         {% elif reliability_score >= 50 %}Silver tier — 5% discount active
                         {% else %}Complete more rentals to unlock discounts{% endif %}
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <div class="dash-card">
+                <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
                     <div class="dash-card-title">Carbon Footprint</div>
                     <div class="dash-card-desc">CO₂ saved vs a gasoline car across all your rentals.</div>
                     <div class="co2-val">{{ co2_saved }} kg</div>
                     <div class="co2-label" style="margin-bottom:1rem">CO₂ saved</div>
                     <div style="font-size:0.8rem;color:var(--color-text-secondary)">Choose EVs, bikes, and scooters to increase your savings.</div>
-                </div>
+                </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <div class="dash-card">
+                <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
                     <div class="dash-card-title">Rewards &amp; Discounts</div>
                     <div class="dash-card-desc">Your loyalty discount is applied automatically at checkout.</div>
                     {% if discount_pct > 0 %}
@@ -99,7 +99,7 @@
                     <div style="font-size:0.75rem;color:var(--color-text-secondary)">
                         50+ score → 5% &nbsp;·&nbsp; 75+ → 10% &nbsp;·&nbsp; 90+ → 15%
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>

@@ -23,6 +23,9 @@ urlpatterns = [
     # Notifications
     path("notifications/", views.notifications, name="notifications"),
 
+    # Gamification
+    path("my-rewards/", views.my_rewards, name="my_rewards"),
+
     # Provider fleet management
     path("provider/fleet/", views.provider_fleet, name="provider_fleet"),
     path("provider/fleet/add/", views.provider_add_vehicle, name="provider_add_vehicle"),

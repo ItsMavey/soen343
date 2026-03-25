@@ -504,3 +504,47 @@ def notifications(request):
     Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
     notifs = Notification.objects.filter(user=request.user).select_related("vehicle")[:50]
     return render(request, "booking/notifications.html", {"notifs": notifs})
+
+@login_required
+def my_rewards(request):
+    if not request.user.is_commuter:
+        return redirect("role_dashboard")
+    from .sustainability import (
+        reliability_score, total_co2_saved, loyalty_discount,
+        co2_saved_kg, DISCOUNT_TIERS, BASELINE_KG_PER_DAY,
+    )
+    score = reliability_score(request.user)
+    discount_rate, discount_label = loyalty_discount(score)
+    co2 = total_co2_saved(request.user)
+
+    returned = Reservation.objects.filter(
+        user=request.user, status=Reservation.STATUS_RETURNED
+    ).select_related("vehicle").order_by("-returned_at")
+
+    rental_co2 = []
+    for r in returned:
+        days = (r.end_date - r.start_date).days + 1
+        saved = co2_saved_kg(r.vehicle, days)
+        rental_co2.append({"reservation": r, "days": days, "saved": saved})
+
+    total_res = Reservation.objects.filter(user=request.user).exclude(
+        status=Reservation.STATUS_PENDING
+    ).count()
+    returned_count = returned.count()
+
+    tiers = [
+        {"threshold": t, "rate": int(r * 100), "label": l,
+         "active": score >= t and (score < DISCOUNT_TIERS[i-1][0] if i > 0 else True)}
+        for i, (t, r, l) in enumerate(DISCOUNT_TIERS) if t > 0
+    ]
+
+    return render(request, "booking/my_rewards.html", {
+        "score": score,
+        "discount_rate": int(discount_rate * 100),
+        "discount_label": discount_label,
+        "co2_saved": co2,
+        "rental_co2": rental_co2,
+        "total_res": total_res,
+        "returned_count": returned_count,
+        "tiers": tiers,
+    })
