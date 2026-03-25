@@ -12,6 +12,7 @@ from .factories import ProviderFactoryA, ProviderFactoryB
 from .forms import VehicleSearchForm, PaymentForm, ReservationForm, ProviderVehicleForm
 from .models import Vehicle, Car, Bike, Scooter, Reservation, Notification
 from .pricing import select_strategy, SURGE_THRESHOLD
+from .sustainability import reliability_score, apply_discount, total_co2_saved, loyalty_discount
 from .services import ParkingService, TransitFacade
 from .states import InvalidTransitionError
 
@@ -120,6 +121,8 @@ def reserve_vehicle(request, vehicle_id):
         else:
             strategy = select_strategy(start_date, active_count)
             total_amount = strategy.calculate(vehicle.daily_rate, start_date, end_date)
+            score = reliability_score(request.user)
+            total_amount, discount_amt, _ = apply_discount(total_amount, score)
             reservation = Reservation.objects.create(
                 user=request.user,
                 vehicle=vehicle,
@@ -131,12 +134,17 @@ def reserve_vehicle(request, vehicle_id):
             messages.success(request, "Vehicle reserved. Complete payment to confirm.")
             return redirect("reservation_payment", reservation_id=reservation.id)
 
+    score = reliability_score(request.user)
+    discount_rate, discount_label = loyalty_discount(score)
+
     return render(request, "booking/reserve_vehicle.html", {
         "vehicle": vehicle,
         "form": form,
         "is_surge": is_surge,
         "active_count": active_count,
         "disabled_ranges_json": json.dumps(disabled_ranges),
+        "discount_rate": float(discount_rate),
+        "discount_label": discount_label,
     })
 
 

@@ -65,7 +65,16 @@ def role_dashboard(request):
 def commuter_dashboard(request):
     if not request.user.is_commuter:
         return redirect("role_dashboard")
-    return render(request, "users/commuter_dashboard.html")
+    from booking.sustainability import reliability_score, total_co2_saved, loyalty_discount
+    score = reliability_score(request.user)
+    discount_rate, discount_label = loyalty_discount(score)
+    co2 = total_co2_saved(request.user)
+    return render(request, "users/commuter_dashboard.html", {
+        "reliability_score": score,
+        "discount_label": discount_label,
+        "discount_pct": int(discount_rate * 100),
+        "co2_saved": co2,
+    })
 
 
 @login_required

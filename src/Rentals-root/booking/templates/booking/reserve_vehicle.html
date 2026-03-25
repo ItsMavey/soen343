@@ -75,6 +75,7 @@
                 <div class="pricing-row"><span class="pricing-label">Base rate</span><span id="p-base"></span></div>
                 <div class="pricing-row" id="p-surcharge-row" style="display:none"><span class="pricing-label" id="p-surcharge-label"></span><span id="p-surcharge"></span></div>
                 <div class="pricing-row"><span class="pricing-label">Days</span><span id="p-days"></span></div>
+                <div class="pricing-row" id="p-discount-row" style="display:none"><span class="pricing-label" id="p-discount-label" style="color:#4ade80"></span><span id="p-discount" style="color:#4ade80"></span></div>
                 <div class="pricing-row total"><span>Estimated Total</span><span id="p-total"></span></div>
             </div>
             <button type="submit">Reserve &amp; Continue to Payment</button>
@@ -89,7 +90,9 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 const DAILY_RATE     = {{ vehicle.daily_rate }};
-const IS_SURGE       = {{ is_surge|yesno:"true,false" }};
+const IS_SURGE        = {{ is_surge|yesno:"true,false" }};
+const DISCOUNT_RATE   = {{ discount_rate }};
+const DISCOUNT_LABEL  = "{{ discount_label }}";
 const DISABLED_RANGES = {{ disabled_ranges_json|safe }};
 const TODAY          = new Date().toISOString().split('T')[0];
 
@@ -133,7 +136,9 @@ function updatePreview() {
     const end   = new Date(e + 'T00:00:00Z');
     const days  = Math.round((end - start) / 86400000) + 1;
     const strat = getStrategy(start);
-    const total = (DAILY_RATE * days * strat.multiplier).toFixed(2);
+    const subtotal = DAILY_RATE * days * strat.multiplier;
+    const discountAmt = subtotal * DISCOUNT_RATE;
+    const total = (subtotal - discountAmt).toFixed(2);
 
     const badge = document.getElementById('strategy-badge');
     badge.textContent = strat.label;
@@ -150,6 +155,15 @@ function updatePreview() {
         surchargeRow.style.display = 'flex';
     } else {
         surchargeRow.style.display = 'none';
+    }
+
+    const discountRow = document.getElementById('p-discount-row');
+    if (DISCOUNT_RATE > 0) {
+        document.getElementById('p-discount-label').textContent = DISCOUNT_LABEL;
+        document.getElementById('p-discount').textContent = `-$${discountAmt.toFixed(2)}`;
+        discountRow.style.display = 'flex';
+    } else {
+        discountRow.style.display = 'none';
     }
 
     document.getElementById('pricing-preview').classList.add('show');
