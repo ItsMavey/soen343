@@ -340,7 +340,7 @@ def rental_analytics(request):
         kind_rev = kind_res.filter(
             status__in=[Reservation.STATUS_CONFIRMED, Reservation.STATUS_RETURNED]
         ).aggregate(total=Sum("total_amount"))["total"] or 0
-        by_kind.append({"kind": kind_label, "count": kind_res.count(), "revenue": kind_rev})
+        by_kind.append({"kind": kind_label, "kind_code": kind_code, "count": kind_res.count(), "revenue": kind_rev})
 
     top_vehicles = vehicles.order_by("-total_trips")[:5]
     thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
@@ -354,6 +354,7 @@ def rental_analytics(request):
                 "id": r.id,
                 "user": r.user.get_full_name() or r.user.username,
                 "vehicle": f"{r.vehicle.year} {r.vehicle.make} {r.vehicle.model}",
+                "vehicle_id": r.vehicle_id,
                 "kind": r.vehicle.vehicle_kind,
                 "start": str(r.start_date),
                 "end": str(r.end_date),
