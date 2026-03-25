@@ -16,6 +16,22 @@ from .services import ParkingService, TransitFacade
 from .states import InvalidTransitionError
 
 
+def _attach_upcoming_reservations(vehicles):
+    """Attach .upcoming_reservations list to each vehicle in-place."""
+    today = datetime.date.today()
+    upcoming = Reservation.objects.filter(
+        status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
+        end_date__gte=today,
+    ).values("vehicle_id", "start_date", "end_date").order_by("start_date")
+
+    res_map = {}
+    for r in upcoming:
+        res_map.setdefault(r["vehicle_id"], []).append(r)
+
+    for v in vehicles:
+        v.upcoming_reservations = res_map.get(v.id, [])
+
+
 @login_required
 def vehicle_list(request):
     vehicles = Vehicle.objects.all().order_by("make", "model")
@@ -39,6 +55,8 @@ def vehicle_list(request):
         if max_rate is not None:
             vehicles = vehicles.filter(daily_rate__lte=max_rate)
 
+    vehicles = list(vehicles)
+    _attach_upcoming_reservations(vehicles)
     return render(request, "booking/vehicle_list.html", {"vehicles": vehicles, "form": form})
 
 
@@ -46,16 +64,24 @@ def vehicle_list(request):
 def vehicle_detail(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     subtype = vehicle.get_subtype()
-    active_count = Reservation.objects.filter(
-        vehicle=vehicle,
-        status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
-    ).count()
+    today = datetime.date.today()
+    upcoming_reservations = list(
+        Reservation.objects.filter(
+            vehicle=vehicle,
+            status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
+            end_date__gte=today,
+        ).values("start_date", "end_date").order_by("start_date")
+    )
+    active_count = len(upcoming_reservations)
     is_surge = active_count >= SURGE_THRESHOLD
+    disabled_ranges = [{"from": str(r["start_date"]), "to": str(r["end_date"])} for r in upcoming_reservations]
     return render(request, "booking/vehicle_detail.html", {
         "vehicle": vehicle,
         "subtype": subtype,
         "is_surge": is_surge,
         "active_count": active_count,
+        "upcoming_reservations": upcoming_reservations,
+        "disabled_ranges_json": json.dumps(disabled_ranges),
     })
 
 
@@ -64,11 +90,17 @@ def reserve_vehicle(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     form = ReservationForm(request.POST or None)
 
-    active_count = Reservation.objects.filter(
-        vehicle=vehicle,
-        status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
-    ).count()
+    today = datetime.date.today()
+    booked = list(
+        Reservation.objects.filter(
+            vehicle=vehicle,
+            status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
+            end_date__gte=today,
+        ).values("start_date", "end_date").order_by("start_date")
+    )
+    active_count = len(booked)
     is_surge = active_count >= SURGE_THRESHOLD
+    disabled_ranges = [{"from": str(r["start_date"]), "to": str(r["end_date"])} for r in booked]
 
     if request.method == "POST" and form.is_valid():
         start_date = form.cleaned_data["start_date"]
@@ -81,7 +113,9 @@ def reserve_vehicle(request, vehicle_id):
             end_date__gte=start_date,
         ).exists()
 
-        if overlapping:
+        if vehicle.vehicle_status == Vehicle.STATUS_MAINTENANCE:
+            form.add_error(None, "This vehicle is currently under maintenance and cannot be reserved.")
+        elif overlapping:
             form.add_error(None, "This vehicle is already reserved for the selected dates.")
         else:
             strategy = select_strategy(start_date, active_count)
@@ -94,7 +128,6 @@ def reserve_vehicle(request, vehicle_id):
                 total_amount=total_amount,
                 pricing_strategy=strategy.name,
             )
-            vehicle.reserve()
             messages.success(request, "Vehicle reserved. Complete payment to confirm.")
             return redirect("reservation_payment", reservation_id=reservation.id)
 
@@ -103,6 +136,7 @@ def reserve_vehicle(request, vehicle_id):
         "form": form,
         "is_surge": is_surge,
         "active_count": active_count,
+        "disabled_ranges_json": json.dumps(disabled_ranges),
     })
 
 
@@ -119,11 +153,6 @@ def reservation_payment(request, reservation_id):
         return redirect("reservation_detail", reservation_id=reservation.id)
 
     if request.method == "POST" and form.is_valid():
-        try:
-            reservation.vehicle.confirm()
-        except InvalidTransitionError as e:
-            messages.error(request, str(e))
-            return redirect("reservation_detail", reservation_id=reservation.id)
         reservation.status = Reservation.STATUS_CONFIRMED
         reservation.paid_at = timezone.now()
         reservation.save(update_fields=["status", "paid_at"])
@@ -150,11 +179,9 @@ def return_vehicle(request, reservation_id):
         return redirect("vehicle_list")
     if request.method == "POST":
         if reservation.status == Reservation.STATUS_CONFIRMED:
-            try:
-                reservation.vehicle.return_vehicle()
-            except InvalidTransitionError as e:
-                messages.error(request, str(e))
-                return redirect("reservation_detail", reservation_id=reservation.id)
+            vehicle = reservation.vehicle
+            vehicle.total_trips += 1
+            vehicle.save(update_fields=["total_trips"])
             reservation.status = Reservation.STATUS_RETURNED
             reservation.returned_at = timezone.now()
             reservation.save(update_fields=["status", "returned_at"])

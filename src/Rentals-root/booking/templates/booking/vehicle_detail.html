@@ -23,6 +23,16 @@
         .btn-primary-apex:hover { background: var(--color-accent-hover); box-shadow: 0 12px 32px var(--color-accent-glow); color: #0d0d0d; transform: translateY(-2px); }
         .btn-ghost-apex { display: inline-flex; align-items: center; padding: 0.85rem 2rem; background: transparent; color: var(--color-text-primary); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid var(--color-border); border-radius: 2px; transition: var(--transition-base); }
         .btn-ghost-apex:hover { border-color: var(--color-text-secondary); background: rgba(255,255,255,0.04); }
+        .pricing-notice { border-radius: 4px; padding: 0.9rem 1.1rem; margin: 1.2rem 0; font-size: 0.84rem; }
+        .pricing-notice.surge   { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+        .pricing-notice.weekend { background: rgba(251,191,36,0.07); border: 1px solid rgba(251,191,36,0.2); color: #fbbf24; }
+        .pricing-notice.standard{ background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.15); color: #4ade80; }
+        .pricing-notice strong  { display: block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.25rem; opacity: 0.8; }
+        .avail-section { margin: 1.2rem 0; }
+        .avail-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 0.6rem; }
+        .booked-range { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255,107,26,0.06); border: 1px solid rgba(255,107,26,0.15); border-radius: 3px; padding: 0.25rem 0.6rem; margin: 0.2rem 0.2rem 0 0; font-size: 0.78rem; color: var(--color-text-secondary); }
+        .booked-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--color-accent); flex-shrink: 0; }
+        .no-bookings { font-size: 0.82rem; color: var(--color-text-secondary); }
 {% endblock %}
 
 {% block content %}
@@ -34,8 +44,8 @@
             <div class="car-eyebrow">{{ vehicle.year }} &middot; {{ vehicle.get_vehicle_kind_display }}</div>
             <h1 class="car-title">{{ vehicle.make }} {{ vehicle.model }}</h1>
 
-            <div class="badge-available {% if vehicle.is_available %}yes{% else %}no{% endif %}">
-                {% if vehicle.is_available %}Available{% else %}{{ vehicle.get_vehicle_status_display }}{% endif %}
+            <div class="badge-available {% if vehicle.vehicle_status == 'MAINTENANCE' %}no{% else %}yes{% endif %}">
+                {% if vehicle.vehicle_status == 'MAINTENANCE' %}Under Maintenance{% else %}Available{% endif %}
             </div>
 
             <div class="mb-3">
@@ -53,6 +63,29 @@
             </div>
 
             <div class="rate-display">${{ vehicle.daily_rate }} <span>/ day</span></div>
+
+            <div class="avail-section">
+                <div class="avail-label">Upcoming Reserved Dates</div>
+                {% if upcoming_reservations %}
+                    {% for r in upcoming_reservations %}
+                        <span class="booked-range"><span class="booked-dot"></span>{{ r.start_date }} → {{ r.end_date }}</span>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-bookings">No upcoming reservations — all dates available.</p>
+                {% endif %}
+            </div>
+
+            {% if is_surge %}
+            <div class="pricing-notice surge">
+                <strong>Surge Pricing Active</strong>
+                High demand for this vehicle — a 50% surcharge applies to all bookings. Current rate: ${{ vehicle.daily_rate|floatformat:2 }} × 1.50/day.
+            </div>
+            {% else %}
+            <div class="pricing-notice weekend">
+                <strong>Weekend Surcharge</strong>
+                Rentals starting on Saturday or Sunday are charged at +25%. Weekday bookings use the base rate.
+            </div>
+            {% endif %}
 
             <div class="d-flex gap-3 flex-wrap">
                 <a href="{% url 'reserve_vehicle' vehicle.id %}" class="btn-primary-apex">Reserve This Vehicle</a>

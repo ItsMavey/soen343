@@ -44,9 +44,11 @@
         .car-meta { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 1rem; }
         .car-rate { font-size: 1.5rem; font-family: var(--font-display); font-weight: 600; margin-bottom: 0.4rem; }
         .car-rate span { font-size: 0.8rem; font-family: var(--font-body); color: var(--color-text-secondary); font-weight: 300; }
-        .badge-available { display: inline-block; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 2px; margin-bottom: 1.2rem; }
+        .badge-available { display: inline-block; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 2px; margin-bottom: 0.6rem; }
         .badge-available.yes { background: rgba(50,205,50,0.12); color: #4ade80; border: 1px solid rgba(50,205,50,0.2); }
         .badge-available.no  { background: rgba(255,107,26,0.1); color: var(--color-accent); border: 1px solid rgba(255,107,26,0.2); }
+        .booked-dates { font-size: 0.72rem; color: var(--color-text-secondary); margin-bottom: 1rem; line-height: 1.6; }
+        .booked-range { display: inline-block; background: rgba(255,107,26,0.06); border: 1px solid rgba(255,107,26,0.12); border-radius: 2px; padding: 0.1rem 0.4rem; margin: 0.1rem 0.15rem 0.1rem 0; font-size: 0.68rem; white-space: nowrap; }
         .btn-card { margin-top: auto; display: block; text-align: center; padding: 0.65rem; background: transparent; color: var(--color-text-primary); border: 1px solid var(--color-border); border-radius: 3px; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; transition: var(--transition-base); }
         .btn-card:hover { background: var(--color-accent); color: #0d0d0d; border-color: var(--color-accent); }
 {% endblock %}
@@ -101,9 +103,21 @@
                         <div class="car-name">{{ vehicle.make }} {{ vehicle.model }}</div>
                         <div class="car-meta">{{ vehicle.get_vehicle_kind_display }}</div>
                         <div class="car-rate">${{ vehicle.daily_rate }} <span>/ day</span></div>
-                        <div class="badge-available {% if vehicle.is_available %}yes{% else %}no{% endif %}">
-                            {% if vehicle.is_available %}Available{% else %}Reserved{% endif %}
+                        <div class="badge-available {% if vehicle.vehicle_status == 'MAINTENANCE' %}no{% else %}yes{% endif %}">
+                            {% if vehicle.vehicle_status == 'MAINTENANCE' %}Under Maintenance{% else %}Available{% endif %}
                         </div>
+                        {% if vehicle.upcoming_reservations %}
+                        <div class="booked-dates">
+                            {% for r in vehicle.upcoming_reservations|slice:":3" %}
+                                <span class="booked-range">{{ r.start_date }} → {{ r.end_date }}</span>
+                            {% endfor %}
+                            {% if vehicle.upcoming_reservations|length > 3 %}
+                                <span style="color:var(--color-text-secondary); font-size:0.68rem;">+{{ vehicle.upcoming_reservations|length|add:"-3" }} more</span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="booked-dates" style="margin-bottom:1rem;">&nbsp;</div>
+                        {% endif %}
                         <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn-card">View Details</a>
                     </div>
                 </div>
