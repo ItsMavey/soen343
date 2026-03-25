@@ -5,16 +5,32 @@
 {% block nav_fleet %}active{% endblock %}
 
 {% block extra_style %}
-        .centered-wrap { min-height: calc(100vh - 65px); display: grid; place-items: center; padding: 1.5rem; }
-        .card { width: 100%; max-width: 480px; background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 8px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
-        .brand { font-family: var(--font-display); letter-spacing: 0.08em; font-size: 1.2rem; margin-bottom: 0.5rem; }
-        .brand span { color: var(--color-accent); }
-        .vehicle-name { font-family: var(--font-display); font-size: 1.1rem; color: var(--color-text-secondary); margin-bottom: 0.2rem; }
-        h1 { margin: 0 0 0.4rem; font-family: var(--font-display); font-size: 2rem; font-weight: 600; }
-        .rate-badge { display: inline-block; font-size: 0.8rem; color: var(--color-accent); margin-bottom: 1.5rem; }
-        .divider { border: none; border-top: 1px solid var(--color-border); margin: 1.2rem 0; }
-        .field { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 0.45rem; }
+        .page-wrap { padding: 3rem 0 5rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+        .back-link:hover { color: var(--color-accent); }
+
+        /* Vehicle info panel */
+        .info-panel { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.8rem; height: 100%; }
+        .vehicle-kind-badge { display: inline-block; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 2px; background: rgba(255,107,26,0.1); color: var(--color-accent); border: 1px solid rgba(255,107,26,0.2); margin-bottom: 0.75rem; }
+        .vehicle-title { font-size: 1.55rem; font-weight: 300; margin-bottom: 0.2rem; line-height: 1.2; }
+        .vehicle-rate { font-size: 2rem; font-weight: 300; color: var(--color-accent); margin: 0.6rem 0 1.2rem; }
+        .vehicle-rate small { font-size: 0.85rem; color: var(--color-text-secondary); }
+        .info-divider { border: none; border-top: 1px solid var(--color-border); margin: 1.2rem 0; }
+        .spec-list { display: flex; flex-direction: column; gap: 0.55rem; }
+        .spec-row { display: flex; justify-content: space-between; font-size: 0.85rem; }
+        .spec-key { color: var(--color-text-secondary); }
+        .spec-val { font-weight: 500; }
+        .surge-notice { margin-top: 1.2rem; padding: 0.7rem 0.9rem; background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); border-radius: 4px; font-size: 0.8rem; color: #f87171; }
+        .weekend-notice { margin-top: 1.2rem; padding: 0.7rem 0.9rem; background: rgba(251,191,36,0.07); border: 1px solid rgba(251,191,36,0.2); border-radius: 4px; font-size: 0.8rem; color: #fbbf24; }
+        .discount-notice { margin-top: 0.6rem; padding: 0.7rem 0.9rem; background: rgba(74,222,128,0.07); border: 1px solid rgba(74,222,128,0.2); border-radius: 4px; font-size: 0.8rem; color: #4ade80; }
+
+        /* Form panel */
+        .form-panel { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.8rem; }
+        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 1.1rem; }
+        .field { margin-bottom: 1.1rem; }
+        label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 0.4rem; }
         input[type="date"], .flatpickr-input { width: 100%; border: 1px solid var(--color-border); background: #141414; color: var(--color-text-primary); border-radius: 4px; padding: 0.72rem 0.8rem; font-family: inherit; font-size: 0.95rem; color-scheme: dark; box-sizing: border-box; }
         input[type="date"]:focus, .flatpickr-input:focus { outline: none; border-color: rgba(255,107,26,0.5); box-shadow: 0 0 0 3px rgba(255,107,26,0.14); }
         .flatpickr-calendar { background: #1a1a1a !important; border: 1px solid var(--color-border) !important; box-shadow: 0 16px 48px rgba(0,0,0,0.6) !important; }
@@ -28,60 +44,104 @@
         .flatpickr-weekday { color: var(--color-text-secondary) !important; background: #1a1a1a !important; }
         .flatpickr-prev-month svg, .flatpickr-next-month svg { fill: var(--color-text-secondary) !important; }
         .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: var(--color-accent) !important; }
-        .errorlist, .non-field-errors { color: var(--color-error); margin: 0.35rem 0 0; padding-left: 1.1rem; font-size: 0.82rem; }
-        button { width: 100%; margin-top: 0.5rem; border: none; border-radius: 4px; padding: 0.8rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: background 0.2s; }
-        button:hover { background: var(--color-accent-hover); }
-        .links { margin-top: 1rem; color: var(--color-text-secondary); font-size: 0.9rem; text-align: center; }
-        .links a { color: var(--color-accent); }
-        .pricing-preview { margin: 1rem 0; padding: 1rem; background: rgba(255,107,26,0.05); border: 1px solid rgba(255,107,26,0.15); border-radius: 4px; display: none; }
+        .errorlist, .non-field-errors { list-style: none; padding: 0; color: var(--color-error); font-size: 0.82rem; margin: 0.3rem 0 0; }
+
+        /* Pricing preview */
+        .pricing-preview { margin: 1.2rem 0; padding: 1rem; background: rgba(255,107,26,0.04); border: 1px solid rgba(255,107,26,0.15); border-radius: 4px; display: none; }
         .pricing-preview.show { display: block; }
-        .pricing-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem; }
-        .pricing-row.total { font-weight: 600; font-size: 1rem; border-top: 1px solid rgba(255,107,26,0.15); padding-top: 0.4rem; margin-top: 0.2rem; color: var(--color-accent); }
-        .pricing-label { color: var(--color-text-secondary); }
-        .strategy-badge { display: inline-block; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; margin-bottom: 0.6rem; }
+        .strategy-badge { display: inline-block; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; margin-bottom: 0.75rem; }
         .strategy-STANDARD { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
         .strategy-WEEKEND  { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
         .strategy-SURGE    { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .pricing-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem; }
+        .pricing-row.total { font-weight: 600; font-size: 1rem; border-top: 1px solid rgba(255,107,26,0.15); padding-top: 0.5rem; margin-top: 0.2rem; color: var(--color-accent); }
+        .pricing-label { color: var(--color-text-secondary); }
+        .btn-reserve { display: block; width: 100%; margin-top: 0.5rem; border: none; border-radius: 3px; padding: 0.85rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+        .btn-reserve:hover { background: var(--color-accent-hover); }
 {% endblock %}
 
 {% block content %}
-<div class="centered-wrap">
-    <div class="card">
-        <div class="brand">TABAC <span>DRIVE</span></div>
-        <div class="vehicle-name">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</div>
-        <h1>Reserve</h1>
-        <div class="rate-badge">${{ vehicle.daily_rate }} / day &middot; {{ vehicle.get_vehicle_kind_display }}</div>
+<div class="page-wrap">
+    <div class="container">
+        <a href="{% url 'vehicle_detail' vehicle.id %}" class="back-link">&larr; Back to vehicle</a>
+        <p class="page-title">Reserve Vehicle</p>
+        <p class="page-subtitle">Choose your rental dates and review pricing before confirming.</p>
 
-        {% if form.non_field_errors %}
-            <div class="non-field-errors">{{ form.non_field_errors }}</div>
-        {% endif %}
+        <div class="row g-4">
+            <!-- Left: vehicle info -->
+            <div class="col-12 col-lg-5">
+                <div class="info-panel">
+                    <div class="vehicle-kind-badge">{{ vehicle.get_vehicle_kind_display }}</div>
+                    <div class="vehicle-title">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</div>
+                    <div class="vehicle-rate">${{ vehicle.daily_rate }}<small> / day</small></div>
 
-        <hr class="divider">
+                    <hr class="info-divider">
 
-        <form method="post">
-            {% csrf_token %}
-            <div class="field">
-                <label for="{{ form.start_date.id_for_label }}">Start Date</label>
-                {{ form.start_date }}
-                {{ form.start_date.errors }}
+                    <div class="spec-list">
+                        {% with sub=vehicle.get_subtype %}
+                        {% if vehicle.vehicle_kind == "CAR" %}
+                            <div class="spec-row"><span class="spec-key">Fuel type</span><span class="spec-val">{{ sub.get_fuel_type_display }}</span></div>
+                            {% if sub.body_style %}<div class="spec-row"><span class="spec-key">Body style</span><span class="spec-val">{{ sub.body_style }}</span></div>{% endif %}
+                        {% elif vehicle.vehicle_kind == "BIKE" %}
+                            <div class="spec-row"><span class="spec-key">Type</span><span class="spec-val">{{ sub.get_bike_type_display }}</span></div>
+                            <div class="spec-row"><span class="spec-key">Motor</span><span class="spec-val">{% if sub.has_motor %}Yes{% else %}No{% endif %}</span></div>
+                        {% elif vehicle.vehicle_kind == "SCOOTER" %}
+                            <div class="spec-row"><span class="spec-key">Engine</span><span class="spec-val">{% if sub.is_electric %}Electric{% else %}{{ sub.engine_cc }}cc{% endif %}</span></div>
+                        {% endif %}
+                        {% endwith %}
+                        <div class="spec-row"><span class="spec-key">Rating</span><span class="spec-val">{{ vehicle.rating }} ★ ({{ vehicle.review_count }} reviews)</span></div>
+                        <div class="spec-row"><span class="spec-key">Total trips</span><span class="spec-val">{{ vehicle.total_trips }}</span></div>
+                    </div>
+
+                    {% if is_surge %}
+                    <div class="surge-notice">⚠ High demand — surge pricing applies (+50%)</div>
+                    {% elif vehicle.vehicle_kind == "CAR" %}
+                    <div class="weekend-notice" id="weekend-hint" style="display:none">Weekend rate applies to your selected dates (+25%)</div>
+                    {% endif %}
+
+                    {% if discount_rate > 0 %}
+                    <div class="discount-notice">{{ discount_label }} applied at checkout</div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="field">
-                <label for="{{ form.end_date.id_for_label }}">End Date</label>
-                {{ form.end_date }}
-                {{ form.end_date.errors }}
+
+            <!-- Right: booking form -->
+            <div class="col-12 col-lg-7">
+                <div class="form-panel">
+                    <div class="section-label">Select Dates</div>
+
+                    {% if form.non_field_errors %}
+                        <ul class="non-field-errors">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-12 col-sm-6 field">
+                                <label for="{{ form.start_date.id_for_label }}">Start Date</label>
+                                {{ form.start_date }}
+                                {{ form.start_date.errors }}
+                            </div>
+                            <div class="col-12 col-sm-6 field">
+                                <label for="{{ form.end_date.id_for_label }}">End Date</label>
+                                {{ form.end_date }}
+                                {{ form.end_date.errors }}
+                            </div>
+                        </div>
+
+                        <div class="pricing-preview" id="pricing-preview">
+                            <span class="strategy-badge" id="strategy-badge"></span>
+                            <div class="pricing-row"><span class="pricing-label">Daily rate</span><span id="p-base"></span></div>
+                            <div class="pricing-row"><span class="pricing-label">Days</span><span id="p-days"></span></div>
+                            <div class="pricing-row" id="p-surcharge-row" style="display:none"><span class="pricing-label" id="p-surcharge-label"></span><span id="p-surcharge"></span></div>
+                            <div class="pricing-row" id="p-discount-row" style="display:none"><span class="pricing-label" id="p-discount-label" style="color:#4ade80"></span><span id="p-discount" style="color:#4ade80"></span></div>
+                            <div class="pricing-row total"><span>Estimated Total</span><span id="p-total"></span></div>
+                        </div>
+
+                        <button type="submit" class="btn-reserve">Reserve &amp; Continue to Payment</button>
+                    </form>
+                </div>
             </div>
-            <div class="pricing-preview" id="pricing-preview">
-                <span class="strategy-badge" id="strategy-badge"></span>
-                <div class="pricing-row"><span class="pricing-label">Base rate</span><span id="p-base"></span></div>
-                <div class="pricing-row" id="p-surcharge-row" style="display:none"><span class="pricing-label" id="p-surcharge-label"></span><span id="p-surcharge"></span></div>
-                <div class="pricing-row"><span class="pricing-label">Days</span><span id="p-days"></span></div>
-                <div class="pricing-row" id="p-discount-row" style="display:none"><span class="pricing-label" id="p-discount-label" style="color:#4ade80"></span><span id="p-discount" style="color:#4ade80"></span></div>
-                <div class="pricing-row total"><span>Estimated Total</span><span id="p-total"></span></div>
-            </div>
-            <button type="submit">Reserve &amp; Continue to Payment</button>
-        </form>
-        <div class="links">
-            <a href="{% url 'vehicle_detail' vehicle.id %}">&larr; Back to vehicle</a>
         </div>
     </div>
 </div>
@@ -89,12 +149,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-const DAILY_RATE     = {{ vehicle.daily_rate }};
+const DAILY_RATE      = {{ vehicle.daily_rate }};
 const IS_SURGE        = {{ is_surge|yesno:"true,false" }};
 const DISCOUNT_RATE   = {{ discount_rate }};
 const DISCOUNT_LABEL  = "{{ discount_label }}";
 const DISABLED_RANGES = {{ disabled_ranges_json|safe }};
-const TODAY          = new Date().toISOString().split('T')[0];
 
 const startEl = document.getElementById('{{ form.start_date.id_for_label }}');
 const endEl   = document.getElementById('{{ form.end_date.id_for_label }}');
@@ -104,7 +163,6 @@ const fpConfig = {
     minDate: 'today',
     disable: DISABLED_RANGES,
     disableMobile: false,
-    theme: 'dark',
     onReady(_, __, fp) { fp.calendarContainer.style.fontFamily = 'inherit'; },
 };
 
@@ -122,7 +180,7 @@ const fpEnd = flatpickr(endEl, {
 });
 
 function getStrategy(startDate) {
-    if (IS_SURGE) return { name: 'SURGE',   label: 'Surge Pricing', multiplier: 1.50, surchargeLabel: '+50% high-demand surcharge' };
+    if (IS_SURGE) return { name: 'SURGE',   label: 'Surge Pricing',  multiplier: 1.50, surchargeLabel: '+50% high-demand surcharge' };
     const dow = startDate.getUTCDay();
     if (dow === 0 || dow === 6) return { name: 'WEEKEND', label: 'Weekend Rate', multiplier: 1.25, surchargeLabel: '+25% weekend surcharge' };
     return { name: 'STANDARD', label: 'Standard Rate', multiplier: 1.00, surchargeLabel: null };
@@ -136,16 +194,14 @@ function updatePreview() {
     const end   = new Date(e + 'T00:00:00Z');
     const days  = Math.round((end - start) / 86400000) + 1;
     const strat = getStrategy(start);
-    const subtotal = DAILY_RATE * days * strat.multiplier;
+    const subtotal    = DAILY_RATE * days * strat.multiplier;
     const discountAmt = subtotal * DISCOUNT_RATE;
-    const total = (subtotal - discountAmt).toFixed(2);
+    const total       = (subtotal - discountAmt).toFixed(2);
 
-    const badge = document.getElementById('strategy-badge');
-    badge.textContent = strat.label;
-    badge.className = `strategy-badge strategy-${strat.name}`;
-
-    document.getElementById('p-base').textContent = `$${DAILY_RATE}/day`;
-    document.getElementById('p-days').textContent = `${days} day${days !== 1 ? 's' : ''}`;
+    document.getElementById('strategy-badge').textContent  = strat.label;
+    document.getElementById('strategy-badge').className    = `strategy-badge strategy-${strat.name}`;
+    document.getElementById('p-base').textContent  = `$${DAILY_RATE}/day`;
+    document.getElementById('p-days').textContent  = `${days} day${days !== 1 ? 's' : ''}`;
     document.getElementById('p-total').textContent = `$${total}`;
 
     const surchargeRow = document.getElementById('p-surcharge-row');
