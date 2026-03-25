@@ -25,6 +25,10 @@
         .btn-sm-action:hover { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
         .btn-sm-danger { border-color: rgba(239,68,68,0.3); color: #f87171; }
         .btn-sm-danger:hover { border-color: #f87171; color: #f87171; background: rgba(239,68,68,0.05); }
+        .btn-sm-warn { border-color: rgba(251,191,36,0.3); color: #fbbf24; }
+        .btn-sm-warn:hover { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,0.05); }
+        .btn-sm-success { border-color: rgba(74,222,128,0.3); color: #4ade80; }
+        .btn-sm-success:hover { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.05); }
         .empty-state { text-align: center; padding: 4rem 0; color: var(--color-text-secondary); }
         .empty-state p { margin-bottom: 1.5rem; }
 {% endblock %}
@@ -63,8 +67,19 @@
                         {{ v.get_vehicle_status_display }}
                     </td>
                     <td>{{ v.total_trips }}</td>
-                    <td class="d-flex gap-2">
+                    <td class="d-flex gap-2 flex-wrap">
                         <a href="{% url 'provider_edit_vehicle' v.id %}" class="btn-sm-action">Edit</a>
+                        {% if v.vehicle_status == 'AVAILABLE' %}
+                        <form method="post" action="{% url 'provider_maintenance' v.id %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-sm-action btn-sm-warn">Maintenance</button>
+                        </form>
+                        {% elif v.vehicle_status == 'MAINTENANCE' %}
+                        <form method="post" action="{% url 'provider_complete_maintenance' v.id %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-sm-action btn-sm-success">Mark Available</button>
+                        </form>
+                        {% endif %}
                         <form method="post" action="{% url 'provider_delete_vehicle' v.id %}" class="m-0">
                             {% csrf_token %}
                             <button type="submit" class="btn-sm-action btn-sm-danger" onclick="return confirm('Remove {{ v.make }} {{ v.model }} from your fleet?')">Remove</button>

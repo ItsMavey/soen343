@@ -13,6 +13,7 @@ from .forms import VehicleSearchForm, PaymentForm, ReservationForm, ProviderVehi
 from .models import Vehicle, Car, Bike, Scooter, Reservation
 from .pricing import select_strategy, SURGE_THRESHOLD
 from .services import ParkingService, TransitFacade
+from .states import InvalidTransitionError
 
 
 @login_required
@@ -45,7 +46,17 @@ def vehicle_list(request):
 def vehicle_detail(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     subtype = vehicle.get_subtype()
-    return render(request, "booking/vehicle_detail.html", {"vehicle": vehicle, "subtype": subtype})
+    active_count = Reservation.objects.filter(
+        vehicle=vehicle,
+        status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
+    ).count()
+    is_surge = active_count >= SURGE_THRESHOLD
+    return render(request, "booking/vehicle_detail.html", {
+        "vehicle": vehicle,
+        "subtype": subtype,
+        "is_surge": is_surge,
+        "active_count": active_count,
+    })
 
 
 @login_required
@@ -108,10 +119,14 @@ def reservation_payment(request, reservation_id):
         return redirect("reservation_detail", reservation_id=reservation.id)
 
     if request.method == "POST" and form.is_valid():
+        try:
+            reservation.vehicle.confirm()
+        except InvalidTransitionError as e:
+            messages.error(request, str(e))
+            return redirect("reservation_detail", reservation_id=reservation.id)
         reservation.status = Reservation.STATUS_CONFIRMED
         reservation.paid_at = timezone.now()
         reservation.save(update_fields=["status", "paid_at"])
-        reservation.vehicle.confirm()
         messages.success(request, "Payment completed. Reservation confirmed.")
         return redirect("reservation_detail", reservation_id=reservation.id)
 
@@ -135,10 +150,14 @@ def return_vehicle(request, reservation_id):
         return redirect("vehicle_list")
     if request.method == "POST":
         if reservation.status == Reservation.STATUS_CONFIRMED:
+            try:
+                reservation.vehicle.return_vehicle()
+            except InvalidTransitionError as e:
+                messages.error(request, str(e))
+                return redirect("reservation_detail", reservation_id=reservation.id)
             reservation.status = Reservation.STATUS_RETURNED
             reservation.returned_at = timezone.now()
             reservation.save(update_fields=["status", "returned_at"])
-            reservation.vehicle.return_vehicle()
             messages.success(request, "Vehicle return completed.")
         else:
             messages.error(request, "Only confirmed reservations can be returned.")
@@ -285,6 +304,36 @@ def provider_edit_vehicle(request, vehicle_id):
     return render(request, "booking/provider_vehicle_form.html", {
         "form": form, "action": "Edit", "vehicle": vehicle,
     })
+
+
+@login_required
+def provider_maintenance(request, vehicle_id):
+    guard = _require_provider(request)
+    if guard:
+        return guard
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id, owner=request.user)
+    if request.method == "POST":
+        try:
+            vehicle.send_to_maintenance()
+            messages.success(request, f"{vehicle.display_name()} sent to maintenance.")
+        except InvalidTransitionError as e:
+            messages.error(request, str(e))
+    return redirect("provider_fleet")
+
+
+@login_required
+def provider_complete_maintenance(request, vehicle_id):
+    guard = _require_provider(request)
+    if guard:
+        return guard
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id, owner=request.user)
+    if request.method == "POST":
+        try:
+            vehicle.complete_maintenance()
+            messages.success(request, f"{vehicle.display_name()} is now available.")
+        except InvalidTransitionError as e:
+            messages.error(request, str(e))
+    return redirect("provider_fleet")
 
 
 @login_required

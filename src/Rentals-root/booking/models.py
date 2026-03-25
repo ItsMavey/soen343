@@ -54,22 +54,28 @@ class Vehicle(models.Model):
                 pass
         return self
 
+    @property
+    def state(self):
+        from .states import get_state
+        return get_state(self.vehicle_status)
+
     def reserve(self):
-        self.vehicle_status = self.STATUS_RESERVED
-        self.save(update_fields=["vehicle_status"])
+        self.state.reserve(self)
 
     def confirm(self):
-        self.vehicle_status = self.STATUS_IN_USE
-        self.save(update_fields=["vehicle_status"])
+        self.state.confirm(self)
 
     def return_vehicle(self):
-        self.vehicle_status = self.STATUS_AVAILABLE
-        self.total_trips += 1
-        self.save(update_fields=["vehicle_status", "total_trips"])
+        self.state.return_vehicle(self)
 
     def send_to_maintenance(self):
-        self.vehicle_status = self.STATUS_MAINTENANCE
-        self.save(update_fields=["vehicle_status"])
+        self.state.send_to_maintenance(self)
+
+    def complete_maintenance(self):
+        from .states import MaintenanceState, InvalidTransitionError
+        if not isinstance(self.state, MaintenanceState):
+            raise InvalidTransitionError("Vehicle is not under maintenance.")
+        self.state.complete_maintenance(self)
 
     def display_name(self):
         return f"{self.year} {self.make} {self.model}"

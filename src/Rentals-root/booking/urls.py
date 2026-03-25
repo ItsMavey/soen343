@@ -25,4 +25,6 @@ urlpatterns = [
     path("provider/fleet/add/", views.provider_add_vehicle, name="provider_add_vehicle"),
     path("provider/fleet/<int:vehicle_id>/edit/", views.provider_edit_vehicle, name="provider_edit_vehicle"),
     path("provider/fleet/<int:vehicle_id>/delete/", views.provider_delete_vehicle, name="provider_delete_vehicle"),
+    path("provider/fleet/<int:vehicle_id>/maintenance/", views.provider_maintenance, name="provider_maintenance"),
+    path("provider/fleet/<int:vehicle_id>/maintenance/complete/", views.provider_complete_maintenance, name="provider_complete_maintenance"),
 ]
