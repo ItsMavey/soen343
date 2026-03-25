@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Vehicle | TABAC DRIVE{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_style %}
+        .centered-wrap { min-height: calc(100vh - 65px); display: grid; place-items: center; padding: 1.5rem; }
+        .card { width: 100%; max-width: 560px; background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 8px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+        .brand { font-family: var(--font-display); letter-spacing: 0.08em; font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .brand span { color: var(--color-accent); }
+        h1 { font-family: var(--font-display); font-size: 2rem; font-weight: 600; margin-bottom: 1.5rem; }
+        .field { margin-bottom: 1rem; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 0.45rem; }
+        input[type="text"], input[type="number"], select {
+            width: 100%; border: 1px solid var(--color-border); background: #141414; color: var(--color-text-primary);
+            border-radius: 4px; padding: 0.72rem 0.8rem; font-family: inherit; font-size: 0.95rem;
+        }
+        input:focus, select:focus { outline: none; border-color: rgba(255,107,26,0.5); box-shadow: 0 0 0 3px rgba(255,107,26,0.14); }
+        select option { background: #1c1c1c; }
+        .checkbox-field { display: flex; align-items: center; gap: 0.6rem; padding: 0.72rem 0; }
+        .checkbox-field input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-accent); }
+        .checkbox-field label { margin: 0; text-transform: none; letter-spacing: 0; font-size: 0.9rem; color: var(--color-text-primary); }
+        .section-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin: 1.2rem 0 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(255,107,26,0.15); }
+        .subtype-section { display: none; }
+        .subtype-section.active { display: block; }
+        .errorlist { color: var(--color-error); margin: 0.3rem 0 0; padding-left: 1rem; font-size: 0.82rem; }
+        .divider { border: none; border-top: 1px solid var(--color-border); margin: 1.2rem 0; }
+        button[type="submit"] { width: 100%; margin-top: 0.5rem; border: none; border-radius: 4px; padding: 0.8rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+        button[type="submit"]:hover { background: var(--color-accent-hover); }
+        .links { margin-top: 1rem; text-align: center; color: var(--color-text-secondary); font-size: 0.9rem; }
+        .links a { color: var(--color-accent); }
+{% endblock %}
+
+{% block content %}
+<div class="centered-wrap">
+    <div class="card">
+        <div class="brand">TABAC <span>DRIVE</span></div>
+        <h1>{{ action }} Vehicle</h1>
+
+        <form method="post" id="vehicle-form">
+            {% csrf_token %}
+
+            <div class="field">
+                <label for="{{ form.vehicle_kind.id_for_label }}">Vehicle Type</label>
+                {{ form.vehicle_kind }}
+                {{ form.vehicle_kind.errors }}
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label for="{{ form.make.id_for_label }}">Make</label>
+                    {{ form.make }}
+                    {{ form.make.errors }}
+                </div>
+                <div class="field">
+                    <label for="{{ form.model.id_for_label }}">Model</label>
+                    {{ form.model }}
+                    {{ form.model.errors }}
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label for="{{ form.year.id_for_label }}">Year</label>
+                    {{ form.year }}
+                    {{ form.year.errors }}
+                </div>
+                <div class="field">
+                    <label for="{{ form.daily_rate.id_for_label }}">Daily Rate ($)</label>
+                    {{ form.daily_rate }}
+                    {{ form.daily_rate.errors }}
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Car fields -->
+            <div class="subtype-section" id="section-car">
+                <div class="section-label">Car Details</div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="{{ form.fuel_type.id_for_label }}">Fuel Type</label>
+                        {{ form.fuel_type }}
+                    </div>
+                    <div class="field">
+                        <label for="{{ form.body_style.id_for_label }}">Body Style</label>
+                        {{ form.body_style }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bike fields -->
+            <div class="subtype-section" id="section-bike">
+                <div class="section-label">Bike Details</div>
+                <div class="field">
+                    <label for="{{ form.bike_type.id_for_label }}">Bike Type</label>
+                    {{ form.bike_type }}
+                </div>
+                <div class="checkbox-field">
+                    {{ form.has_motor }}
+                    <label for="{{ form.has_motor.id_for_label }}">Has Motor (E-Bike)</label>
+                </div>
+            </div>
+
+            <!-- Scooter fields -->
+            <div class="subtype-section" id="section-scooter">
+                <div class="section-label">Scooter Details</div>
+                <div class="field">
+                    <label for="{{ form.engine_cc.id_for_label }}">Engine (cc)</label>
+                    {{ form.engine_cc }}
+                </div>
+                <div class="checkbox-field">
+                    {{ form.is_electric }}
+                    <label for="{{ form.is_electric.id_for_label }}">Electric Scooter</label>
+                </div>
+            </div>
+
+            <button type="submit">{{ action }} Vehicle</button>
+        </form>
+        <div class="links">
+            <a href="{% url 'provider_fleet' %}">&larr; Back to fleet</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const kindSelect = document.getElementById('{{ form.vehicle_kind.id_for_label }}');
+    const sections = { CAR: 'section-car', BIKE: 'section-bike', SCOOTER: 'section-scooter' };
+
+    function updateSections() {
+        Object.values(sections).forEach(id => document.getElementById(id).classList.remove('active'));
+        const sel = sections[kindSelect.value];
+        if (sel) document.getElementById(sel).classList.add('active');
+    }
+
+    kindSelect.addEventListener('change', updateSections);
+    updateSections();
+</script>
+{% endblock %}

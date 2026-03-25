@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard | TABAC DRIVE{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_style %}
+        .page-wrap { padding: 3rem 0 5rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+        .dash-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.8rem; transition: var(--transition-base); height: 100%; }
+        .dash-card:hover { border-color: rgba(255,107,26,0.2); }
+        .dash-card-title { font-size: 1.2rem; font-weight: 300; margin-bottom: 0.4rem; }
+        .dash-card-desc { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 1.2rem; }
+        .btn-card-action { display: inline-flex; align-items: center; padding: 0.55rem 1.2rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; border: none; border-radius: 2px; cursor: pointer; transition: var(--transition-base); }
+        .btn-card-action:hover { background: var(--color-accent-hover); color: #0d0d0d; }
+        .btn-card-ghost { display: inline-flex; align-items: center; padding: 0.55rem 1.2rem; background: transparent; color: var(--color-text-secondary); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--color-border); border-radius: 2px; transition: var(--transition-base); }
+        .btn-card-ghost:hover { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
+        .stat-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+        .stat { text-align: center; }
+        .stat-val { font-size: 2rem; font-weight: 600; color: var(--color-accent); line-height: 1; }
+        .stat-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-top: 0.2rem; }
+        .score-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 3px; height: 5px; margin: 0.6rem 0 1rem; overflow: hidden; }
+        .score-bar { height: 100%; background: var(--color-accent); border-radius: 3px; transition: width 0.6s ease; }
+        .discount-badge { display: inline-block; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 2px; background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); margin-bottom: 1rem; }
+        .co2-val { font-size: 1.6rem; font-weight: 600; color: #4ade80; line-height: 1; margin-bottom: 0.2rem; }
+        .co2-label { font-size: 0.75rem; color: var(--color-text-secondary); letter-spacing: 0.06em; }
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="container">
+        <p class="page-title">Welcome back, {{ user.first_name|default:user.username }}</p>
+        <p class="page-subtitle">Your mobility hub — rentals, transit, and rewards</p>
+
+        <div class="row g-4">
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dash-card">
+                    <div class="dash-card-title">Browse Fleet</div>
+                    <div class="dash-card-desc">Search and reserve Cars, Bikes, and Scooters near you.</div>
+                    <a href="{% url 'vehicle_list' %}" class="btn-card-action">Find a Vehicle</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dash-card">
+                    <div class="dash-card-title">My Reservations</div>
+                    <div class="dash-card-desc">View active and past rentals, complete payments, or return vehicles.</div>
+                    <a href="{% url 'my_reservations' %}" class="btn-card-action">View Reservations</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dash-card">
+                    <div class="dash-card-title">Parking</div>
+                    <div class="dash-card-desc">Find nearby parking lots and check live availability.</div>
+                    <a href="{% url 'parking' %}" class="btn-card-action">Find Parking</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="dash-card">
+                    <div class="dash-card-title">Public Transit</div>
+                    <div class="dash-card-desc">View nearby stops and next departures.</div>
+                    <a href="{% url 'transit' %}" class="btn-card-action">View Transit</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
+                    <div class="dash-card-title">Reliability Score</div>
+                    <div class="dash-card-desc">Based on completed returns vs total reservations.</div>
+                    <div class="stat-val">{{ reliability_score }}<span style="font-size:1rem;color:var(--color-text-secondary)">/100</span></div>
+                    <div class="score-bar-wrap">
+                        <div class="score-bar" style="width:{{ reliability_score }}%"></div>
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--color-text-secondary)">
+                        {% if reliability_score >= 90 %}Elite tier — 15% discount active
+                        {% elif reliability_score >= 75 %}Gold tier — 10% discount active
+                        {% elif reliability_score >= 50 %}Silver tier — 5% discount active
+                        {% else %}Complete more rentals to unlock discounts{% endif %}
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
+                    <div class="dash-card-title">Carbon Footprint</div>
+                    <div class="dash-card-desc">CO₂ saved vs a gasoline car across all your rentals.</div>
+                    <div class="co2-val">{{ co2_saved }} kg</div>
+                    <div class="co2-label" style="margin-bottom:1rem">CO₂ saved</div>
+                    <div style="font-size:0.8rem;color:var(--color-text-secondary)">Choose EVs, bikes, and scooters to increase your savings.</div>
+                </a>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
+                    <div class="dash-card-title">Rewards &amp; Discounts</div>
+                    <div class="dash-card-desc">Your loyalty discount is applied automatically at checkout.</div>
+                    {% if discount_pct > 0 %}
+                        <div class="discount-badge">{{ discount_pct }}% off your next rental</div>
+                    {% else %}
+                        <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:1rem">No discount yet — return more rentals to earn rewards.</div>
+                    {% endif %}
+                    <div style="font-size:0.75rem;color:var(--color-text-secondary)">
+                        50+ score → 5% &nbsp;·&nbsp; 75+ → 10% &nbsp;·&nbsp; 90+ → 15%
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

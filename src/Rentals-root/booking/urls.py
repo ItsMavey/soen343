@@ -11,4 +11,26 @@ urlpatterns = [
     path("reservations/<int:reservation_id>/payment/", views.reservation_payment, name="reservation_payment"),
     path("reservations/<int:reservation_id>/return/", views.return_vehicle, name="return_vehicle"),
     path("reservations/<int:reservation_id>/cancel/", views.cancel_reservation, name="cancel_reservation"),
+
+    # External services
+    path("parking/", views.parking, name="parking"),
+    path("transit/", views.transit, name="transit"),
+
+    # Analytics
+    path("analytics/rentals/", views.rental_analytics, name="rental_analytics"),
+    path("analytics/gateway/", views.gateway_analytics, name="gateway_analytics"),
+
+    # Notifications
+    path("notifications/", views.notifications, name="notifications"),
+
+    # Gamification
+    path("my-rewards/", views.my_rewards, name="my_rewards"),
+
+    # Provider fleet management
+    path("provider/fleet/", views.provider_fleet, name="provider_fleet"),
+    path("provider/fleet/add/", views.provider_add_vehicle, name="provider_add_vehicle"),
+    path("provider/fleet/<int:vehicle_id>/edit/", views.provider_edit_vehicle, name="provider_edit_vehicle"),
+    path("provider/fleet/<int:vehicle_id>/delete/", views.provider_delete_vehicle, name="provider_delete_vehicle"),
+    path("provider/fleet/<int:vehicle_id>/maintenance/", views.provider_maintenance, name="provider_maintenance"),
+    path("provider/fleet/<int:vehicle_id>/maintenance/complete/", views.provider_complete_maintenance, name="provider_complete_maintenance"),
 ]

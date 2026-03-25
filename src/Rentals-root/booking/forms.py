@@ -2,7 +2,7 @@ import datetime
 
 from django import forms
 
-from .models import Vehicle
+from .models import Vehicle, Car, Bike, Scooter
 
 
 class VehicleSearchForm(forms.Form):
@@ -37,3 +37,24 @@ class ReservationForm(forms.Form):
 
 class PaymentForm(forms.Form):
     confirm_payment = forms.BooleanField(required=True, label="I confirm this simulated payment")
+
+
+class ProviderVehicleForm(forms.Form):
+    # Common fields
+    vehicle_kind = forms.ChoiceField(choices=Vehicle.KIND_CHOICES, label="Type")
+    make = forms.CharField(max_length=50)
+    model = forms.CharField(max_length=100)
+    year = forms.IntegerField(min_value=1900, max_value=datetime.date.today().year + 1)
+    daily_rate = forms.DecimalField(max_digits=8, decimal_places=2, min_value=0)
+
+    # Car fields
+    fuel_type = forms.ChoiceField(choices=Car.FUEL_CHOICES, required=False)
+    body_style = forms.CharField(max_length=50, required=False, label="Body Style (e.g. SUV, Sedan)")
+
+    # Bike fields
+    bike_type = forms.ChoiceField(choices=Bike.BIKE_TYPE_CHOICES, required=False)
+    has_motor = forms.BooleanField(required=False, label="Has Motor (E-Bike)")
+
+    # Scooter fields
+    engine_cc = forms.IntegerField(min_value=1, required=False, initial=50, label="Engine (cc)")
+    is_electric = forms.BooleanField(required=False, label="Electric Scooter")

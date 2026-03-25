@@ -26,6 +26,12 @@ class Vehicle(models.Model):
     vehicle_kind = models.CharField(max_length=10, choices=KIND_CHOICES)
     vehicle_status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STATUS_AVAILABLE)
     provider = models.CharField(max_length=100, blank=True, default="")
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="owned_vehicles",
+    )
 
     make = models.CharField(max_length=50)
     model = models.CharField(max_length=100)
@@ -48,22 +54,42 @@ class Vehicle(models.Model):
                 pass
         return self
 
+    @property
+    def state(self):
+        from .states import get_state
+        return get_state(self.vehicle_status)
+
     def reserve(self):
-        self.vehicle_status = self.STATUS_RESERVED
-        self.save(update_fields=["vehicle_status"])
+        self.state.reserve(self)
 
     def confirm(self):
-        self.vehicle_status = self.STATUS_IN_USE
-        self.save(update_fields=["vehicle_status"])
+        self.state.confirm(self)
 
     def return_vehicle(self):
-        self.vehicle_status = self.STATUS_AVAILABLE
-        self.total_trips += 1
-        self.save(update_fields=["vehicle_status", "total_trips"])
+        self.state.return_vehicle(self)
 
     def send_to_maintenance(self):
-        self.vehicle_status = self.STATUS_MAINTENANCE
-        self.save(update_fields=["vehicle_status"])
+        self.state.send_to_maintenance(self)
+        self._notify_observers("MAINTENANCE")
+
+    def complete_maintenance(self):
+        from .states import MaintenanceState, InvalidTransitionError
+        if not isinstance(self.state, MaintenanceState):
+            raise InvalidTransitionError("Vehicle is not under maintenance.")
+        self.state.complete_maintenance(self)
+        self._notify_observers("AVAILABLE")
+
+    def _notify_observers(self, event: str) -> None:
+        from .observers import Subject, UserNotifier, AdminDashboard, RecommendationService
+        subject = Subject()
+        subject.attach(UserNotifier())
+        subject.attach(AdminDashboard())
+        if event == "AVAILABLE":
+            subject.attach(RecommendationService())
+        # Temporarily bind this vehicle to the subject so notify() passes it
+        subject._vehicle = self
+        for observer in subject._observers:
+            observer.update(event, self)
 
     def display_name(self):
         return f"{self.year} {self.make} {self.model}"
@@ -151,7 +177,17 @@ class Reservation(models.Model):
     )
     start_date = models.DateField()
     end_date = models.DateField()
+    PRICING_STANDARD = "STANDARD"
+    PRICING_WEEKEND = "WEEKEND"
+    PRICING_SURGE = "SURGE"
+    PRICING_CHOICES = [
+        (PRICING_STANDARD, "Standard Rate"),
+        (PRICING_WEEKEND, "Weekend Rate"),
+        (PRICING_SURGE, "Surge Pricing"),
+    ]
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    pricing_strategy = models.CharField(max_length=10, choices=PRICING_CHOICES, default=PRICING_STANDARD)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
@@ -166,3 +202,38 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"Reservation #{self.id} - {self.user} - {self.vehicle}"
+
+
+class Notification(models.Model):
+    EVENT_MAINTENANCE    = "MAINTENANCE"
+    EVENT_AVAILABLE      = "AVAILABLE"
+    EVENT_RETURNED       = "RETURNED"
+    EVENT_RECOMMENDATION = "RECOMMENDATION"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    vehicle = models.ForeignKey(
+        Vehicle,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="notifications",
+    )
+    reservation = models.ForeignKey(
+        "Reservation",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="notifications",
+    )
+    message = models.CharField(max_length=300)
+    event_type = models.CharField(max_length=20)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Notification({self.user}, {self.event_type})"

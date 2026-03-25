@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Public Transit | TABAC DRIVE{% endblock %}
+
+{% block nav_transit %}active{% endblock %}
+
+{% block extra_style %}
+        .page-wrap { padding: 3rem 0 5rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 1rem; }
+        .stop-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.2rem 1.4rem; transition: border-color 0.2s; display: flex; align-items: center; justify-content: space-between; }
+        .stop-card:hover { border-color: rgba(255,107,26,0.2); }
+        .stop-name { font-size: 0.95rem; font-weight: 500; }
+        .stop-dist { font-size: 0.8rem; color: var(--color-text-secondary); }
+        .btn-stop { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.35rem 0.9rem; background: transparent; border: 1px solid var(--color-border); color: var(--color-text-secondary); border-radius: 2px; cursor: pointer; transition: 0.2s; }
+        .btn-stop:hover, .btn-stop.active { border-color: var(--color-accent); color: var(--color-accent); }
+        .dep-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .dep-table th { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.6rem 1rem; border-bottom: 1px solid var(--color-border); text-align: left; }
+        .dep-table td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--color-border); font-size: 0.9rem; }
+        .min-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 2px; background: rgba(255,107,26,0.1); color: var(--color-accent); font-size: 0.8rem; font-weight: 600; }
+        .service-note { font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 2rem; padding: 0.8rem 1rem; border: 1px solid var(--color-border); border-radius: 4px; }
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="container">
+        <p class="page-title">Public Transit</p>
+        <p class="page-subtitle">Nearby stops — select a stop to view next departures</p>
+
+        <div class="section-label">Nearby Stops</div>
+        <div class="d-flex flex-column gap-2 mb-4">
+            {% for stop in stops %}
+            <div class="stop-card">
+                <div>
+                    <div class="stop-name">{{ stop.name }}</div>
+                    <div class="stop-dist">{{ stop.distance_m }}m away &middot; {{ stop.id }}</div>
+                </div>
+                <a href="?stop_id={{ stop.id }}" class="btn-stop {% if stop_id == stop.id %}active{% endif %}">
+                    View Departures
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if departures %}
+        <div class="section-label">Next Departures — Stop {{ stop_id }}</div>
+        <table class="dep-table">
+            <thead><tr><th>Route</th><th>Destination</th><th>Departs</th></tr></thead>
+            <tbody>
+                {% for dep in departures %}
+                <tr>
+                    <td>{{ dep.route }}</td>
+                    <td>{{ dep.destination }}</td>
+                    <td><span class="min-badge">{{ dep.minutes }} min</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% elif stop_id %}
+        <p style="color:var(--color-text-secondary);font-size:0.9rem;">No departures found for this stop.</p>
+        {% endif %}
+
+        <p class="service-note">Transit data is aggregated via TransitFacade using GTFSAdapter and CityAPIAdapter (Adapter pattern). In production these would call live external transit APIs.</p>
+    </div>
+</div>
+{% endblock %}

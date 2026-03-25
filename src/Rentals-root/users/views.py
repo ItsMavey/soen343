@@ -58,7 +58,23 @@ def role_dashboard(request):
         return redirect("provider_dashboard")
     if role == "ADMIN":
         return redirect("city_admin_dashboard")
-    return redirect("vehicle_list")
+    return redirect("commuter_dashboard")
+
+
+@login_required
+def commuter_dashboard(request):
+    if not request.user.is_commuter:
+        return redirect("role_dashboard")
+    from booking.sustainability import reliability_score, total_co2_saved, loyalty_discount
+    score = reliability_score(request.user)
+    discount_rate, discount_label = loyalty_discount(score)
+    co2 = total_co2_saved(request.user)
+    return render(request, "users/commuter_dashboard.html", {
+        "reliability_score": score,
+        "discount_label": discount_label,
+        "discount_pct": int(discount_rate * 100),
+        "co2_saved": co2,
+    })
 
 
 @login_required
@@ -72,7 +88,9 @@ def provider_dashboard(request):
 def city_admin_dashboard(request):
     if not request.user.is_city_admin:
         return redirect("role_dashboard")
-    return render(request, "users/city_admin_dashboard.html")
+    from booking.models import Notification
+    recent_activity = Notification.objects.select_related("vehicle").order_by("-created_at")[:10]
+    return render(request, "users/city_admin_dashboard.html", {"recent_activity": recent_activity})
 
 
 class RegisterView(CreateView):

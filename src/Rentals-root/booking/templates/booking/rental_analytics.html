@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Rental Analytics | TABAC DRIVE{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_style %}
+        .page-wrap { padding: 4rem 0 5rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin: 0 0 1.2rem; }
+        .stat-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.5rem; transition: var(--transition-base); }
+        .stat-card.clickable { cursor: pointer; }
+        .stat-card.clickable:hover { border-color: rgba(255,107,26,0.4); }
+        .stat-card.active { border-color: var(--color-accent); }
+        .stat-val { font-family: var(--font-display); font-size: 2.4rem; font-weight: 600; color: var(--color-accent); line-height: 1; }
+        .stat-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-top: 0.3rem; }
+        .stat-hint { font-size: 0.65rem; color: rgba(255,107,26,0.6); margin-top: 0.5rem; letter-spacing: 0.06em; }
+        .table-wrap { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--color-border); text-align: left; font-weight: 600; }
+        td { padding: 0.85rem 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.9rem; }
+        tr:last-child td { border-bottom: none; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+        .back-link:hover { color: var(--color-accent); }
+        .drill-panel { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; margin-bottom: 2rem; display: none; }
+        .drill-panel.open { display: block; }
+        .drill-header { padding: 0.8rem 1.2rem; background: rgba(255,107,26,0.06); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; }
+        .drill-title { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); }
+        .drill-close { background: none; border: none; color: var(--color-text-secondary); cursor: pointer; font-size: 1rem; padding: 0; line-height: 1; }
+        .drill-close:hover { color: var(--color-text-primary); }
+        .drill-body { max-height: 340px; overflow-y: auto; }
+        .status-badge { display: inline-block; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; }
+        .status-PENDING  { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+        .status-CONFIRMED{ background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+        .status-RETURNED { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+        .status-CANCELLED{ background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .chart-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.5rem; }
+        .chart-card canvas { cursor: pointer; }
+        .empty-note { color: var(--color-text-secondary); font-size: 0.85rem; padding: 1.5rem 1.2rem; }
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="container">
+        <a href="{% url 'role_dashboard' %}" class="back-link">&larr; Dashboard</a>
+        <p class="page-title">Rental Analytics</p>
+        <p class="page-subtitle">{% if is_provider %}Your fleet performance{% else %}Platform-wide rental statistics{% endif %}</p>
+
+        <!-- Overview tiles -->
+        <div class="section-label">Overview</div>
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="stat-card clickable" data-filter="all">
+                    <div class="stat-val">{{ total }}</div>
+                    <div class="stat-label">Total Bookings</div>
+                    <div class="stat-hint">click to view &rsaquo;</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card clickable" data-filter="confirmed">
+                    <div class="stat-val">{{ confirmed }}</div>
+                    <div class="stat-label">Confirmed</div>
+                    <div class="stat-hint">click to view &rsaquo;</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card clickable" data-filter="returned">
+                    <div class="stat-val">{{ returned }}</div>
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-hint">click to view &rsaquo;</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-val">${{ revenue|floatformat:0 }}</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card clickable" data-filter="recent">
+                    <div class="stat-val">{{ recent }}</div>
+                    <div class="stat-label">Last 30 Days</div>
+                    <div class="stat-hint">click to view &rsaquo;</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drill-down panel -->
+        <div class="drill-panel mb-5" id="drill-panel">
+            <div class="drill-header">
+                <span class="drill-title" id="drill-title"></span>
+                <button class="drill-close" id="drill-close">&times;</button>
+            </div>
+            <div class="drill-body">
+                <table id="drill-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Vehicle</th>
+                            <th>Dates</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="drill-tbody"></tbody>
+                </table>
+                <p class="empty-note" id="drill-empty" style="display:none;">No reservations match this filter.</p>
+            </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="row g-4 mb-5">
+            <div class="col-12 col-lg-5">
+                <div class="section-label">Bookings by Vehicle Type</div>
+                <div class="chart-card" style="height:320px; position:relative;">
+                    {% if total > 0 %}
+                    <canvas id="kindChart"></canvas>
+                    {% else %}
+                    <p class="empty-note">No booking data yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-12 col-lg-7">
+                <div class="section-label">Top Vehicles by Trips</div>
+                <div class="chart-card" style="height:320px; position:relative;">
+                    {% if top_vehicles %}
+                    <canvas id="tripsChart"></canvas>
+                    {% else %}
+                    <p class="empty-note">No trip data yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+
+const COLORS = ['#ff6b1a', '#f59e0b', '#38bdf8', '#a78bfa', '#34d399'];
+
+/* ================================================================
+   Drill-down panel helpers (defined first so chart onClick can call them)
+   ================================================================ */
+const ALL_ROWS = {{ reservations_json|safe }};
+
+const TILE_LABELS = {
+    all:       'All Bookings',
+    confirmed: 'Confirmed Bookings',
+    returned:  'Completed Bookings',
+    recent:    'Bookings — Last 30 Days',
+};
+
+function statusBadge(r) {
+    return `<span class="status-badge status-${r.status}">${r.status_display}</span>`;
+}
+
+function renderDrill(title, rows) {
+    document.getElementById('drill-title').textContent = title;
+    const tbody = document.getElementById('drill-tbody');
+    const empty = document.getElementById('drill-empty');
+    tbody.innerHTML = '';
+    if (rows.length === 0) {
+        empty.style.display = 'block';
+    } else {
+        empty.style.display = 'none';
+        rows.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="color:var(--color-text-secondary)">#${r.id}</td>
+                <td>${r.user}</td>
+                <td>${r.vehicle}</td>
+                <td style="color:var(--color-text-secondary);font-size:0.82rem">${r.start} → ${r.end}</td>
+                <td>$${r.amount.toFixed(2)}</td>
+                <td>${statusBadge(r)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    document.querySelectorAll('.stat-card.clickable').forEach(c => c.classList.remove('active'));
+    const panel = document.getElementById('drill-panel');
+    panel.classList.add('open');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function openDrillByKey(key) {
+    let rows;
+    if (key === 'all')       rows = ALL_ROWS;
+    else if (key === 'confirmed') rows = ALL_ROWS.filter(r => r.status === 'CONFIRMED' || r.status === 'RETURNED');
+    else if (key === 'returned')  rows = ALL_ROWS.filter(r => r.status === 'RETURNED');
+    else if (key === 'recent')    rows = ALL_ROWS.filter(r => r.recent);
+    else rows = ALL_ROWS;
+    renderDrill(TILE_LABELS[key] || key, rows);
+    document.querySelector(`.stat-card[data-filter="${key}"]`)?.classList.add('active');
+}
+
+function openDrillByKind(kindCode, label) {
+    renderDrill(`${label} — All Bookings`, ALL_ROWS.filter(r => r.kind === kindCode));
+}
+
+function openDrillByVehicle(vehicleId, label) {
+    renderDrill(`${label} — Bookings`, ALL_ROWS.filter(r => r.vehicle_id === vehicleId));
+}
+
+/* Tile click listeners */
+document.querySelectorAll('.stat-card.clickable').forEach(card => {
+    card.addEventListener('click', () => {
+        const key = card.dataset.filter;
+        const panel = document.getElementById('drill-panel');
+        if (panel.classList.contains('open') && card.classList.contains('active')) {
+            panel.classList.remove('open');
+            card.classList.remove('active');
+        } else {
+            openDrillByKey(key);
+        }
+    });
+});
+
+document.getElementById('drill-close').addEventListener('click', () => {
+    document.getElementById('drill-panel').classList.remove('open');
+    document.querySelectorAll('.stat-card.clickable').forEach(c => c.classList.remove('active'));
+});
+
+/* ================================================================
+   Charts
+   ================================================================ */
+
+/* Pie chart: bookings by vehicle kind */
+{% if total > 0 %}
+const KIND_CODES    = [{% for row in by_kind %}'{{ row.kind_code }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+const KIND_REVENUES = [{% for row in by_kind %}{{ row.revenue|floatformat:2 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+new Chart(document.getElementById('kindChart'), {
+    type: 'doughnut',
+    data: {
+        labels: [{% for row in by_kind %}'{{ row.kind }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for row in by_kind %}{{ row.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: COLORS,
+            borderWidth: 0,
+            hoverOffset: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 16, font: { size: 11 } } },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} bookings — $${KIND_REVENUES[ctx.dataIndex]}` } }
+        },
+        onClick(evt, elements) {
+            if (!elements.length) return;
+            const idx = elements[0].index;
+            openDrillByKind(KIND_CODES[idx], this.data.labels[idx]);
+        }
+    }
+});
+{% endif %}
+
+/* Bar chart: top vehicles by trips */
+{% if top_vehicles %}
+const TOP_VEHICLE_IDS    = [{% for v in top_vehicles %}{{ v.id }}{% if not forloop.last %},{% endif %}{% endfor %}];
+const TOP_VEHICLE_LABELS = [{% for v in top_vehicles %}'{{ v.year }} {{ v.make }} {{ v.model }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+
+new Chart(document.getElementById('tripsChart'), {
+    type: 'bar',
+    data: {
+        labels: TOP_VEHICLE_LABELS,
+        datasets: [{
+            label: 'Total Trips',
+            data: [{% for v in top_vehicles %}{{ v.total_trips }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: COLORS,
+            borderRadius: 3,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { precision: 0 } },
+            y: { grid: { display: false } }
+        },
+        onClick(evt, elements) {
+            if (!elements.length) return;
+            const idx = elements[0].index;
+            openDrillByVehicle(TOP_VEHICLE_IDS[idx], TOP_VEHICLE_LABELS[idx]);
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

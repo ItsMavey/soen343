@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}My Rewards | TABAC DRIVE{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_style %}
+        .page-wrap { padding: 3rem 0 5rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin: 0 0 1.2rem; }
+        .stat-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.5rem; }
+        .big-val { font-size: 3rem; font-weight: 600; color: var(--color-accent); line-height: 1; }
+        .big-val.green { color: #4ade80; }
+        .big-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-top: 0.3rem; }
+        .score-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 3px; height: 6px; margin: 1rem 0 0.5rem; overflow: hidden; }
+        .score-bar { height: 100%; background: var(--color-accent); border-radius: 3px; }
+        .tier-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 0.5rem; background: rgba(255,255,255,0.02); border: 1px solid var(--color-border); }
+        .tier-row.active-tier { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.05); }
+        .tier-score { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; color: var(--color-text-secondary); min-width: 60px; }
+        .tier-label { flex: 1; font-size: 0.85rem; }
+        .tier-badge { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 2px; }
+        .tier-badge.active { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+        .tier-badge.locked { background: rgba(148,163,184,0.08); color: #64748b; border: 1px solid rgba(148,163,184,0.15); }
+        .table-wrap { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--color-border); text-align: left; font-weight: 600; }
+        td { padding: 0.8rem 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
+        tr:last-child td { border-bottom: none; }
+        .saved-positive { color: #4ade80; font-weight: 500; }
+        .saved-zero { color: var(--color-text-secondary); }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+        .back-link:hover { color: var(--color-accent); }
+        .empty-note { color: var(--color-text-secondary); font-size: 0.85rem; padding: 1.5rem 1.1rem; }
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="container">
+        <a href="{% url 'role_dashboard' %}" class="back-link">&larr; Dashboard</a>
+        <p class="page-title">My Rewards</p>
+        <p class="page-subtitle">Reliability score, carbon savings, and loyalty discounts</p>
+
+        <!-- Top stats -->
+        <div class="row g-3 mb-5">
+            <div class="col-12 col-md-4">
+                <div class="stat-card">
+                    <div class="section-label">Reliability Score</div>
+                    <div class="big-val">{{ score }}</div>
+                    <div class="big-label">out of 100</div>
+                    <div class="score-bar-wrap">
+                        <div class="score-bar" style="width:{{ score }}%"></div>
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--color-text-secondary)">
+                        {{ returned_count }} completed / {{ total_res }} total reservations
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="stat-card">
+                    <div class="section-label">CO₂ Saved</div>
+                    <div class="big-val green">{{ co2_saved }}</div>
+                    <div class="big-label">kg vs gasoline baseline</div>
+                    <div style="margin-top:1rem;font-size:0.8rem;color:var(--color-text-secondary)">
+                        Calculated across all completed rentals. EVs, bikes, and scooters save the most.
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="stat-card">
+                    <div class="section-label">Active Discount</div>
+                    {% if discount_rate > 0 %}
+                        <div class="big-val green">{{ discount_rate }}%</div>
+                        <div class="big-label">loyalty discount</div>
+                        <div style="margin-top:1rem;font-size:0.8rem;color:#4ade80">{{ discount_label }} — applied automatically at checkout</div>
+                    {% else %}
+                        <div class="big-val" style="color:var(--color-text-secondary)">0%</div>
+                        <div class="big-label">no discount yet</div>
+                        <div style="margin-top:1rem;font-size:0.8rem;color:var(--color-text-secondary)">Reach a reliability score of 50 to unlock your first discount.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Discount tiers -->
+        <div class="section-label">Discount Tiers</div>
+        <div class="mb-5">
+            {% for tier in tiers %}
+            <div class="tier-row {% if score >= tier.threshold %}active-tier{% endif %}">
+                <div class="tier-score">{{ tier.threshold }}+ score</div>
+                <div class="tier-label">{{ tier.rate }}% off every rental</div>
+                <span class="tier-badge {% if score >= tier.threshold %}active{% else %}locked{% endif %}">
+                    {% if score >= tier.threshold %}Active{% else %}Locked{% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Per-rental CO2 breakdown -->
+        <div class="section-label">CO₂ Breakdown by Rental</div>
+        {% if rental_co2 %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vehicle</th>
+                        <th>Dates</th>
+                        <th>Days</th>
+                        <th>CO₂ Saved (kg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rental_co2 %}
+                    <tr>
+                        <td>{{ row.reservation.vehicle.display_name }}</td>
+                        <td style="color:var(--color-text-secondary);font-size:0.82rem">{{ row.reservation.start_date }} → {{ row.reservation.end_date }}</td>
+                        <td style="color:var(--color-text-secondary)">{{ row.days }}</td>
+                        <td class="{% if row.saved > 0 %}saved-positive{% else %}saved-zero{% endif %}">
+                            {% if row.saved > 0 %}+{{ row.saved }}{% else %}0{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="table-wrap">
+            <p class="empty-note">No completed rentals yet. Complete a rental to start tracking your carbon savings.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

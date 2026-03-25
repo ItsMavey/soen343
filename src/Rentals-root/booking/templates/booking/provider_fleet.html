@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}My Fleet | TABAC DRIVE{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_style %}
+        .page-wrap { padding: 3rem 0 5rem; }
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .btn-add { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.4rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px; }
+        .btn-add:hover { background: var(--color-accent-hover); color: #0d0d0d; }
+        .fleet-table { width: 100%; border-collapse: collapse; }
+        .fleet-table th { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.75rem 1rem; border-bottom: 1px solid var(--color-border); text-align: left; }
+        .fleet-table td { padding: 1rem; border-bottom: 1px solid var(--color-border); font-size: 0.9rem; vertical-align: middle; }
+        .fleet-table tr:hover td { background: var(--color-surface); }
+        .kind-badge { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 2px; }
+        .kind-car { background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+        .kind-bike { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
+        .kind-scooter { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+        .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 0.4rem; }
+        .status-available { background: #4ade80; }
+        .status-other { background: #9a9590; }
+        .btn-sm-action { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.3rem 0.8rem; border-radius: 2px; border: 1px solid var(--color-border); color: var(--color-text-secondary); background: transparent; cursor: pointer; }
+        .btn-sm-action:hover { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
+        .btn-sm-danger { border-color: rgba(239,68,68,0.3); color: #f87171; }
+        .btn-sm-danger:hover { border-color: #f87171; color: #f87171; background: rgba(239,68,68,0.05); }
+        .btn-sm-warn { border-color: rgba(251,191,36,0.3); color: #fbbf24; }
+        .btn-sm-warn:hover { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,0.05); }
+        .btn-sm-success { border-color: rgba(74,222,128,0.3); color: #4ade80; }
+        .btn-sm-success:hover { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.05); }
+        .empty-state { text-align: center; padding: 4rem 0; color: var(--color-text-secondary); }
+        .empty-state p { margin-bottom: 1.5rem; }
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="container">
+
+        <div class="page-header">
+            <h1 class="page-title">My Fleet</h1>
+            <a href="{% url 'provider_add_vehicle' %}" class="btn-add">+ Add Vehicle</a>
+        </div>
+
+        {% if vehicles %}
+        <table class="fleet-table">
+            <thead>
+                <tr>
+                    <th>Vehicle</th>
+                    <th>Type</th>
+                    <th>Rate</th>
+                    <th>Status</th>
+                    <th>Trips</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in vehicles %}
+                <tr>
+                    <td><strong>{{ v.year }} {{ v.make }} {{ v.model }}</strong></td>
+                    <td>
+                        <span class="kind-badge kind-{{ v.vehicle_kind|lower }}">{{ v.get_vehicle_kind_display }}</span>
+                    </td>
+                    <td>${{ v.daily_rate }}/day</td>
+                    <td>
+                        <span class="status-dot {% if v.is_available %}status-available{% else %}status-other{% endif %}"></span>
+                        {{ v.get_vehicle_status_display }}
+                    </td>
+                    <td>{{ v.total_trips }}</td>
+                    <td class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'provider_edit_vehicle' v.id %}" class="btn-sm-action">Edit</a>
+                        {% if v.vehicle_status == 'AVAILABLE' %}
+                        <form method="post" action="{% url 'provider_maintenance' v.id %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-sm-action btn-sm-warn">Maintenance</button>
+                        </form>
+                        {% elif v.vehicle_status == 'MAINTENANCE' %}
+                        <form method="post" action="{% url 'provider_complete_maintenance' v.id %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-sm-action btn-sm-success">Mark Available</button>
+                        </form>
+                        {% endif %}
+                        <form method="post" action="{% url 'provider_delete_vehicle' v.id %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-sm-action btn-sm-danger" onclick="return confirm('Remove {{ v.make }} {{ v.model }} from your fleet?')">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No vehicles in your fleet yet.</p>
+            <a href="{% url 'provider_add_vehicle' %}" class="btn-add">Add your first vehicle</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
