@@ -157,7 +157,17 @@ class Reservation(models.Model):
     )
     start_date = models.DateField()
     end_date = models.DateField()
+    PRICING_STANDARD = "STANDARD"
+    PRICING_WEEKEND = "WEEKEND"
+    PRICING_SURGE = "SURGE"
+    PRICING_CHOICES = [
+        (PRICING_STANDARD, "Standard Rate"),
+        (PRICING_WEEKEND, "Weekend Rate"),
+        (PRICING_SURGE, "Surge Pricing"),
+    ]
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    pricing_strategy = models.CharField(max_length=10, choices=PRICING_CHOICES, default=PRICING_STANDARD)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)

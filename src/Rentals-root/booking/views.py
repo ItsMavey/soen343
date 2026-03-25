@@ -11,6 +11,7 @@ from django.utils import timezone
 from .factories import ProviderFactoryA, ProviderFactoryB
 from .forms import VehicleSearchForm, PaymentForm, ReservationForm, ProviderVehicleForm
 from .models import Vehicle, Car, Bike, Scooter, Reservation
+from .pricing import select_strategy, SURGE_THRESHOLD
 from .services import ParkingService, TransitFacade
 
 
@@ -52,6 +53,12 @@ def reserve_vehicle(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     form = ReservationForm(request.POST or None)
 
+    active_count = Reservation.objects.filter(
+        vehicle=vehicle,
+        status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
+    ).count()
+    is_surge = active_count >= SURGE_THRESHOLD
+
     if request.method == "POST" and form.is_valid():
         start_date = form.cleaned_data["start_date"]
         end_date = form.cleaned_data["end_date"]
@@ -66,20 +73,26 @@ def reserve_vehicle(request, vehicle_id):
         if overlapping:
             form.add_error(None, "This vehicle is already reserved for the selected dates.")
         else:
-            days = (end_date - start_date).days + 1
-            total_amount = Decimal(days) * vehicle.daily_rate
+            strategy = select_strategy(start_date, active_count)
+            total_amount = strategy.calculate(vehicle.daily_rate, start_date, end_date)
             reservation = Reservation.objects.create(
                 user=request.user,
                 vehicle=vehicle,
                 start_date=start_date,
                 end_date=end_date,
                 total_amount=total_amount,
+                pricing_strategy=strategy.name,
             )
             vehicle.reserve()
             messages.success(request, "Vehicle reserved. Complete payment to confirm.")
             return redirect("reservation_payment", reservation_id=reservation.id)
 
-    return render(request, "booking/reserve_vehicle.html", {"vehicle": vehicle, "form": form})
+    return render(request, "booking/reserve_vehicle.html", {
+        "vehicle": vehicle,
+        "form": form,
+        "is_surge": is_surge,
+        "active_count": active_count,
+    })
 
 
 @login_required

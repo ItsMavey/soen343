@@ -22,6 +22,15 @@
         button:hover { background: var(--color-accent-hover); }
         .links { margin-top: 1rem; color: var(--color-text-secondary); font-size: 0.9rem; text-align: center; }
         .links a { color: var(--color-accent); }
+        .pricing-preview { margin: 1rem 0; padding: 1rem; background: rgba(255,107,26,0.05); border: 1px solid rgba(255,107,26,0.15); border-radius: 4px; display: none; }
+        .pricing-preview.show { display: block; }
+        .pricing-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem; }
+        .pricing-row.total { font-weight: 600; font-size: 1rem; border-top: 1px solid rgba(255,107,26,0.15); padding-top: 0.4rem; margin-top: 0.2rem; color: var(--color-accent); }
+        .pricing-label { color: var(--color-text-secondary); }
+        .strategy-badge { display: inline-block; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; margin-bottom: 0.6rem; }
+        .strategy-STANDARD { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
+        .strategy-WEEKEND  { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+        .strategy-SURGE    { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
 {% endblock %}
 
 {% block content %}
@@ -50,6 +59,13 @@
                 {{ form.end_date }}
                 {{ form.end_date.errors }}
             </div>
+            <div class="pricing-preview" id="pricing-preview">
+                <span class="strategy-badge" id="strategy-badge"></span>
+                <div class="pricing-row"><span class="pricing-label">Base rate</span><span id="p-base"></span></div>
+                <div class="pricing-row" id="p-surcharge-row" style="display:none"><span class="pricing-label" id="p-surcharge-label"></span><span id="p-surcharge"></span></div>
+                <div class="pricing-row"><span class="pricing-label">Days</span><span id="p-days"></span></div>
+                <div class="pricing-row total"><span>Estimated Total</span><span id="p-total"></span></div>
+            </div>
             <button type="submit">Reserve &amp; Continue to Payment</button>
         </form>
         <div class="links">
@@ -57,4 +73,52 @@
         </div>
     </div>
 </div>
+
+<script>
+const DAILY_RATE = {{ vehicle.daily_rate }};
+const IS_SURGE   = {{ is_surge|yesno:"true,false" }};
+
+const startInput = document.getElementById('{{ form.start_date.id_for_label }}');
+const endInput   = document.getElementById('{{ form.end_date.id_for_label }}');
+
+function getStrategy(startDate) {
+    if (IS_SURGE) return { name: 'SURGE',    label: 'Surge Pricing',  multiplier: 1.50, surchargeLabel: '+50% high-demand surcharge' };
+    const dow = startDate.getUTCDay(); // 0=Sun, 6=Sat
+    if (dow === 0 || dow === 6) return { name: 'WEEKEND', label: 'Weekend Rate', multiplier: 1.25, surchargeLabel: '+25% weekend surcharge' };
+    return { name: 'STANDARD', label: 'Standard Rate', multiplier: 1.00, surchargeLabel: null };
+}
+
+function updatePreview() {
+    const s = startInput.value, e = endInput.value;
+    if (!s || !e || s > e) { document.getElementById('pricing-preview').classList.remove('show'); return; }
+
+    const start = new Date(s + 'T00:00:00Z');
+    const end   = new Date(e + 'T00:00:00Z');
+    const days  = Math.round((end - start) / 86400000) + 1;
+    const strat = getStrategy(start);
+    const total = (DAILY_RATE * days * strat.multiplier).toFixed(2);
+
+    const badge = document.getElementById('strategy-badge');
+    badge.textContent = strat.label;
+    badge.className = `strategy-badge strategy-${strat.name}`;
+
+    document.getElementById('p-base').textContent = `$${DAILY_RATE}/day`;
+    document.getElementById('p-days').textContent = `${days} day${days !== 1 ? 's' : ''}`;
+    document.getElementById('p-total').textContent = `$${total}`;
+
+    const surchargeRow = document.getElementById('p-surcharge-row');
+    if (strat.surchargeLabel) {
+        document.getElementById('p-surcharge-label').textContent = strat.surchargeLabel;
+        document.getElementById('p-surcharge').textContent = `×${strat.multiplier.toFixed(2)}`;
+        surchargeRow.style.display = 'flex';
+    } else {
+        surchargeRow.style.display = 'none';
+    }
+
+    document.getElementById('pricing-preview').classList.add('show');
+}
+
+startInput.addEventListener('change', updatePreview);
+endInput.addEventListener('change', updatePreview);
+</script>
 {% endblock %}
