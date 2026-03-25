@@ -54,6 +54,7 @@ class UserNotifier(Observer):
                     ),
                     event_type=event,
                     vehicle=vehicle,
+                    reservation=r,
                 )
 
         elif event == "AVAILABLE":
@@ -74,6 +75,7 @@ class UserNotifier(Observer):
                         ),
                         event_type=event,
                         vehicle=vehicle,
+                        reservation=r,
                     )
             # Also notify users whose previous booking was cancelled
             cancelled = (

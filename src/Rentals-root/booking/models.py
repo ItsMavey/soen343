@@ -221,6 +221,12 @@ class Notification(models.Model):
         on_delete=models.SET_NULL,
         related_name="notifications",
     )
+    reservation = models.ForeignKey(
+        "Reservation",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="notifications",
+    )
     message = models.CharField(max_length=300)
     event_type = models.CharField(max_length=20)
     is_read = models.BooleanField(default=False)
