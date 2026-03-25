@@ -185,6 +185,7 @@ def return_vehicle(request, reservation_id):
             reservation.status = Reservation.STATUS_RETURNED
             reservation.returned_at = timezone.now()
             reservation.save(update_fields=["status", "returned_at"])
+            vehicle._notify_observers("RETURNED")
             messages.success(request, "Vehicle return completed.")
         else:
             messages.error(request, "Only confirmed reservations can be returned.")
@@ -435,25 +436,23 @@ def rental_analytics(request):
     thirty_days_ago = timezone.now() - datetime.timedelta(days=30)
     recent = reservations.filter(created_at__gte=thirty_days_ago).count()
 
-    reservations_json = "[]"
-    if user.is_city_admin:
-        rows = []
-        for r in reservations.select_related("vehicle", "user").order_by("-created_at"):
-            rows.append({
-                "id": r.id,
-                "user": r.user.get_full_name() or r.user.username,
-                "vehicle": f"{r.vehicle.year} {r.vehicle.make} {r.vehicle.model}",
-                "vehicle_id": r.vehicle_id,
-                "kind": r.vehicle.vehicle_kind,
-                "start": str(r.start_date),
-                "end": str(r.end_date),
-                "amount": float(r.total_amount),
-                "status": r.status,
-                "status_display": r.get_status_display(),
-                "created": r.created_at.strftime("%Y-%m-%d"),
-                "recent": r.created_at >= thirty_days_ago,
-            })
-        reservations_json = json.dumps(rows)
+    rows = []
+    for r in reservations.select_related("vehicle", "user").order_by("-created_at"):
+        rows.append({
+            "id": r.id,
+            "user": r.user.get_full_name() or r.user.username,
+            "vehicle": f"{r.vehicle.year} {r.vehicle.make} {r.vehicle.model}",
+            "vehicle_id": r.vehicle_id,
+            "kind": r.vehicle.vehicle_kind,
+            "start": str(r.start_date),
+            "end": str(r.end_date),
+            "amount": float(r.total_amount),
+            "status": r.status,
+            "status_display": r.get_status_display(),
+            "created": r.created_at.strftime("%Y-%m-%d"),
+            "recent": r.created_at >= thirty_days_ago,
+        })
+    reservations_json = json.dumps(rows)
 
     return render(request, "booking/rental_analytics.html", {
         "total": total,

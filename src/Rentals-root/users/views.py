@@ -79,7 +79,9 @@ def provider_dashboard(request):
 def city_admin_dashboard(request):
     if not request.user.is_city_admin:
         return redirect("role_dashboard")
-    return render(request, "users/city_admin_dashboard.html")
+    from booking.models import Notification
+    recent_activity = Notification.objects.select_related("vehicle").order_by("-created_at")[:10]
+    return render(request, "users/city_admin_dashboard.html", {"recent_activity": recent_activity})
 
 
 class RegisterView(CreateView):

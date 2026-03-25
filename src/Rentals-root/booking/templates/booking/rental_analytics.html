@@ -51,24 +51,24 @@
         <div class="section-label">Overview</div>
         <div class="row g-3 mb-3">
             <div class="col-6 col-md-3">
-                <div class="stat-card {% if not is_provider %}clickable{% endif %}" data-filter="all">
+                <div class="stat-card clickable" data-filter="all">
                     <div class="stat-val">{{ total }}</div>
                     <div class="stat-label">Total Bookings</div>
-                    {% if not is_provider %}<div class="stat-hint">click to view &rsaquo;</div>{% endif %}
+                    <div class="stat-hint">click to view &rsaquo;</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-card {% if not is_provider %}clickable{% endif %}" data-filter="confirmed">
+                <div class="stat-card clickable" data-filter="confirmed">
                     <div class="stat-val">{{ confirmed }}</div>
                     <div class="stat-label">Confirmed</div>
-                    {% if not is_provider %}<div class="stat-hint">click to view &rsaquo;</div>{% endif %}
+                    <div class="stat-hint">click to view &rsaquo;</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-card {% if not is_provider %}clickable{% endif %}" data-filter="returned">
+                <div class="stat-card clickable" data-filter="returned">
                     <div class="stat-val">{{ returned }}</div>
                     <div class="stat-label">Completed</div>
-                    {% if not is_provider %}<div class="stat-hint">click to view &rsaquo;</div>{% endif %}
+                    <div class="stat-hint">click to view &rsaquo;</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
@@ -80,16 +80,15 @@
         </div>
         <div class="row g-3 mb-4">
             <div class="col-6 col-md-3">
-                <div class="stat-card {% if not is_provider %}clickable{% endif %}" data-filter="recent">
+                <div class="stat-card clickable" data-filter="recent">
                     <div class="stat-val">{{ recent }}</div>
                     <div class="stat-label">Last 30 Days</div>
-                    {% if not is_provider %}<div class="stat-hint">click to view &rsaquo;</div>{% endif %}
+                    <div class="stat-hint">click to view &rsaquo;</div>
                 </div>
             </div>
         </div>
 
-        <!-- Drill-down panel (admin only) -->
-        {% if not is_provider %}
+        <!-- Drill-down panel -->
         <div class="drill-panel mb-5" id="drill-panel">
             <div class="drill-header">
                 <span class="drill-title" id="drill-title"></span>
@@ -112,7 +111,6 @@
                 <p class="empty-note" id="drill-empty" style="display:none;">No reservations match this filter.</p>
             </div>
         </div>
-        {% endif %}
 
         <!-- Charts row -->
         <div class="row g-4 mb-5">
@@ -151,7 +149,6 @@ const COLORS = ['#ff6b1a', '#f59e0b', '#38bdf8', '#a78bfa', '#34d399'];
 /* ================================================================
    Drill-down panel helpers (defined first so chart onClick can call them)
    ================================================================ */
-{% if not is_provider %}
 const ALL_ROWS = {{ reservations_json|safe }};
 
 const TILE_LABELS = {
@@ -230,7 +227,6 @@ document.getElementById('drill-close').addEventListener('click', () => {
     document.getElementById('drill-panel').classList.remove('open');
     document.querySelectorAll('.stat-card.clickable').forEach(c => c.classList.remove('active'));
 });
-{% endif %}
 
 /* ================================================================
    Charts
@@ -262,7 +258,7 @@ new Chart(document.getElementById('kindChart'), {
         onClick(evt, elements) {
             if (!elements.length) return;
             const idx = elements[0].index;
-            {% if not is_provider %}openDrillByKind(KIND_CODES[idx], this.data.labels[idx]);{% endif %}
+            openDrillByKind(KIND_CODES[idx], this.data.labels[idx]);
         }
     }
 });
@@ -297,7 +293,7 @@ new Chart(document.getElementById('tripsChart'), {
         onClick(evt, elements) {
             if (!elements.length) return;
             const idx = elements[0].index;
-            {% if not is_provider %}openDrillByVehicle(TOP_VEHICLE_IDS[idx], TOP_VEHICLE_LABELS[idx]);{% endif %}
+            openDrillByVehicle(TOP_VEHICLE_IDS[idx], TOP_VEHICLE_LABELS[idx]);
         }
     }
 });
