@@ -78,8 +78,7 @@ All five patterns are fully implemented and wired into the live application. See
 | **Observer** | `booking/observers.py` | `Vehicle._notify_observers()` fires `UserNotifier`, `AdminDashboard`, `RecommendationService`; `fire_overdue_notifications()` for overdue detection |
 | **Factory** | `booking/factories.py` | `ProviderFactoryA` (cars/EVs) and `ProviderFactoryB` (bikes/scooters) encapsulate vehicle creation |
 | **Adapter** | `booking/services.py` | `GTFSAdapter` + `CityAPIAdapter` implement `TransitProvider`; `TransitFacade` aggregates both; `ParkingService` follows same interface |
-
-**Pure Fabrication** — `booking/sustainability.py`: stateless service for gamification (`reliability_score`, `co2_saved_kg`, `total_co2_saved`, `loyalty_discount`, `apply_discount`).
+| **Pure Fabrication** | `booking/sustainability.py` | stateless service for gamification (`reliability_score`, `co2_saved_kg`, `total_co2_saved`, `loyalty_discount`, `apply_discount`) |
 
 ---
 
