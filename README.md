@@ -122,6 +122,7 @@ cd src/Rentals-root
 
 # 4. Apply migrations
 python manage.py migrate
+# If migrations fail, delete the database and retry: rm db.sqlite3 
 
 # 5. Seed demo data (creates all demo users + vehicles + reservations)
 python manage.py seed_demo
