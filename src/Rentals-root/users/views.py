@@ -161,7 +161,7 @@ def city_admin_dashboard(request):
     ]
 
     # --- Detail: parking utilization by city ---
-    lots = ParkingService().get_nearby_lots()
+    lots = ParkingService().get_lots()
     city_parking = {}
     for lot in lots:
         c = lot.city
