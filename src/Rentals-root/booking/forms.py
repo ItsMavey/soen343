@@ -11,6 +11,10 @@ class VehicleSearchForm(forms.Form):
         required=False,
         choices=[("", "All Types")] + Vehicle.KIND_CHOICES,
     )
+    city = forms.ChoiceField(
+        required=False,
+        choices=[("", "All Cities")] + Vehicle.CITY_CHOICES,
+    )
     fuel_type = forms.CharField(required=False, label="Fuel (cars only)")
     min_rate = forms.DecimalField(required=False, min_value=0)
     max_rate = forms.DecimalField(required=False, min_value=0)
@@ -46,6 +50,7 @@ class ProviderVehicleForm(forms.Form):
     model = forms.CharField(max_length=100)
     year = forms.IntegerField(min_value=1900, max_value=datetime.date.today().year + 1)
     daily_rate = forms.DecimalField(max_digits=8, decimal_places=2, min_value=0)
+    city = forms.ChoiceField(choices=Vehicle.CITY_CHOICES, initial=Vehicle.CITY_MTL)
 
     # Car fields
     fuel_type = forms.ChoiceField(choices=Car.FUEL_CHOICES, required=False)

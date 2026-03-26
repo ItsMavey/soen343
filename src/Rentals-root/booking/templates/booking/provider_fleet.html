@@ -31,6 +31,8 @@
         .btn-sm-success:hover { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.05); }
         .empty-state { text-align: center; padding: 4rem 0; color: var(--color-text-secondary); }
         .empty-state p { margin-bottom: 1.5rem; }
+        .overdue-banner { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.25); border-radius: 4px; padding: 0.75rem 1.1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #f87171; display: flex; align-items: center; gap: 0.5rem; }
+        .overdue-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #f87171; flex-shrink: 0; }
 {% endblock %}
 
 {% block content %}
@@ -41,6 +43,13 @@
             <h1 class="page-title">My Fleet</h1>
             <a href="{% url 'provider_add_vehicle' %}" class="btn-add">+ Add Vehicle</a>
         </div>
+
+        {% if overdue_count %}
+        <div class="overdue-banner">
+            <div class="overdue-dot"></div>
+            <strong>{{ overdue_count }} vehicle{{ overdue_count|pluralize }} overdue</strong> — a renter has not returned a vehicle past the scheduled end date. These are highlighted below.
+        </div>
+        {% endif %}
 
         {% if vehicles %}
         <table class="fleet-table">
@@ -56,8 +65,11 @@
             </thead>
             <tbody>
                 {% for v in vehicles %}
-                <tr>
-                    <td><strong>{{ v.year }} {{ v.make }} {{ v.model }}</strong></td>
+                <tr {% if v.is_overdue %}style="background:rgba(239,68,68,0.04)"{% endif %}>
+                    <td>
+                        <strong>{{ v.year }} {{ v.make }} {{ v.model }}</strong>
+                        {% if v.is_overdue %}<span style="font-size:0.65rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#f87171;margin-left:0.5rem">● Overdue</span>{% endif %}
+                    </td>
                     <td>
                         <span class="kind-badge kind-{{ v.vehicle_kind|lower }}">{{ v.get_vehicle_kind_display }}</span>
                     </td>

@@ -23,8 +23,24 @@ class Vehicle(models.Model):
         (STATUS_MAINTENANCE, "Maintenance"),
     ]
 
+    CITY_MTL = "MTL"
+    CITY_LAV = "LAV"
+    CITY_LON = "LON"
+    CITY_QC  = "QC"
+    CITY_GAT = "GAT"
+    CITY_SHE = "SHE"
+    CITY_CHOICES = [
+        (CITY_MTL, "Montreal"),
+        (CITY_LAV, "Laval"),
+        (CITY_LON, "Longueuil"),
+        (CITY_QC,  "Quebec City"),
+        (CITY_GAT, "Gatineau"),
+        (CITY_SHE, "Sherbrooke"),
+    ]
+
     vehicle_kind = models.CharField(max_length=10, choices=KIND_CHOICES)
     vehicle_status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STATUS_AVAILABLE)
+    city = models.CharField(max_length=5, choices=CITY_CHOICES, default=CITY_MTL)
     provider = models.CharField(max_length=100, blank=True, default="")
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

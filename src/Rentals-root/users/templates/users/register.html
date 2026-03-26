@@ -196,8 +196,32 @@
             {{ form.confirm_password.errors }}
         </div>
 
+        <div id="commuter-prefs" style="display:none">
+            <div class="field">
+                <label for="{{ form.preferred_city.id_for_label }}">Preferred City</label>
+                {{ form.preferred_city }}
+                {{ form.preferred_city.errors }}
+            </div>
+            <div class="field">
+                <label for="{{ form.preferred_mobility_type.id_for_label }}">Preferred Mobility Type</label>
+                {{ form.preferred_mobility_type }}
+                {{ form.preferred_mobility_type.errors }}
+            </div>
+        </div>
+
         <button type="submit">Register</button>
     </form>
+    <script>
+        function togglePrefs() {
+            var role = document.querySelector('input[name="role"]:checked');
+            document.getElementById('commuter-prefs').style.display =
+                (role && role.value === 'COMMUTER') ? 'block' : 'none';
+        }
+        document.querySelectorAll('input[name="role"]').forEach(function(r) {
+            r.addEventListener('change', togglePrefs);
+        });
+        togglePrefs();
+    </script>
     <div class="links">
         Already have an account? <a href="{% url 'login' %}">Sign in</a>
     </div>

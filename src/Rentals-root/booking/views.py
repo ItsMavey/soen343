@@ -1,4 +1,5 @@
 import datetime
+from django.utils import timezone as _tz
 import json
 from decimal import Decimal
 
@@ -19,7 +20,7 @@ from .states import InvalidTransitionError
 
 def _attach_upcoming_reservations(vehicles):
     """Attach .upcoming_reservations list to each vehicle in-place."""
-    today = datetime.date.today()
+    today = _tz.localdate()
     upcoming = Reservation.objects.filter(
         status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
         end_date__gte=today,
@@ -41,6 +42,7 @@ def vehicle_list(request):
     if form.is_valid():
         query = form.cleaned_data.get("query")
         vehicle_kind = form.cleaned_data.get("vehicle_kind")
+        city = form.cleaned_data.get("city")
         fuel_type = form.cleaned_data.get("fuel_type")
         min_rate = form.cleaned_data.get("min_rate")
         max_rate = form.cleaned_data.get("max_rate")
@@ -49,6 +51,8 @@ def vehicle_list(request):
             vehicles = vehicles.filter(Q(make__icontains=query) | Q(model__icontains=query))
         if vehicle_kind:
             vehicles = vehicles.filter(vehicle_kind=vehicle_kind)
+        if city:
+            vehicles = vehicles.filter(city=city)
         if fuel_type:
             vehicles = vehicles.filter(car__fuel_type__iexact=fuel_type)
         if min_rate is not None:
@@ -65,7 +69,7 @@ def vehicle_list(request):
 def vehicle_detail(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     subtype = vehicle.get_subtype()
-    today = datetime.date.today()
+    today = _tz.localdate()
     upcoming_reservations = list(
         Reservation.objects.filter(
             vehicle=vehicle,
@@ -91,7 +95,7 @@ def reserve_vehicle(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     form = ReservationForm(request.POST or None)
 
-    today = datetime.date.today()
+    today = _tz.localdate()
     booked = list(
         Reservation.objects.filter(
             vehicle=vehicle,
@@ -202,8 +206,10 @@ def return_vehicle(request, reservation_id):
 
 @login_required
 def my_reservations(request):
-    reservations = Reservation.objects.filter(user=request.user).select_related("vehicle")
-    return render(request, "booking/my_reservations.html", {"reservations": reservations})
+    import datetime
+    reservations = Reservation.objects.filter(user=request.user).select_related("vehicle").order_by("-created_at")
+    today = _tz.localdate()
+    return render(request, "booking/my_reservations.html", {"reservations": reservations, "today": today})
 
 
 @login_required
@@ -241,11 +247,24 @@ def _require_provider(request):
 
 @login_required
 def provider_fleet(request):
+    import datetime
     guard = _require_provider(request)
     if guard:
         return guard
+    today = _tz.localdate()
     vehicles = Vehicle.objects.filter(owner=request.user).order_by("make", "model")
-    return render(request, "booking/provider_fleet.html", {"vehicles": vehicles})
+    # Annotate each vehicle with its overdue active reservation (if any)
+    overdue_vehicle_ids = set(
+        Reservation.objects.filter(
+            vehicle__owner=request.user,
+            status=Reservation.STATUS_CONFIRMED,
+            end_date__lt=today,
+        ).values_list("vehicle_id", flat=True)
+    )
+    for v in vehicles:
+        v.is_overdue = v.id in overdue_vehicle_ids
+    overdue_count = len(overdue_vehicle_ids)
+    return render(request, "booking/provider_fleet.html", {"vehicles": vehicles, "overdue_count": overdue_count, "today": today})
 
 
 @login_required
@@ -266,6 +285,7 @@ def provider_add_vehicle(request):
             "owner": request.user,
             "provider": request.user.username,
         }
+        city = form.cleaned_data.get("city", Vehicle.CITY_MTL)
         if kind == Vehicle.KIND_CAR:
             factory.create_car(
                 fuel_type=form.cleaned_data.get("fuel_type", "GASOLINE"),
@@ -284,6 +304,9 @@ def provider_add_vehicle(request):
                 is_electric=form.cleaned_data.get("is_electric", False),
                 **common,
             )
+        # Set city on the newly created vehicle
+        from booking.models import Vehicle as V
+        V.objects.filter(make=common["make"], model=common["model"], year=common["year"], owner=request.user).update(city=city)
         messages.success(request, "Vehicle added to your fleet.")
         return redirect("provider_fleet")
 
@@ -305,6 +328,7 @@ def provider_edit_vehicle(request, vehicle_id):
         "model": vehicle.model,
         "year": vehicle.year,
         "daily_rate": vehicle.daily_rate,
+        "city": vehicle.city,
     }
     if vehicle.vehicle_kind == Vehicle.KIND_CAR:
         initial.update({"fuel_type": subtype.fuel_type, "body_style": subtype.body_style})
@@ -319,7 +343,8 @@ def provider_edit_vehicle(request, vehicle_id):
         vehicle.model = form.cleaned_data["model"]
         vehicle.year = form.cleaned_data["year"]
         vehicle.daily_rate = form.cleaned_data["daily_rate"]
-        vehicle.save(update_fields=["make", "model", "year", "daily_rate"])
+        vehicle.city = form.cleaned_data.get("city", vehicle.city)
+        vehicle.save(update_fields=["make", "model", "year", "daily_rate", "city"])
 
         if vehicle.vehicle_kind == Vehicle.KIND_CAR:
             subtype.fuel_type = form.cleaned_data.get("fuel_type", subtype.fuel_type)

@@ -1,176 +1,118 @@
-<!-- PROJECT LOGO -->
 <div align="center">
 
-  <a href="https://github.com/ItsMavey/ItsBagelBot">
-    <img src=".github/assets/logo.png" alt="Logo" width="200" height="200">
-  </a>
-
-<h3 align="center">Rentals</h3>
-
-  <p align="center">
-    SOEN 343
-    <br />
-    Term Project
-    <br />
-    <br />
-    <a href="https://github.com/ItsMavey/soen343"><strong>Explore the docs »</strong></a>
-    <br />
-    <a href="https://github.com/ItsMavey/soen343/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    &middot;
-    <a href="https://github.com/ItsMavey/soen343/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
-    <br />
-    <br />
-    </p>
-<br />
-
-[![Email](https://img.shields.io/badge/contact%40itsmavey.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:contact@itsmavey.com)
-[![GitHub](https://img.shields.io/badge/ItsMavey-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ItsMavey)
-
-
+  <h3 align="center">TABAC DRIVE</h3>
+  <p align="center">Smart Urban Mobility Management System — SOEN 343</p>
 </div>
 
-***
+---
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li><a href="#about-the-project">About The Project</a>
-        <ul>
-            <li><a href="#team-members">Team Members</a></li>
-        </ul>
-    </li>
-    <li><a href="#architecture-overview">Architecture Overview</a>
-        <ul>
-            <li><a href="#tech-stack">Tech Stack</a></li>
-        </ul>
-    </li>
-    <li><a href="#project-setup">Project Setup</a></li>
-    <li><a href="#common-commands">Common Commands</a></li>
-    <li><a href="#contributors">Contributors</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgements">Acknowledgements</a></li>
-  </ol>
-</details>
+## Table of Contents
 
-***
+- [About](#about)
+- [Team](#team)
+- [Tech Stack](#tech-stack)
+- [Project Setup](#project-setup)
+- [Common Commands](#common-commands)
+- [Contributors](#contributors)
 
-## About The Project
+---
 
-> In progress
+## About
 
-### Team Members
+TABAC DRIVE is a Django-based urban mobility platform that unites public and private transportation for commuters, mobility providers, and city admins.
 
-| Name                    | ID       |
-|-------------------------|----------|
-| Adam Ousmeer            | 40246695 |
-| Daniel Ganchev          | 40315755 |
+**Three user roles:**
+- **Commuter** — search and reserve vehicles, access parking and transit info, earn loyalty rewards
+- **Mobility Provider** — manage a vehicle fleet, view rental analytics
+- **City Admin** — monitor system activity, view analytics and external services
+
+**GOF Design Patterns implemented:** Strategy, State, Observer, Factory, Adapter
+
+---
+
+## Team
+
+| Name | Student ID |
+|---|---|
+| Adam Ousmeer | 40246695 |
+| Daniel Ganchev | 40315755 |
 | Abed-Elmouhsen Cherkawi | 40323359 |
-| Emre Emuler             | 40212481 |
-| Dylan Bourret           | 40287207 |
-| Yanis Djeridi           | 40227313 |
+| Emre Emuler | 40212481 |
+| Dylan Bourret | 40287207 |
+| Yanis Djeridi | 40227313 |
 
-***
+---
 
-## Architecture Overview
+## Tech Stack
 
-> In progress
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-6.0-092E20?style=for-the-badge&logo=django&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 
-### Tech Stack
-
-#### Languages
-
-![Python](https://img.shields.io/badge/python-%FF.svg?style=for-the-badge&logo=python&logoColor=white)
-
-#### Technologies & Tools
-
-![Django](https://img.shields.io/badge/django-%23092E20.svg?style=for-the-badge&logo=django&logoColor=white)
-
-***
+---
 
 ## Project Setup
 
 **Requirements:** Python 3.10+
 
 ```bash
-# 1. Activate the virtual environment
-.\venv\Scripts\Activate
+# 1. Create and activate a virtual environment
+python -m venv venv
+.\venv\Scripts\Activate        # Windows
+source venv/bin/activate       # macOS/Linux
 
 # 2. Install dependencies
-cd src\Rentals-root
-pip install -r ..\..\requirements.txt
+pip install -r requirements.txt
 
-# 3. Apply migrations
+# 3. Move into the Django project
+cd src/Rentals-root
+
+# 4. Apply migrations
 python manage.py migrate
 
-# 4. Seed vehicle data
-python manage.py seed_cars ..\..\dataset\CarRentalData.csv
+# 5. Seed vehicle data
+python manage.py seed_cars ../../dataset/CarRentalData.csv
+python manage.py seed_bikes
+python manage.py seed_scooters
 
-# 5. (Optional) Create an admin account
+# 6. (Optional) Seed user accounts
+python manage.py seed_user ../../dataset/person_10000.csv
+
+# 7. (Optional) Create a superuser
 python manage.py createsuperuser
 
-# 6. Run the development server
+# 8. Start the dev server
 python manage.py runserver
 ```
 
 Open [http://localhost:8000](http://localhost:8000) in your browser.
 
-***
+---
 
 ## Common Commands
 
 All commands run from `src/Rentals-root/`.
 
-#### Seed data
-
 ```bash
-# Cars (from CSV)
-python manage.py seed_cars ..\..\dataset\CarRentalData.csv
+# Run the server
+python manage.py runserver
 
-# Bikes (hardcoded fleet)
-python manage.py seed_bikes
+# Database
+python manage.py makemigrations
+python manage.py migrate
 
-# Scooters (hardcoded fleet)
-python manage.py seed_scooters
-
-# Users (from CSV)
-python manage.py seed_user ..\..\dataset\person_10000.csv
-```
-
-#### User roles
-
-Users can register as **Commuter** or **Mobility Provider**. To assign the **City Admin** role:
-
-```bash
+# Assign City Admin role to a user
 python manage.py set_role <username> admin
-```
+# Other roles: commuter, provider
 
-Other valid roles: `commuter`, `provider`.
-
-#### Run tests
-
-```bash
+# Run tests
 python manage.py test
 ```
 
-***
+---
 
 ## Contributors
-
-This project exists thanks to the people who contribute.
 
 <a href="https://github.com/ItsMavey/soen343/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ItsMavey/soen343" />
 </a>
-
-***
-
-## Contact
-
-ItsMavey - [GitHub](https://github.com/ItsMavey) - [Email](mailto:contact@itsmavey.com)
-
-***
-
-## Acknowledgements
-
-README template inspired by [othneildrew/Best-README-Template](https://github.com/othneildrew/Best-README-Template)
