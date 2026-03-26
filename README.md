@@ -29,7 +29,7 @@ TABAC DRIVE is a Django-based urban mobility platform that unites private vehicl
 | **Mobility Provider** | Add/edit/remove vehicles, view rental analytics, receive maintenance and overdue notifications |
 | **City Admin** | Monitor platform activity, view rental and gateway analytics, manage all users |
 
-**Sprint 3 implemented features:**
+**Phase 3 implemented features:**
 - Complete rental lifecycle: search → reserve → payment (simulated) → return
 - Role-based dashboards with analytics
 - Overdue detection and notification system
@@ -69,74 +69,17 @@ TABAC DRIVE is a Django-based urban mobility platform that unites private vehicl
 
 ## GOF Design Patterns
 
-All five patterns are fully implemented and wired into the live application.
+All five patterns are fully implemented and wired into the live application. See the team report for full justification.
 
-### 1. Strategy — Dynamic Pricing (`booking/pricing.py`)
+| Pattern | File | Description |
+|---|---|---|
+| **Strategy** | `booking/pricing.py` | `PricingStrategy` ABC — `StandardPricing` (×1.00), `WeekendPricing` (×1.25), `SurgePricing` (×1.50) selected at reservation time |
+| **State** | `booking/states.py` | `VehicleState` ABC — `AvailableState`, `ReservedState`, `InUseState`, `MaintenanceState`; invalid transitions raise `InvalidTransitionError` |
+| **Observer** | `booking/observers.py` | `Vehicle._notify_observers()` fires `UserNotifier`, `AdminDashboard`, `RecommendationService`; `fire_overdue_notifications()` for overdue detection |
+| **Factory** | `booking/factories.py` | `ProviderFactoryA` (cars/EVs) and `ProviderFactoryB` (bikes/scooters) encapsulate vehicle creation |
+| **Adapter** | `booking/services.py` | `GTFSAdapter` + `CityAPIAdapter` implement `TransitProvider`; `TransitFacade` aggregates both; `ParkingService` follows same interface |
 
-**Problem:** Rental pricing varies by demand and date (standard, weekend surcharge, surge pricing). Hard-coding conditionals in the reservation view violates Open/Closed Principle.
-
-**Solution:** `PricingStrategy` ABC with three concrete strategies — `StandardPricing`, `WeekendPricing`, `SurgePricing`. The `reserve_vehicle` view calls `select_strategy()` at runtime; adding a new pricing rule requires no changes to existing code.
-
-**Without it:** One large conditional block in the view; every new pricing rule modifies existing logic and risks regressions.
-
-```
-PricingStrategy (ABC)
-  ├── StandardPricing   ×1.00
-  ├── WeekendPricing    ×1.25
-  └── SurgePricing      ×1.50
-```
-
----
-
-### 2. State — Vehicle Lifecycle (`booking/states.py`)
-
-**Problem:** A vehicle transitions between Available → Reserved → In Use → Maintenance. Without structure, every transition requires checking current status with conditionals scattered across the codebase.
-
-**Solution:** `VehicleState` ABC with `AvailableState`, `ReservedState`, `InUseState`, `MaintenanceState`. `Vehicle` delegates all transitions to its current state object; invalid transitions raise `InvalidTransitionError`.
-
-**Without it:** Long `if vehicle_status == X` chains in every view that touches vehicle state; illegal transitions go unchecked.
-
----
-
-### 3. Observer — Notification System (`booking/observers.py`)
-
-**Problem:** When a vehicle changes state (maintenance, return, available), multiple parties need to be notified — the renter, city admins, and the recommendation engine — without the vehicle model knowing about them.
-
-**Solution:** `Subject`/`Observer` ABCs. `Vehicle._notify_observers(event)` fires `UserNotifier`, `AdminDashboard`, and `RecommendationService`. Each creates `Notification` DB records independently. `fire_overdue_notifications()` extends this for overdue rental detection (idempotent).
-
-**Without it:** Vehicle model directly imports and calls notification logic; tight coupling prevents independent extension.
-
----
-
-### 4. Factory — Vehicle Instantiation (`booking/factories.py`)
-
-**Problem:** Two provider fleets (ProviderA — cars/EVs, ProviderB — bikes/scooters) create vehicles differently. Client code should not need to know the concrete vehicle class.
-
-**Solution:** `VehicleFactory` base with `ProviderFactoryA` and `ProviderFactoryB` concrete factories. Each factory encapsulates `Car`, `Bike`, or `Scooter` creation with provider-specific defaults.
-
-**Without it:** Seeding and creation logic directly instantiate concrete model classes; switching provider strategies requires editing call sites.
-
----
-
-### 5. Adapter — External Services (`booking/services.py`)
-
-**Problem:** Parking and transit data come from incompatible external sources (OpenStreetMap Overpass API for transit stops, hardcoded city data for parking). The rest of the app should talk to a single interface regardless of source.
-
-**Solution:** `TransitProvider` interface adapted by `GTFSAdapter` (real bus stops from Overpass API) and `CityAPIAdapter` (real metro stations from Overpass API). `TransitFacade` aggregates both. `ParkingService` follows the same abstraction. Swapping data sources requires only a new adapter class.
-
-**Without it:** Views directly contain HTTP calls and parsing logic; changing data sources breaks view code.
-
----
-
-### Pure Fabrication — Gamification (`booking/sustainability.py`)
-
-A stateless service class with no corresponding domain entity — justified by GRASP Pure Fabrication to avoid bloating `User` or `Reservation` models with unrelated computation:
-
-- `reliability_score(user)` — % of reservations properly returned
-- `co2_saved_kg(vehicle, days)` — CO₂ saved vs gasoline baseline
-- `total_co2_saved(user)` — aggregate across all completed rentals
-- `loyalty_discount(score)` — tiered discount rate (0%, 5%, 10%, 15%)
-- `apply_discount(amount, score)` — applies discount to a reservation total
+**Pure Fabrication** — `booking/sustainability.py`: stateless service for gamification (`reliability_score`, `co2_saved_kg`, `total_co2_saved`, `loyalty_discount`, `apply_discount`).
 
 ---
 
