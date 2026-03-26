@@ -77,6 +77,18 @@
                         </select>
                     </div>
                     <div class="col-6 col-md-2">
+                        <label class="filter-label">City</label>
+                        <select class="filter-input" name="city">
+                            <option value="">All Cities</option>
+                            <option value="MTL" {% if request.GET.city == "MTL" %}selected{% endif %}>Montreal</option>
+                            <option value="LAV" {% if request.GET.city == "LAV" %}selected{% endif %}>Laval</option>
+                            <option value="LON" {% if request.GET.city == "LON" %}selected{% endif %}>Longueuil</option>
+                            <option value="QC"  {% if request.GET.city == "QC"  %}selected{% endif %}>Quebec City</option>
+                            <option value="GAT" {% if request.GET.city == "GAT" %}selected{% endif %}>Gatineau</option>
+                            <option value="SHE" {% if request.GET.city == "SHE" %}selected{% endif %}>Sherbrooke</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-2">
                         <label class="filter-label">Fuel (cars)</label>
                         <input class="filter-input" type="text" name="fuel_type" placeholder="e.g. Electric" value="{{ request.GET.fuel_type }}">
                     </div>

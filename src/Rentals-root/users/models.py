@@ -14,10 +14,27 @@ class User(AbstractUser):
         (ROLE_ADMIN, "City Admin"),
     ]
 
+    CITY_CHOICES = [
+        ("MTL", "Montreal"),
+        ("LAV", "Laval"),
+        ("LON", "Longueuil"),
+        ("QC",  "Quebec City"),
+        ("GAT", "Gatineau"),
+        ("SHE", "Sherbrooke"),
+    ]
+
+    MOBILITY_CHOICES = [
+        ("CAR",     "Car"),
+        ("BIKE",    "Bike"),
+        ("SCOOTER", "Scooter"),
+    ]
+
     email = models.EmailField(unique=True)
     address = AddressField(null=True, blank=True, on_delete=models.SET_NULL)
     phone_number = PhoneNumberField(region="CA", blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=ROLE_COMMUTER)
+    preferred_city = models.CharField(max_length=5, choices=CITY_CHOICES, blank=True, default="")
+    preferred_mobility_type = models.CharField(max_length=10, choices=MOBILITY_CHOICES, blank=True, default="")
 
     @property
     def is_commuter(self):

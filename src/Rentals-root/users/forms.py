@@ -24,9 +24,21 @@ class UserRegistrationForm(forms.ModelForm):
         label="I am a",
     )
 
+    preferred_city = forms.ChoiceField(
+        choices=[("", "Select a city (optional)")] + User.CITY_CHOICES,
+        required=False,
+        label="Preferred city",
+    )
+
+    preferred_mobility_type = forms.ChoiceField(
+        choices=[("", "Select a type (optional)")] + User.MOBILITY_CHOICES,
+        required=False,
+        label="Preferred mobility type",
+    )
+
     class Meta:
         model = User
-        fields = ["username", "email", "role", "password", "confirm_password"]
+        fields = ["username", "email", "role", "preferred_city", "preferred_mobility_type", "password", "confirm_password"]
 
     def clean_username(self):
         username = self.cleaned_data["username"]
@@ -60,6 +72,8 @@ class UserRegistrationForm(forms.ModelForm):
         user = super().save(commit=False)
         user.email = self.cleaned_data["email"]
         user.role = self.cleaned_data["role"]
+        user.preferred_city = self.cleaned_data.get("preferred_city", "")
+        user.preferred_mobility_type = self.cleaned_data.get("preferred_mobility_type", "")
         user.set_password(self.cleaned_data["password"])
         if commit:
             user.save()

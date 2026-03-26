@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SUMMS** (Smart Urban Mobility Management System) — SOEN 343 Phase 3 project by team TABAC. A Django-based platform uniting public and private transportation for commuters. The working Django project lives at `src/Rentals-root/`. All `manage.py` commands must be run from that directory.
+**TABAC DRIVE** (Smart Urban Mobility Management System) — SOEN 343 Phase 3 project by team TABAC. A Django-based platform uniting public and private transportation for commuters. The working Django project lives at `src/Rentals-root/`. All `manage.py` commands must be run from that directory.
 
 **Three user roles:**
-- **Commuters** — search/reserve vehicles (cars/EVs/bikes/scooters), access parking and transit
+- **Commuters** — search/reserve vehicles (cars/EVs/bikes/scooters), access parking and transit, earn loyalty rewards
 - **Mobility Providers** — manage their vehicle fleet, view rental analytics
-- **City Admins** — monitor traffic, view external services and rental analytics
+- **City Admins** — monitor activity, view external services and rental analytics
 
 ## Common Commands
 
@@ -21,8 +21,14 @@ python manage.py makemigrations     # Generate new migrations after model change
 python manage.py createsuperuser    # Create admin user
 python manage.py collectstatic      # Collect static files
 
-# Seed car data from CSV
+# Seed data
 python manage.py seed_cars ../../dataset/CarRentalData.csv
+python manage.py seed_bikes
+python manage.py seed_scooters
+python manage.py seed_user ../../dataset/person_10000.csv
+
+# Assign roles
+python manage.py set_role <username> admin      # or: commuter, provider
 
 # Run tests
 python manage.py test               # All tests
@@ -32,7 +38,7 @@ python manage.py test booking.tests.SomeTestClass.test_method  # Single test
 
 ## Architecture
 
-**MVC** — Django templates are the View, Django views/forms are the Controller, Django models are the Model. Each component communicates through the Controller layer, which exposes APIs to the View.
+**MVC** — Django templates are the View, Django views/forms are the Controller, Django models are the Model.
 
 ### System Components
 
@@ -41,14 +47,15 @@ python manage.py test booking.tests.SomeTestClass.test_method  # Single test
 | User Access Service | `users/` | Complete |
 | Rental System | `booking/` | Complete |
 | Vehicle Management | `booking/` | Complete |
-| External Services (Parking, Transit) | TBD | Navigation stub needed |
-| Analytics (Rental, Gateway, Sustainability) | TBD | Partial — Sprint 3 |
-| Gamification / Reliability Score | TBD | Partial — Sprint 3 |
+| External Services (Parking, Transit) | `booking/` | Complete (stub + Adapter pattern) |
+| Analytics (Rental, Gateway) | `booking/` | Complete |
+| Gamification / Reliability Score | `booking/` | Complete |
+| Notifications (Observer) | `booking/` | Complete |
 
 ### Django Apps
 
-- **`users/`** — Custom `User` model (extends `AbstractUser`) with unique email, optional Canadian phone number, and optional address. Handles registration, login, logout.
-- **`booking/`** — Core rental logic: `Car` and `Reservation` models, car search/filter, reservation flow (create → payment → return), and a `seed_cars` management command.
+- **`users/`** — Custom `User` model (extends `AbstractUser`) with unique email, optional Canadian phone number, and optional address. Handles registration, login, logout, and role-based dashboard routing.
+- **`booking/`** — Core rental logic: `Vehicle`, `Reservation`, `Notification` models; reservation flow (create → payment → return); analytics; gamification; notifications; fleet management; external services.
 - **`core/`** — Placeholder for future shared utilities; currently empty.
 
 ### Custom User Model
@@ -57,36 +64,42 @@ python manage.py test booking.tests.SomeTestClass.test_method  # Single test
 
 ### Rental Lifecycle
 
-1. `POST /cars/<id>/reserve/` — Creates a `PENDING` reservation; checks for date overlaps.
+1. `POST /vehicles/<id>/reserve/` — Creates a `PENDING` reservation; checks for date overlaps; applies loyalty discount.
 2. `POST /reservations/<id>/payment/` — Simulated payment; transitions to `CONFIRMED`.
-3. `POST /reservations/<id>/return/` — Marks returned; updates `car.total_trips` and `car.is_available`.
+3. `POST /reservations/<id>/return/` — Marks returned; fires RETURNED observer event.
 
 All booking views require `@login_required`. Users can only access their own reservations.
 
 ### URL Layout
 
-Root `urls.py` includes both `users.urls` and `booking.urls` under `''`. No conflicts because each app owns non-overlapping prefixes (`login/`, `register/` vs. `cars/`, `reservations/`).
+Root `urls.py` includes both `users.urls` and `booking.urls` under `''`. No conflicts because each app owns non-overlapping prefixes.
 
 ### Data Seeding
 
-`booking/management/commands/seed_cars.py` reads CSV columns (`vehicle.make`, `vehicle.model`, `vehicle.year`, `fuelType`, `vehicle.type`, `daily_rate`, `is_available`, `rating`, `reviewCount`, `renterTripsTaken`) and uses `get_or_create` to avoid duplicates. Datasets at `dataset/`.
+`booking/management/commands/seed_cars.py` reads CSV columns and uses `get_or_create` to avoid duplicates. `seed_bikes` and `seed_scooters` use hardcoded fleets. Datasets at `dataset/`.
 
-## GOF Design Patterns (Phase 3)
+## GOF Design Patterns (Phase 3) — All Implemented
 
-These patterns are specified in the design doc and must be reflected in implementation:
+1. **Strategy** (`booking/pricing.py`) — `PricingStrategy` ABC with `StandardPricing`, `WeekendPricing`, `SurgePricing`. `reserve_vehicle` view selects the active strategy at runtime.
+2. **Factory** (`booking/factories.py`) — `VehicleFactory` with `ProviderFactoryA`/`ProviderFactoryB` abstracts vehicle instantiation.
+3. **State** (`booking/states.py`) — `VehicleState` ABC with `AvailableState`, `ReservedState`, `InUseState`, `MaintenanceState`. `Vehicle` delegates state transitions instead of using conditionals.
+4. **Observer** (`booking/observers.py`) — `Subject`/`Observer` ABCs. `Vehicle._notify_observers()` fires MAINTENANCE / AVAILABLE / RETURNED events to `UserNotifier`, `AdminDashboard`, `RecommendationService`. Creates `Notification` records with optional reservation FK for deep-linking.
+5. **Adapter** (`booking/adapters.py`) — `TransitFacade` aggregates `GTFSAdapter` and `CityAPIAdapter` so views talk to a unified `PublicTransportService` interface.
 
-1. **Strategy** — `PricingStrategy` interface with `StandardPricing`, `WeekendPricing`, `SurgePricing`. `Trip`/`Reservation` delegates fare calculation to the selected strategy at runtime.
-2. **Factory** — `VehicleFactory` (and provider-specific `ProviderFactoryA/B`) abstracts vehicle instantiation away from `MobilityProvider`.
-3. **State** — `VehicleState` interface with `AvailableState`, `ReservedState`, `InUseState`, `MaintenanceState`. `Vehicle` delegates `reserve()`, `startUsage()`, etc. to its current state object instead of using conditionals on a status field.
-4. **Observer** — `Subject`/`Observer` interfaces. `VehicleSubject` and `ParkingSpotSubject` notify `UserNotifier`, `AdminDashboard`, `RecommendationService` on state changes.
-5. **Adapter** — `TransitFacade` aggregates `TransitProvider` adapters (`GTFSAdapter`, `CityAPIAdapter`) so `PublicTransportService` talks to a unified interface regardless of external API format.
+### Pure Fabrication
 
-## Sprint 3 Remaining TODOs
+**`booking/sustainability.py`** — stateless service for gamification. No new model fields; all computed from existing `Reservation` data:
+- `reliability_score(user)` — (returned / total non-pending) × 100
+- `co2_saved_kg(vehicle, days)` — CO₂ saved vs gasoline baseline per rental
+- `total_co2_saved(user)` — aggregate across all completed rentals
+- `loyalty_discount(score)` — returns `(rate, label)` based on score tiers
+- `apply_discount(amount, score)` — applies discount rate to a price
 
-From the doc (see GitHub issues):
-- Navigation to External Services (#12) — Parking and Public Transit pages must be navigable even if backed by stub/abstracted services
-- Analytics (#13) — at least one rental analytic and one gateway analytic working
-- Gamification — Carbon Footprint per Rental, Vehicle Return Points, Rewards/Discounts
+### Notification System
+
+`Notification` model: `user`, `vehicle` (nullable FK), `reservation` (nullable FK), `message`, `event_type`, `is_read`, `created_at`.
+
+Context processor (`booking/context_processors.py`) injects `unread_notifications` count into every template. Navbar shows a bell icon with badge. Notifications page marks all as read; each notification links to its reservation if the FK is set.
 
 ## Dependencies
 
@@ -94,8 +107,8 @@ From the doc (see GitHub issues):
 - `django-phonenumber-field` — phone number input/validation
 - `django-address` — structured address field on `User`
 
-Install: `pip install -r requirements.txt`
+Install: `pip install -r requirements.txt` (from repo root)
 
 ## Database
 
-SQLite3 (`src/Rentals-root/db.sqlite3`). For schema changes always run `makemigrations` then `migrate`.
+SQLite3 (`src/Rentals-root/db.sqlite3`) — not committed to git. For schema changes always run `makemigrations` then `migrate`.

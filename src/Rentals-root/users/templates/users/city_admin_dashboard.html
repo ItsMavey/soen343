@@ -14,10 +14,12 @@
         .dash-card-desc { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 1.2rem; }
         .btn-card-action { display: inline-flex; align-items: center; padding: 0.55rem 1.2rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; border: none; border-radius: 2px; cursor: pointer; transition: var(--transition-base); }
         .btn-card-action:hover { background: var(--color-accent-hover); color: #0d0d0d; }
-        .btn-card-ghost { display: inline-flex; align-items: center; padding: 0.55rem 1.2rem; background: transparent; color: var(--color-text-secondary); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--color-border); border-radius: 2px; transition: var(--transition-base); }
-        .btn-card-ghost:hover { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
-        .coming-soon { display: inline-block; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 2px; background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); margin-left: 0.5rem; }
         .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin: 2rem 0 1rem; }
+        .stat-tile { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.2rem 1.5rem; }
+        .stat-val { font-size: 2.2rem; font-weight: 600; color: var(--color-accent); line-height: 1; }
+        .stat-val.green { color: #4ade80; }
+        .stat-val.blue  { color: #60a5fa; }
+        .stat-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-top: 0.3rem; }
         .activity-feed { display: flex; flex-direction: column; gap: 0.5rem; }
         .activity-item { display: flex; align-items: flex-start; gap: 0.9rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.75rem 1rem; }
         .activity-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 0.35rem; }
@@ -28,6 +30,12 @@
         .activity-msg  { font-size: 0.88rem; color: var(--color-text-primary); }
         .activity-time { font-size: 0.72rem; color: var(--color-text-secondary); margin-top: 0.15rem; }
         .empty-activity { font-size: 0.85rem; color: var(--color-text-secondary); padding: 1rem 0; }
+        .city-table { width: 100%; border-collapse: collapse; }
+        .city-table th { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.7rem 1rem; border-bottom: 1px solid var(--color-border); text-align: left; font-weight: 600; }
+        .city-table td { padding: 0.7rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
+        .city-table tr:last-child td { border-bottom: none; }
+        .bar-wrap { background: rgba(255,255,255,0.06); border-radius: 2px; height: 5px; margin-top: 0.4rem; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--color-accent); border-radius: 2px; }
 {% endblock %}
 
 {% block content %}
@@ -36,14 +44,37 @@
         <p class="page-title">City Admin Dashboard</p>
         <p class="page-subtitle">Platform-wide monitoring and service management</p>
 
-        <div class="row g-4">
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="dash-card">
-                    <div class="dash-card-title">Traffic Monitoring <span class="coming-soon">Sprint 3</span></div>
-                    <div class="dash-card-desc">Real-time overview of vehicle activity, hotspots, and congestion across the city.</div>
-                    <span class="btn-card-ghost">Coming Soon</span>
+        <!-- Quick stat tiles -->
+        <div class="section-label">Live Overview</div>
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-tile">
+                    <div class="stat-val">{{ total_users }}</div>
+                    <div class="stat-label">Registered Users</div>
                 </div>
             </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-tile">
+                    <div class="stat-val blue">{{ active_rentals }}</div>
+                    <div class="stat-label">Active Rentals</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-tile">
+                    <div class="stat-val green">{{ trips_today }}</div>
+                    <div class="stat-label">Trips Completed Today</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-tile">
+                    <div class="stat-val">{{ scooters_available }}</div>
+                    <div class="stat-label">Scooters Available</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation cards -->
+        <div class="row g-4 mb-2">
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="dash-card">
                     <div class="dash-card-title">Rental Analytics</div>
@@ -56,6 +87,53 @@
             </div>
         </div>
 
+        <!-- Usage by mobility type -->
+        {% if kind_totals %}
+        <div class="section-label">Usage by Mobility Type</div>
+        {% with max_count=kind_totals.0.count %}
+        <div class="row g-3 mb-4">
+            {% for row in kind_totals %}
+            <div class="col-12 col-md-4">
+                <div class="stat-tile">
+                    <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:0.3rem">{{ row.kind }}</div>
+                    <div class="stat-val" style="font-size:1.6rem">{{ row.count }}</div>
+                    <div class="stat-label">total reservations</div>
+                    <div class="bar-wrap" style="margin-top:0.6rem">
+                        {% if max_count > 0 %}
+                        <div class="bar-fill" style="width:{% widthratio row.count max_count 100 %}%"></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endwith %}
+        {% endif %}
+
+        <!-- Active rentals by city -->
+        {% if by_city %}
+        <div class="section-label">Active Rentals by City</div>
+        <div style="background:linear-gradient(180deg,var(--color-surface-raised),var(--color-surface));border:1px solid var(--color-border);border-radius:6px;overflow:hidden;margin-bottom:2rem">
+            <table class="city-table">
+                <thead>
+                    <tr>
+                        <th>City</th>
+                        <th>Active Rentals</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in by_city %}
+                    <tr>
+                        <td>{{ row.city_label }}</td>
+                        <td style="color:var(--color-accent);font-weight:500">{{ row.cnt }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Recent activity feed -->
         <div class="section-label">Recent Activity</div>
         <div class="activity-feed">
             {% for n in recent_activity %}

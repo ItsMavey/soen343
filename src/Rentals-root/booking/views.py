@@ -41,6 +41,7 @@ def vehicle_list(request):
     if form.is_valid():
         query = form.cleaned_data.get("query")
         vehicle_kind = form.cleaned_data.get("vehicle_kind")
+        city = form.cleaned_data.get("city")
         fuel_type = form.cleaned_data.get("fuel_type")
         min_rate = form.cleaned_data.get("min_rate")
         max_rate = form.cleaned_data.get("max_rate")
@@ -49,6 +50,8 @@ def vehicle_list(request):
             vehicles = vehicles.filter(Q(make__icontains=query) | Q(model__icontains=query))
         if vehicle_kind:
             vehicles = vehicles.filter(vehicle_kind=vehicle_kind)
+        if city:
+            vehicles = vehicles.filter(city=city)
         if fuel_type:
             vehicles = vehicles.filter(car__fuel_type__iexact=fuel_type)
         if min_rate is not None:
@@ -266,6 +269,7 @@ def provider_add_vehicle(request):
             "owner": request.user,
             "provider": request.user.username,
         }
+        city = form.cleaned_data.get("city", Vehicle.CITY_MTL)
         if kind == Vehicle.KIND_CAR:
             factory.create_car(
                 fuel_type=form.cleaned_data.get("fuel_type", "GASOLINE"),
@@ -284,6 +288,9 @@ def provider_add_vehicle(request):
                 is_electric=form.cleaned_data.get("is_electric", False),
                 **common,
             )
+        # Set city on the newly created vehicle
+        from booking.models import Vehicle as V
+        V.objects.filter(make=common["make"], model=common["model"], year=common["year"], owner=request.user).update(city=city)
         messages.success(request, "Vehicle added to your fleet.")
         return redirect("provider_fleet")
 
@@ -305,6 +312,7 @@ def provider_edit_vehicle(request, vehicle_id):
         "model": vehicle.model,
         "year": vehicle.year,
         "daily_rate": vehicle.daily_rate,
+        "city": vehicle.city,
     }
     if vehicle.vehicle_kind == Vehicle.KIND_CAR:
         initial.update({"fuel_type": subtype.fuel_type, "body_style": subtype.body_style})
@@ -319,7 +327,8 @@ def provider_edit_vehicle(request, vehicle_id):
         vehicle.model = form.cleaned_data["model"]
         vehicle.year = form.cleaned_data["year"]
         vehicle.daily_rate = form.cleaned_data["daily_rate"]
-        vehicle.save(update_fields=["make", "model", "year", "daily_rate"])
+        vehicle.city = form.cleaned_data.get("city", vehicle.city)
+        vehicle.save(update_fields=["make", "model", "year", "daily_rate", "city"])
 
         if vehicle.vehicle_kind == Vehicle.KIND_CAR:
             subtype.fuel_type = form.cleaned_data.get("fuel_type", subtype.fuel_type)

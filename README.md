@@ -1,10 +1,7 @@
 <div align="center">
-  <a href="https://github.com/ItsMavey/soen343">
-    <img src=".github/assets/logo.png" alt="Logo" width="200" height="200">
-  </a>
 
   <h3 align="center">TABAC DRIVE</h3>
-  <p align="center">Smart Urban Mobility Management System — SOEN 343 Term Project</p>
+  <p align="center">Smart Urban Mobility Management System — SOEN 343</p>
 </div>
 
 ---

@@ -3,6 +3,9 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 
 from booking.factories import ProviderFactoryB
+from booking.models import Vehicle
+
+_CITIES = [c[0] for c in Vehicle.CITY_CHOICES]
 
 SCOOTERS = [
     {"make": "Vespa", "model": "Primavera 50", "year": 2023, "engine_cc": 50, "is_electric": False, "daily_rate": "35.00"},
@@ -28,7 +31,7 @@ class Command(BaseCommand):
         for data in SCOOTERS:
             if Scooter.objects.filter(make=data["make"], model=data["model"], year=data["year"]).exists():
                 continue
-            factory.create_scooter(
+            scooter = factory.create_scooter(
                 make=data["make"],
                 model=data["model"],
                 year=data["year"],
@@ -39,5 +42,7 @@ class Command(BaseCommand):
                 review_count=created * 2,
                 total_trips=created * 4,
             )
+            scooter.city = _CITIES[created % len(_CITIES)]
+            scooter.save(update_fields=["city"])
             created += 1
         self.stdout.write(self.style.SUCCESS(f"Seeded {created} scooters."))

@@ -4,7 +4,9 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 
 from booking.factories import ProviderFactoryA
-from booking.models import Car
+from booking.models import Car, Vehicle
+
+_CITIES = [c[0] for c in Vehicle.CITY_CHOICES]
 
 
 class Command(BaseCommand):
@@ -40,7 +42,7 @@ class Command(BaseCommand):
                 if Car.objects.filter(make=make, model=model, year=year).exists():
                     continue
 
-                factory.create_car(
+                car = factory.create_car(
                     make=make,
                     model=model,
                     year=year,
@@ -51,6 +53,8 @@ class Command(BaseCommand):
                     review_count=safe_int(row.get("reviewCount")),
                     total_trips=safe_int(row.get("renterTripsTaken")),
                 )
+                car.city = _CITIES[created % len(_CITIES)]
+                car.save(update_fields=["city"])
                 created += 1
 
         self.stdout.write(self.style.SUCCESS(f"Seeded {created} cars."))
