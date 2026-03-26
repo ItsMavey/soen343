@@ -139,9 +139,11 @@ def city_admin_dashboard(request):
             "city": city_labels.get(r.vehicle.city, r.vehicle.city),
             "start": r.start_date,
             "end": r.end_date,
+            "overdue": r.end_date < today,
         }
         for r in active_qs.order_by("-created_at")[:50]
     ]
+    overdue_active = sum(1 for r in active_list if r["overdue"])
 
     # --- Detail: trips completed today ---
     trips_today_list = [
@@ -194,6 +196,7 @@ def city_admin_dashboard(request):
         "trips_today_list": trips_today_list,
         "parking_by_city": parking_by_city,
         "by_city": by_city,
+        "overdue_active": overdue_active,
     })
 
 

@@ -205,8 +205,10 @@ def return_vehicle(request, reservation_id):
 
 @login_required
 def my_reservations(request):
-    reservations = Reservation.objects.filter(user=request.user).select_related("vehicle")
-    return render(request, "booking/my_reservations.html", {"reservations": reservations})
+    import datetime
+    reservations = Reservation.objects.filter(user=request.user).select_related("vehicle").order_by("-created_at")
+    today = datetime.date.today()
+    return render(request, "booking/my_reservations.html", {"reservations": reservations, "today": today})
 
 
 @login_required
@@ -244,11 +246,24 @@ def _require_provider(request):
 
 @login_required
 def provider_fleet(request):
+    import datetime
     guard = _require_provider(request)
     if guard:
         return guard
+    today = datetime.date.today()
     vehicles = Vehicle.objects.filter(owner=request.user).order_by("make", "model")
-    return render(request, "booking/provider_fleet.html", {"vehicles": vehicles})
+    # Annotate each vehicle with its overdue active reservation (if any)
+    overdue_vehicle_ids = set(
+        Reservation.objects.filter(
+            vehicle__owner=request.user,
+            status=Reservation.STATUS_CONFIRMED,
+            end_date__lt=today,
+        ).values_list("vehicle_id", flat=True)
+    )
+    for v in vehicles:
+        v.is_overdue = v.id in overdue_vehicle_ids
+    overdue_count = len(overdue_vehicle_ids)
+    return render(request, "booking/provider_fleet.html", {"vehicles": vehicles, "overdue_count": overdue_count, "today": today})
 
 
 @login_required

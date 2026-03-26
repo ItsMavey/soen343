@@ -84,6 +84,7 @@
                 <div class="stat-tile" onclick="togglePanel('panel-rentals', this)">
                     <div class="stat-val blue">{{ active_rentals }}</div>
                     <div class="stat-label">Active Rentals</div>
+                    {% if overdue_active %}<div style="font-size:0.72rem;color:#f87171;margin-top:0.4rem">{{ overdue_active }} overdue</div>{% endif %}
                     <div class="tile-hint">Click to view &amp; filter by city</div>
                 </div>
             </div>
@@ -171,15 +172,17 @@
             </div>
             {% if active_list %}
             <table class="detail-table">
-                <thead><tr><th>User</th><th>Vehicle</th><th>City</th><th>Start</th><th>End</th></tr></thead>
+                <thead><tr><th>User</th><th>Vehicle</th><th>City</th><th>Start</th><th>Due Back</th></tr></thead>
                 <tbody>
                     {% for r in active_list %}
-                    <tr>
+                    <tr {% if r.overdue %}style="background:rgba(239,68,68,0.05)"{% endif %}>
                         <td>{{ r.user }}</td>
                         <td>{{ r.vehicle }}</td>
                         <td style="color:var(--color-text-secondary)">{{ r.city }}</td>
                         <td style="color:var(--color-text-secondary);font-size:0.8rem">{{ r.start }}</td>
-                        <td style="color:var(--color-text-secondary);font-size:0.8rem">{{ r.end }}</td>
+                        <td style="font-size:0.8rem{% if r.overdue %};color:#f87171;font-weight:600{% else %};color:var(--color-text-secondary){% endif %}">
+                            {{ r.end }}{% if r.overdue %} — Overdue{% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
