@@ -1,6 +1,6 @@
 <div align="center">
-  <h3 align="center">TABAC DRIVE</h3>
-  <p align="center">Smart Urban Mobility Management System — SOEN 343 Phase III</p>
+  <h3 align="center">Team TABAC</h3>
+  <p align="center">Smart Urban Mobility Management System — SOEN 343</p>
 </div>
 
 ---
@@ -32,9 +32,9 @@ TABAC DRIVE is a Django-based urban mobility platform that unites private vehicl
 **Phase 3 implemented features:**
 - Complete rental lifecycle: search → reserve → payment (simulated) → return
 - Role-based dashboards with analytics
-- Overdue detection and notification system
 - External services: parking (city-filtered, time-varying occupancy) and public transit (live stop data from OpenStreetMap via Overpass API)
 - Loyalty/gamification: reliability score, CO₂ savings, tiered discounts
+- Overdue detection and notification system
 - 31 unit tests covering all GOF patterns and sustainability module
 
 ---
