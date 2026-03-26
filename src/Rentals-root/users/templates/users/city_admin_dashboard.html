@@ -8,18 +8,45 @@
         .page-wrap { padding: 3rem 0 5rem; }
         .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
         .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin: 2rem 0 1rem; }
+        /* Tiles */
+        .stat-tile { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.2rem 1.5rem; cursor: pointer; transition: var(--transition-base); user-select: none; }
+        .stat-tile:hover { border-color: rgba(255,107,26,0.35); }
+        .stat-tile.active { border-color: rgba(255,107,26,0.5); background: linear-gradient(180deg, rgba(255,107,26,0.06), var(--color-surface)); }
+        .stat-val { font-size: 2.2rem; font-weight: 600; color: var(--color-accent); line-height: 1; }
+        .stat-val.green { color: #4ade80; }
+        .stat-val.blue  { color: #60a5fa; }
+        .stat-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-top: 0.3rem; }
+        .tile-hint { font-size: 0.68rem; color: var(--color-text-secondary); margin-top: 0.6rem; opacity: 0.6; }
+        /* Detail panels */
+        .detail-panel { display: none; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.4rem 1.6rem; margin-top: 0.75rem; }
+        .detail-panel.open { display: block; }
+        .detail-title { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 1rem; }
+        /* Tables */
+        .detail-table { width: 100%; border-collapse: collapse; }
+        .detail-table th { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--color-border); text-align: left; font-weight: 600; }
+        .detail-table td { padding: 0.65rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; }
+        .detail-table tr:last-child td { border-bottom: none; }
+        .empty-note { color: var(--color-text-secondary); font-size: 0.85rem; padding: 0.5rem 0; }
+        /* Comparison bars */
+        .cmp-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.9rem; }
+        .cmp-label { font-size: 0.8rem; min-width: 70px; color: var(--color-text-secondary); }
+        .cmp-bar-wrap { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 8px; overflow: hidden; }
+        .cmp-bar { height: 100%; border-radius: 3px; }
+        .cmp-count { font-size: 0.85rem; font-weight: 600; color: var(--color-accent); min-width: 30px; text-align: right; }
+        /* Parking bars */
+        .park-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 2px; height: 5px; margin-top: 0.35rem; overflow: hidden; }
+        .park-bar { height: 100%; border-radius: 2px; }
+        /* City filter */
+        .city-filter-select { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: 3px; color: var(--color-text-primary); padding: 0.35rem 0.7rem; font-size: 0.8rem; cursor: pointer; }
+        /* Nav cards */
         .dash-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.8rem; transition: var(--transition-base); }
         .dash-card:hover { border-color: rgba(255,107,26,0.2); }
         .dash-card-title { font-size: 1.2rem; font-weight: 300; margin-bottom: 0.4rem; }
         .dash-card-desc { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 1.2rem; }
         .btn-card-action { display: inline-flex; align-items: center; padding: 0.55rem 1.2rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; border: none; border-radius: 2px; cursor: pointer; transition: var(--transition-base); }
         .btn-card-action:hover { background: var(--color-accent-hover); color: #0d0d0d; }
-        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin: 2rem 0 1rem; }
-        .stat-tile { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.2rem 1.5rem; }
-        .stat-val { font-size: 2.2rem; font-weight: 600; color: var(--color-accent); line-height: 1; }
-        .stat-val.green { color: #4ade80; }
-        .stat-val.blue  { color: #60a5fa; }
-        .stat-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-secondary); margin-top: 0.3rem; }
+        /* Activity feed */
         .activity-feed { display: flex; flex-direction: column; gap: 0.5rem; }
         .activity-item { display: flex; align-items: flex-start; gap: 0.9rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.75rem 1rem; }
         .activity-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 0.35rem; }
@@ -27,15 +54,10 @@
         .dot-available   { background: #4ade80; }
         .dot-returned    { background: #60a5fa; }
         .dot-default     { background: var(--color-text-secondary); }
-        .activity-msg  { font-size: 0.88rem; color: var(--color-text-primary); }
+        .activity-msg  { font-size: 0.88rem; }
         .activity-time { font-size: 0.72rem; color: var(--color-text-secondary); margin-top: 0.15rem; }
         .empty-activity { font-size: 0.85rem; color: var(--color-text-secondary); padding: 1rem 0; }
-        .city-table { width: 100%; border-collapse: collapse; }
-        .city-table th { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.7rem 1rem; border-bottom: 1px solid var(--color-border); text-align: left; font-weight: 600; }
-        .city-table td { padding: 0.7rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
-        .city-table tr:last-child td { border-bottom: none; }
-        .bar-wrap { background: rgba(255,255,255,0.06); border-radius: 2px; height: 5px; margin-top: 0.4rem; overflow: hidden; }
-        .bar-fill { height: 100%; background: var(--color-accent); border-radius: 2px; }
+        .role-badge { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 2px; background: rgba(255,107,26,0.1); color: var(--color-accent); border: 1px solid rgba(255,107,26,0.2); }
 {% endblock %}
 
 {% block content %}
@@ -44,37 +66,228 @@
         <p class="page-title">City Admin Dashboard</p>
         <p class="page-subtitle">Platform-wide monitoring and service management</p>
 
-        <!-- Quick stat tiles -->
+        <!-- Live overview tiles -->
         <div class="section-label">Live Overview</div>
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-2">
+
+            <!-- Registered Users -->
             <div class="col-6 col-md-3">
-                <div class="stat-tile">
+                <div class="stat-tile" onclick="togglePanel('panel-users', this)">
                     <div class="stat-val">{{ total_users }}</div>
                     <div class="stat-label">Registered Users</div>
+                    <div class="tile-hint">Click to view recent</div>
                 </div>
             </div>
+
+            <!-- Active Rentals -->
             <div class="col-6 col-md-3">
-                <div class="stat-tile">
+                <div class="stat-tile" onclick="togglePanel('panel-rentals', this)">
                     <div class="stat-val blue">{{ active_rentals }}</div>
                     <div class="stat-label">Active Rentals</div>
+                    <div class="tile-hint">Click to view &amp; filter by city</div>
                 </div>
             </div>
+
+            <!-- Parking Utilization -->
             <div class="col-6 col-md-3">
-                <div class="stat-tile">
+                <div class="stat-tile" onclick="togglePanel('panel-parking', this)">
+                    <div class="stat-val" style="color:#a78bfa">{{ parking_by_city|length }}</div>
+                    <div class="stat-label">Cities with Parking</div>
+                    <div class="tile-hint">Click to view utilization</div>
+                </div>
+            </div>
+
+            <!-- Trips Completed Today -->
+            <div class="col-6 col-md-3">
+                <div class="stat-tile" onclick="togglePanel('panel-trips', this)">
                     <div class="stat-val green">{{ trips_today }}</div>
                     <div class="stat-label">Trips Completed Today</div>
+                    <div class="tile-hint">Click to view latest</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="stat-tile">
-                    <div class="stat-val">{{ scooters_available }}</div>
-                    <div class="stat-label">Scooters Available</div>
+
+        </div>
+
+        <!-- Bikes vs Scooters tile (full-width) -->
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="stat-tile" onclick="togglePanel('panel-compare', this)">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="stat-label" style="margin-bottom:0.5rem">Usage Comparison — Active Rentals</div>
+                            <div class="d-flex gap-4">
+                                <div>
+                                    <span class="stat-val" style="font-size:1.8rem">{{ bikes_rented }}</span>
+                                    <span style="font-size:0.78rem;color:var(--color-text-secondary);margin-left:0.4rem">Bikes rented</span>
+                                </div>
+                                <div style="color:var(--color-border)">|</div>
+                                <div>
+                                    <span class="stat-val" style="font-size:1.8rem;color:#60a5fa">{{ scooters_rented }}</span>
+                                    <span style="font-size:0.78rem;color:var(--color-text-secondary);margin-left:0.4rem">Scooters rented</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tile-hint" style="margin-top:0.5rem">Click to see breakdown by city</div>
                 </div>
             </div>
         </div>
 
+        <!-- Detail: Registered Users -->
+        <div id="panel-users" class="detail-panel">
+            <div class="detail-title">10 Most Recent Users</div>
+            {% if recent_users %}
+            <table class="detail-table">
+                <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+                <tbody>
+                    {% for u in recent_users %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td style="color:var(--color-text-secondary)">{{ u.email }}</td>
+                        <td><span class="role-badge">{{ u.role_label }}</span></td>
+                        <td style="color:var(--color-text-secondary);font-size:0.8rem">{{ u.date_joined|date:"M d, Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-note">No users yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Detail: Active Rentals -->
+        <div id="panel-rentals" class="detail-panel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="detail-title" style="margin-bottom:0">Active Rentals</div>
+                <form method="get" style="display:inline">
+                    <select name="city_filter" class="city-filter-select" onchange="this.form.submit()">
+                        <option value="">All Cities</option>
+                        {% for code, label in city_choices %}
+                        <option value="{{ code }}" {% if city_filter == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="hidden" name="open" value="rentals">
+                </form>
+            </div>
+            {% if active_list %}
+            <table class="detail-table">
+                <thead><tr><th>User</th><th>Vehicle</th><th>City</th><th>Start</th><th>End</th></tr></thead>
+                <tbody>
+                    {% for r in active_list %}
+                    <tr>
+                        <td>{{ r.user }}</td>
+                        <td>{{ r.vehicle }}</td>
+                        <td style="color:var(--color-text-secondary)">{{ r.city }}</td>
+                        <td style="color:var(--color-text-secondary);font-size:0.8rem">{{ r.start }}</td>
+                        <td style="color:var(--color-text-secondary);font-size:0.8rem">{{ r.end }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-note">No active rentals{% if city_filter %} in this city{% endif %}.</p>
+            {% endif %}
+        </div>
+
+        <!-- Detail: Parking Utilization by City -->
+        <div id="panel-parking" class="detail-panel">
+            <div class="detail-title">Parking Utilization by City</div>
+            {% if parking_by_city %}
+            <table class="detail-table">
+                <thead><tr><th>City</th><th>Total Spots</th><th>Available</th><th>Occupancy</th></tr></thead>
+                <tbody>
+                    {% for cp in parking_by_city %}
+                    <tr>
+                        <td>{{ cp.city_label }}</td>
+                        <td style="color:var(--color-text-secondary)">{{ cp.total }}</td>
+                        <td style="color:#4ade80">{{ cp.available }}</td>
+                        <td style="min-width:120px">
+                            <div style="font-size:0.8rem;margin-bottom:0.3rem">{{ cp.occupancy_pct }}%</div>
+                            <div class="park-bar-wrap">
+                                <div class="park-bar" style="width:{{ cp.occupancy_pct }}%;background:{% if cp.occupancy_pct >= 90 %}#f87171{% elif cp.occupancy_pct >= 60 %}#fbbf24{% else %}#4ade80{% endif %}"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p style="font-size:0.72rem;color:var(--color-text-secondary);margin-top:0.8rem">Data sourced via ParkingService stub — in production this connects to a live city parking API.</p>
+            {% else %}
+            <p class="empty-note">No parking data available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Detail: Trips Completed Today -->
+        <div id="panel-trips" class="detail-panel">
+            <div class="detail-title">Trips Completed Today</div>
+            {% if trips_today_list %}
+            <table class="detail-table">
+                <thead><tr><th>User</th><th>Vehicle</th><th>City</th><th>Returned At</th></tr></thead>
+                <tbody>
+                    {% for t in trips_today_list %}
+                    <tr>
+                        <td>{{ t.user }}</td>
+                        <td>{{ t.vehicle }}</td>
+                        <td style="color:var(--color-text-secondary)">{{ t.city }}</td>
+                        <td style="color:var(--color-text-secondary);font-size:0.8rem">{{ t.returned_at|date:"H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-note">No trips completed today yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Detail: Bikes vs Scooters by city -->
+        <div id="panel-compare" class="detail-panel">
+            <div class="detail-title">Active Rentals — Bikes vs Scooters by City</div>
+            {% with total=bikes_rented|add:scooters_rented %}
+            {% if total > 0 %}
+            <div class="row g-4">
+                <div class="col-12 col-md-5">
+                    <div style="margin-bottom:1.2rem">
+                        <div class="cmp-row">
+                            <div class="cmp-label">Bikes</div>
+                            <div class="cmp-bar-wrap">
+                                <div class="cmp-bar" style="width:{% if total > 0 %}{% widthratio bikes_rented total 100 %}{% else %}0{% endif %}%;background:var(--color-accent)"></div>
+                            </div>
+                            <div class="cmp-count">{{ bikes_rented }}</div>
+                        </div>
+                        <div class="cmp-row">
+                            <div class="cmp-label">Scooters</div>
+                            <div class="cmp-bar-wrap">
+                                <div class="cmp-bar" style="width:{% if total > 0 %}{% widthratio scooters_rented total 100 %}{% else %}0{% endif %}%;background:#60a5fa"></div>
+                            </div>
+                            <div class="cmp-count" style="color:#60a5fa">{{ scooters_rented }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-7">
+                    {% if by_city %}
+                    <table class="detail-table">
+                        <thead><tr><th>City</th><th>Active Rentals</th></tr></thead>
+                        <tbody>
+                            {% for row in by_city %}
+                            <tr>
+                                <td>{{ row.city_label }}</td>
+                                <td style="color:var(--color-accent);font-weight:500">{{ row.cnt }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <p class="empty-note">No active bike or scooter rentals right now.</p>
+            {% endif %}
+            {% endwith %}
+        </div>
+
         <!-- Navigation cards -->
-        <div class="row g-4 mb-2">
+        <div class="section-label">Analytics</div>
+        <div class="row g-4 mb-4">
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="dash-card">
                     <div class="dash-card-title">Rental Analytics</div>
@@ -86,52 +299,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Usage by mobility type -->
-        {% if kind_totals %}
-        <div class="section-label">Usage by Mobility Type</div>
-        {% with max_count=kind_totals.0.count %}
-        <div class="row g-3 mb-4">
-            {% for row in kind_totals %}
-            <div class="col-12 col-md-4">
-                <div class="stat-tile">
-                    <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:0.3rem">{{ row.kind }}</div>
-                    <div class="stat-val" style="font-size:1.6rem">{{ row.count }}</div>
-                    <div class="stat-label">total reservations</div>
-                    <div class="bar-wrap" style="margin-top:0.6rem">
-                        {% if max_count > 0 %}
-                        <div class="bar-fill" style="width:{% widthratio row.count max_count 100 %}%"></div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endwith %}
-        {% endif %}
-
-        <!-- Active rentals by city -->
-        {% if by_city %}
-        <div class="section-label">Active Rentals by City</div>
-        <div style="background:linear-gradient(180deg,var(--color-surface-raised),var(--color-surface));border:1px solid var(--color-border);border-radius:6px;overflow:hidden;margin-bottom:2rem">
-            <table class="city-table">
-                <thead>
-                    <tr>
-                        <th>City</th>
-                        <th>Active Rentals</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in by_city %}
-                    <tr>
-                        <td>{{ row.city_label }}</td>
-                        <td style="color:var(--color-accent);font-weight:500">{{ row.cnt }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
 
         <!-- Recent activity feed -->
         <div class="section-label">Recent Activity</div>
@@ -155,4 +322,45 @@
 
     </div>
 </div>
+
+<script>
+function togglePanel(id, tile) {
+    var panel = document.getElementById(id);
+    var isOpen = panel.classList.contains('open');
+    // Close all panels and deactivate all tiles
+    document.querySelectorAll('.detail-panel').forEach(function(p) { p.classList.remove('open'); });
+    document.querySelectorAll('.stat-tile').forEach(function(t) { t.classList.remove('active'); });
+    if (!isOpen) {
+        panel.classList.add('open');
+        tile.classList.add('active');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+// If city_filter is set, re-open rentals panel on page load
+{% if city_filter %}
+(function() {
+    var panel = document.getElementById('panel-rentals');
+    var tile = panel.previousElementSibling;
+    panel.classList.add('open');
+    // find the active rentals tile
+    document.querySelectorAll('.stat-tile').forEach(function(t) {
+        if (t.getAttribute('onclick') && t.getAttribute('onclick').includes('panel-rentals')) {
+            t.classList.add('active');
+        }
+    });
+})();
+{% endif %}
+
+{% if request.GET.open == 'rentals' %}
+(function() {
+    document.getElementById('panel-rentals').classList.add('open');
+    document.querySelectorAll('.stat-tile').forEach(function(t) {
+        if (t.getAttribute('onclick') && t.getAttribute('onclick').includes('panel-rentals')) {
+            t.classList.add('active');
+        }
+    });
+})();
+{% endif %}
+</script>
 {% endblock %}
