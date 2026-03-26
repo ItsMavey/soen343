@@ -11,4 +11,5 @@ urlpatterns = [
     path("commuter/", views.commuter_dashboard, name="commuter_dashboard"),
     path("provider/", views.provider_dashboard, name="provider_dashboard"),
     path("city-admin/", views.city_admin_dashboard, name="city_admin_dashboard"),
+    path("settings/", views.profile_settings, name="profile_settings"),
 ]

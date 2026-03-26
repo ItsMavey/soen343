@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | TABAC DRIVE{% endblock %}
+
+{% block extra_style %}
+        .page-wrap { padding: 3rem 0 5rem; }
+        .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
+        .settings-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 2rem; max-width: 560px; }
+        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin: 0 0 1.2rem; }
+        .field { margin-bottom: 1.2rem; }
+        .field label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); margin-bottom: 0.45rem; }
+        .field input, .field select { width: 100%; border: 1px solid var(--color-border); background: #141414; color: var(--color-text-primary); border-radius: 4px; padding: 0.72rem 0.8rem; font-family: inherit; font-size: 0.95rem; }
+        .field input:focus, .field select:focus { outline: none; border-color: rgba(255,107,26,0.5); box-shadow: 0 0 0 3px rgba(255,107,26,0.1); }
+        select option { background: #1c1c1c; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .divider { border: none; border-top: 1px solid var(--color-border); margin: 1.5rem 0; }
+        .btn-save { padding: 0.7rem 2rem; background: var(--color-accent); color: #0d0d0d; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; border: none; border-radius: 2px; cursor: pointer; font-family: inherit; }
+        .btn-save:hover { background: var(--color-accent-hover); }
+        .meta-row { font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 0.5rem; }
+        .meta-val { color: var(--color-text-primary); }
+        .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+        .back-link:hover { color: var(--color-accent); }
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="container">
+        <a href="{% url 'role_dashboard' %}" class="back-link">&larr; Dashboard</a>
+        <p class="page-title">Settings</p>
+        <p class="page-subtitle">Manage your profile and mobility preferences</p>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:4px;padding:0.75rem 1rem;margin-bottom:1.5rem;font-size:0.85rem;color:#4ade80;max-width:560px">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="settings-card">
+            <!-- Read-only account info -->
+            <div class="section-label">Account</div>
+            <div class="meta-row">Username &nbsp;·&nbsp; <span class="meta-val">{{ user.username }}</span></div>
+            <div class="meta-row">Email &nbsp;·&nbsp; <span class="meta-val">{{ user.email }}</span></div>
+            <div class="meta-row">Role &nbsp;·&nbsp; <span class="meta-val">{{ user.get_role_display }}</span></div>
+
+            <hr class="divider">
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="section-label">Profile</div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" value="{{ user.first_name }}" placeholder="First name">
+                    </div>
+                    <div class="field">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" value="{{ user.last_name }}" placeholder="Last name">
+                    </div>
+                </div>
+
+                {% if user.is_commuter %}
+                <hr class="divider">
+                <div class="section-label">Mobility Preferences</div>
+                <div class="field">
+                    <label>Preferred City</label>
+                    <select name="preferred_city">
+                        <option value="">No preference</option>
+                        {% for code, label in user.CITY_CHOICES %}
+                        <option value="{{ code }}" {% if user.preferred_city == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Preferred Mobility Type</label>
+                    <select name="preferred_mobility_type">
+                        <option value="">No preference</option>
+                        {% for code, label in user.MOBILITY_CHOICES %}
+                        <option value="{{ code }}" {% if user.preferred_mobility_type == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn-save">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

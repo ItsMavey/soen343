@@ -1,6 +1,7 @@
 from functools import wraps
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -198,6 +199,24 @@ def city_admin_dashboard(request):
         "by_city": by_city,
         "overdue_active": overdue_active,
     })
+
+
+@login_required
+def profile_settings(request):
+    user = request.user
+    if request.method == "POST":
+        user.preferred_city = request.POST.get("preferred_city", "")
+        user.preferred_mobility_type = request.POST.get("preferred_mobility_type", "")
+        first_name = request.POST.get("first_name", "").strip()
+        last_name = request.POST.get("last_name", "").strip()
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+        user.save(update_fields=["preferred_city", "preferred_mobility_type", "first_name", "last_name"])
+        messages.success(request, "Settings saved.")
+        return redirect("profile_settings")
+    return render(request, "users/profile_settings.html", {"user": user})
 
 
 class RegisterView(CreateView):

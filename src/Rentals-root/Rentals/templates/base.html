@@ -158,7 +158,7 @@
                         {% endif %}
                     </a>
 
-                    <span class="nav-username d-none d-lg-block">{{ user.username }}</span>
+                    <a href="{% url 'profile_settings' %}" class="nav-username d-none d-lg-block" style="text-decoration:none;color:inherit">{{ user.username }}</a>
 
                     <form method="post" action="{% url 'logout' %}" class="m-0 p-0">
                         {% csrf_token %}

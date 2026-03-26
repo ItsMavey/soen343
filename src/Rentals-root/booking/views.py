@@ -14,7 +14,7 @@ from .forms import VehicleSearchForm, PaymentForm, ReservationForm, ProviderVehi
 from .models import Vehicle, Car, Bike, Scooter, Reservation, Notification
 from .pricing import select_strategy, SURGE_THRESHOLD
 from .sustainability import reliability_score, apply_discount, total_co2_saved, loyalty_discount
-from .services import ParkingService, TransitFacade
+from .services import ParkingService, TransitFacade, CITY_COORDS
 from .states import InvalidTransitionError
 
 
@@ -206,9 +206,10 @@ def return_vehicle(request, reservation_id):
 
 @login_required
 def my_reservations(request):
-    import datetime
-    reservations = Reservation.objects.filter(user=request.user).select_related("vehicle").order_by("-created_at")
+    reservations = list(Reservation.objects.filter(user=request.user).select_related("vehicle").order_by("-created_at"))
     today = _tz.localdate()
+    from .observers import fire_overdue_notifications
+    fire_overdue_notifications(reservations)
     return render(request, "booking/my_reservations.html", {"reservations": reservations, "today": today})
 
 
@@ -264,6 +265,14 @@ def provider_fleet(request):
     for v in vehicles:
         v.is_overdue = v.id in overdue_vehicle_ids
     overdue_count = len(overdue_vehicle_ids)
+    if overdue_vehicle_ids:
+        from .observers import fire_overdue_notifications
+        overdue_res = list(Reservation.objects.filter(
+            vehicle__owner=request.user,
+            status=Reservation.STATUS_CONFIRMED,
+            end_date__lt=today,
+        ).select_related("vehicle", "user"))
+        fire_overdue_notifications(overdue_res)
     return render(request, "booking/provider_fleet.html", {"vehicles": vehicles, "overdue_count": overdue_count, "today": today})
 
 
@@ -417,17 +426,26 @@ def provider_delete_vehicle(request, vehicle_id):
 
 @login_required
 def parking(request):
-    lots = ParkingService().get_nearby_lots()
-    return render(request, "booking/parking.html", {"lots": lots})
+    city = request.GET.get("city") or getattr(request.user, "preferred_city", "") or "MTL"
+    lots = ParkingService().get_lots(city=city)
+    city_choices = [("MTL", "Montreal"), ("LAV", "Laval"), ("LON", "Longueuil"),
+                    ("QC", "Quebec City"), ("GAT", "Gatineau"), ("SHE", "Sherbrooke")]
+    return render(request, "booking/parking.html", {
+        "lots": lots, "city": city, "city_choices": city_choices,
+    })
 
 
 @login_required
 def transit(request):
+    city = getattr(request.user, "preferred_city", "") or "MTL"
+    lat, lon = CITY_COORDS.get(city, CITY_COORDS["MTL"])
     facade = TransitFacade()
-    stops = facade.get_nearby_stops()
+    stops = facade.get_nearby_stops(lat=lat, lon=lon)
     stop_id = request.GET.get("stop_id")
     departures = facade.get_next_departures(stop_id) if stop_id else []
-    return render(request, "booking/transit.html", {"stops": stops, "departures": departures, "stop_id": stop_id})
+    return render(request, "booking/transit.html", {
+        "stops": stops, "departures": departures, "stop_id": stop_id, "city": city,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -506,8 +524,9 @@ def gateway_analytics(request):
         messages.error(request, "Access restricted to City Admins.")
         return redirect("role_dashboard")
 
-    lots = ParkingService().get_nearby_lots()
-    stops = TransitFacade().get_nearby_stops()
+    lots = ParkingService().get_lots()
+    lat, lon = CITY_COORDS["MTL"]
+    stops = TransitFacade().get_nearby_stops(lat=lat, lon=lon)
 
     total_spots = sum(lot.total_spots for lot in lots)
     available_spots = sum(lot.available_spots for lot in lots)

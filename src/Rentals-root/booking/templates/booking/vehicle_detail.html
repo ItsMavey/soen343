@@ -41,7 +41,7 @@
         <a href="{% url 'vehicle_list' %}" class="back-link d-inline-block mb-4">&larr; Back to Fleet</a>
 
         <div class="detail-card">
-            <div class="car-eyebrow">{{ vehicle.year }} &middot; {{ vehicle.get_vehicle_kind_display }}</div>
+            <div class="car-eyebrow">{{ vehicle.year }} &middot; {{ vehicle.get_vehicle_kind_display }} &middot; {{ vehicle.get_city_display }}</div>
             <h1 class="car-title">{{ vehicle.make }} {{ vehicle.model }}</h1>
 
             <div class="badge-available {% if vehicle.vehicle_status == 'MAINTENANCE' %}no{% else %}yes{% endif %}">
@@ -58,6 +58,7 @@
                 {% elif vehicle.vehicle_kind == "SCOOTER" %}
                     <div class="spec-row"><span class="spec-label">Engine</span><span>{% if subtype.is_electric %}Electric{% else %}{{ subtype.engine_cc }}cc{% endif %}</span></div>
                 {% endif %}
+                <div class="spec-row"><span class="spec-label">City</span><span>{{ vehicle.get_city_display }}</span></div>
                 <div class="spec-row"><span class="spec-label">Rating</span><span>{{ vehicle.rating }} / 5 &middot; {{ vehicle.review_count }} reviews</span></div>
                 <div class="spec-row"><span class="spec-label">Total Trips</span><span>{{ vehicle.total_trips }}</span></div>
             </div>

@@ -147,3 +147,51 @@ class RecommendationService(Observer):
                 event_type="RECOMMENDATION",
                 vehicle=vehicle,
             )
+
+
+def fire_overdue_notifications(reservations):
+    """
+    For each overdue CONFIRMED reservation (end_date < today), fire a single
+    OVERDUE notification to the renter. Idempotent — skips if already sent.
+    """
+    import datetime
+    from django.utils import timezone
+    from .models import Notification
+
+    today = timezone.localdate()
+    for r in reservations:
+        if r.status != "CONFIRMED":
+            continue
+        if r.end_date >= today:
+            continue
+        already = Notification.objects.filter(
+            reservation=r, event_type="OVERDUE"
+        ).exists()
+        if already:
+            continue
+        Notification.objects.create(
+            user=r.user,
+            vehicle=r.vehicle,
+            reservation=r,
+            message=(
+                f"Your rental of {r.vehicle.display_name()} was due back on "
+                f"{r.end_date}. Please return the vehicle as soon as possible."
+            ),
+            event_type="OVERDUE",
+        )
+        # Also notify admins via AdminDashboard observer pattern
+        from .models import Notification as N
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        for admin in User.objects.filter(role="ADMIN"):
+            if not N.objects.filter(reservation=r, event_type="OVERDUE", user=admin).exists():
+                N.objects.create(
+                    user=admin,
+                    vehicle=r.vehicle,
+                    reservation=r,
+                    message=(
+                        f"Overdue rental: {r.user.username} has not returned "
+                        f"{r.vehicle.display_name()} (due {r.end_date})."
+                    ),
+                    event_type="OVERDUE",
+                )

@@ -27,6 +27,7 @@
     <div class="container">
         <p class="page-title">Public Transit</p>
         <p class="page-subtitle">Nearby stops — select a stop to view next departures</p>
+        {% if city %}<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:1.5rem;">Showing stops near your preferred city. Update in <a href="{% url 'profile_settings' %}" style="color:var(--color-accent)">settings</a>.</p>{% endif %}
 
         <div class="section-label">Nearby Stops</div>
         <div class="d-flex flex-column gap-2 mb-4">
@@ -61,7 +62,7 @@
         <p style="color:var(--color-text-secondary);font-size:0.9rem;">No departures found for this stop.</p>
         {% endif %}
 
-        <p class="service-note">Transit data is aggregated via TransitFacade using GTFSAdapter and CityAPIAdapter (Adapter pattern). In production these would call live external transit APIs.</p>
+        <p class="service-note">Stop names are live data from OpenStreetMap via the Overpass API (GTFSAdapter + CityAPIAdapter · Adapter pattern). Departure times are time-of-day simulations — no free real-time STM API is publicly available.</p>
     </div>
 </div>
 {% endblock %}

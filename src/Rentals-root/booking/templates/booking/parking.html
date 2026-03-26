@@ -27,7 +27,16 @@
 <div class="page-wrap">
     <div class="container">
         <p class="page-title">Parking</p>
-        <p class="page-subtitle">Nearby parking lots — live availability via external parking service</p>
+        <p class="page-subtitle">Nearby parking lots — occupancy updates hourly</p>
+
+        <form method="get" class="mb-4" style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+            <select name="city" onchange="this.form.submit()" style="background:#1c1c1c;border:1px solid var(--color-border);color:var(--color-text-primary);border-radius:4px;padding:0.5rem 0.8rem;font-family:inherit;font-size:0.85rem;">
+                {% for code, label in city_choices %}
+                <option value="{{ code }}" {% if city == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <span style="font-size:0.78rem;color:var(--color-text-secondary);">{{ lots|length }} lot{{ lots|length|pluralize }} found</span>
+        </form>
 
         <div class="row g-4">
             {% for lot in lots %}
@@ -52,7 +61,7 @@
             </div>
             {% endfor %}
         </div>
-        <p class="service-note">Parking data is provided via an abstracted external parking service (ParkingService). In production this would connect to a live city parking API.</p>
+        <p class="service-note">Availability is simulated using a time-of-day occupancy model (ParkingService · Adapter pattern). No public real-time parking API exists for these Quebec cities.</p>
     </div>
 </div>
 {% endblock %}

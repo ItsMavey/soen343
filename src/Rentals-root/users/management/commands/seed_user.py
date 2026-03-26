@@ -1,64 +1,71 @@
 import csv
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from address.models import Address
-from phonenumber_field.phonenumber import PhoneNumber
+from django.contrib.auth.hashers import make_password
 
 User = get_user_model()
 
+_HASHED_PW = None  # computed once
+
+
+def _get_hashed_pw():
+    global _HASHED_PW
+    if _HASHED_PW is None:
+        _HASHED_PW = make_password("TemporaryPass123!")
+    return _HASHED_PW
+
 
 class Command(BaseCommand):
-    help = 'Seeds the database with user data from the Synthetic Person Records CSV'
+    help = "Seeds the database with user data from the Synthetic Person Records CSV"
 
     def add_arguments(self, parser):
-        parser.add_argument('csv_file', type=str, help='Path to the synthetic person CSV file')
+        parser.add_argument("csv_file", type=str, help="Path to the synthetic person CSV file")
+        parser.add_argument(
+            "--limit", type=int, default=0,
+            help="Maximum number of users to create (0 = all)",
+        )
 
     def handle(self, *args, **kwargs):
-        path = kwargs['csv_file']
+        path = kwargs["csv_file"]
+        limit = kwargs["limit"]
 
-        with open(path, 'r', encoding='utf-8-sig') as file:
-            reader = csv.DictReader(file)
+        existing_emails = set(User.objects.values_list("email", flat=True))
+        existing_usernames = set(User.objects.values_list("username", flat=True))
+
+        to_create = []
+        count = 0
+
+        with open(path, "r", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
             for row in reader:
-                # 1. Construct the raw address string from CSV columns
-                # Columns in dataset: streetnumber, street, city, postalcode
-                raw_address_str = f"{row['streetnumber']} {row['street']}, {row['city']}, {row['postalcode']}, Canada"
+                if limit and count >= limit:
+                    break
 
-                # 2. Handle AddressField (django-address)
-                # This creates or retrieves the Address object required by AddressField
-                address_obj = Address.objects.get_or_create(raw=raw_address_str)[0]
-
-                # 3. Clean Phone Number
-                # PhoneNumberField(region="CA") expects valid formats
-                raw_phone = row.get('phone', '')
-                try:
-                    # We force it to a CA-parsable format if not already E.164
-                    phone_obj = PhoneNumber.from_string(raw_phone, region="CA")
-                except Exception:
-                    phone_obj = None
-
-                # 4. Create the User
-                # Using get_or_create on username to avoid duplicates
+                email = row.get("email", "").strip().lower()
                 username = f"{row['firstname'].lower()}.{row['lastname'].lower()}.{row.get('person_id', '0')}"
 
-                email = row.get('email', '').strip().lower()
-                if User.objects.filter(email=email).exists():
+                if email in existing_emails or username in existing_usernames:
                     continue
 
-                user, created = User.objects.get_or_create(
+                existing_emails.add(email)
+                existing_usernames.add(username)
+
+                to_create.append(User(
                     username=username,
-                    defaults={
-                        'first_name': row.get('firstname'),
-                        'last_name': row.get('lastname'),
-                        'email': email,
-                        'phone_number': phone_obj,
-                        'address': address_obj,
-                        'is_active': True,
-                        'role': User.ROLE_COMMUTER,
-                    }
-                )
+                    first_name=row.get("firstname", ""),
+                    last_name=row.get("lastname", ""),
+                    email=email,
+                    password=_get_hashed_pw(),
+                    is_active=True,
+                    role=User.ROLE_COMMUTER,
+                ))
+                count += 1
 
-                if created:
-                    user.set_password('TemporaryPass123!')  # Required for AbstractUser
-                    user.save()
+        # Batch insert in chunks of 500
+        chunk = 500
+        created = 0
+        for i in range(0, len(to_create), chunk):
+            batch = User.objects.bulk_create(to_create[i:i + chunk], ignore_conflicts=True)
+            created += len(batch)
 
-        self.stdout.write(self.style.SUCCESS(f'Successfully seeded users from {path}!'))
+        self.stdout.write(self.style.SUCCESS(f"Created {created} users from {path}"))

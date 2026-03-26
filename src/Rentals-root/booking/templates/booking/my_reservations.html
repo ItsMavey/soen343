@@ -77,6 +77,11 @@
                                     {% csrf_token %}
                                     <button class="btn-sm-danger" type="submit" onclick="return confirm('Cancel this reservation?')">Cancel</button>
                                 </form>
+                            {% elif reservation.status == "CONFIRMED" %}
+                                <form method="post" action="{% url 'return_vehicle' reservation.id %}" class="m-0">
+                                    {% csrf_token %}
+                                    <button class="btn-sm-primary" type="submit" onclick="return confirm('Confirm vehicle return?')">Return Vehicle</button>
+                                </form>
                             {% endif %}
                         </div>
                     </div>
