@@ -1,4 +1,5 @@
 import datetime
+from django.utils import timezone as _tz
 import json
 from decimal import Decimal
 
@@ -19,7 +20,7 @@ from .states import InvalidTransitionError
 
 def _attach_upcoming_reservations(vehicles):
     """Attach .upcoming_reservations list to each vehicle in-place."""
-    today = datetime.date.today()
+    today = _tz.localdate()
     upcoming = Reservation.objects.filter(
         status__in=[Reservation.STATUS_PENDING, Reservation.STATUS_CONFIRMED],
         end_date__gte=today,
@@ -68,7 +69,7 @@ def vehicle_list(request):
 def vehicle_detail(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     subtype = vehicle.get_subtype()
-    today = datetime.date.today()
+    today = _tz.localdate()
     upcoming_reservations = list(
         Reservation.objects.filter(
             vehicle=vehicle,
@@ -94,7 +95,7 @@ def reserve_vehicle(request, vehicle_id):
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     form = ReservationForm(request.POST or None)
 
-    today = datetime.date.today()
+    today = _tz.localdate()
     booked = list(
         Reservation.objects.filter(
             vehicle=vehicle,
@@ -207,7 +208,7 @@ def return_vehicle(request, reservation_id):
 def my_reservations(request):
     import datetime
     reservations = Reservation.objects.filter(user=request.user).select_related("vehicle").order_by("-created_at")
-    today = datetime.date.today()
+    today = _tz.localdate()
     return render(request, "booking/my_reservations.html", {"reservations": reservations, "today": today})
 
 
@@ -250,7 +251,7 @@ def provider_fleet(request):
     guard = _require_provider(request)
     if guard:
         return guard
-    today = datetime.date.today()
+    today = _tz.localdate()
     vehicles = Vehicle.objects.filter(owner=request.user).order_by("make", "model")
     # Annotate each vehicle with its overdue active reservation (if any)
     overdue_vehicle_ids = set(

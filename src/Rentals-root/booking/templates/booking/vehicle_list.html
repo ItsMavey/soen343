@@ -113,7 +113,7 @@
                     <div class="car-card">
                         <div class="car-year">{{ vehicle.year }}</div>
                         <div class="car-name">{{ vehicle.make }} {{ vehicle.model }}</div>
-                        <div class="car-meta">{{ vehicle.get_vehicle_kind_display }}</div>
+                        <div class="car-meta">{{ vehicle.get_vehicle_kind_display }} &nbsp;·&nbsp; {{ vehicle.get_city_display }}</div>
                         <div class="car-rate">${{ vehicle.daily_rate }} <span>/ day</span></div>
                         <div class="badge-available {% if vehicle.vehicle_status == 'MAINTENANCE' %}no{% else %}yes{% endif %}">
                             {% if vehicle.vehicle_status == 'MAINTENANCE' %}Under Maintenance{% else %}Available{% endif %}

@@ -108,7 +108,7 @@ def city_admin_dashboard(request):
     from django.contrib.auth import get_user_model
     UserModel = get_user_model()
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     city_labels = dict(Vehicle.CITY_CHOICES)
 
     # --- Tile counts ---
