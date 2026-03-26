@@ -76,7 +76,7 @@ python manage.py seed_bikes
 python manage.py seed_scooters
 
 # 6. (Optional) Seed user accounts
-python manage.py seed_user ../../dataset/person_10000.csv
+python manage.py seed_user ../../dataset/person_10000.csv --limit 1000
 
 # 7. (Optional) Create a superuser
 python manage.py createsuperuser
