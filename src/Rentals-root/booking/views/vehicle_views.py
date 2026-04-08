@@ -1,14 +1,16 @@
 import json
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone as _tz
 
 from ..forms import VehicleSearchForm, ReservationForm
 from ..models import Vehicle, Reservation
-from ..pricing import select_strategy, SURGE_THRESHOLD
-from ..sustainability import reliability_score, apply_discount, loyalty_discount
+from ..pricing import SURGE_THRESHOLD
+from ..services import ReservationService
+from ..sustainability import loyalty_discount, reliability_score
 
 
 def _attach_upcoming_reservations(vehicles):
@@ -85,9 +87,6 @@ def vehicle_detail(request, vehicle_id):
 
 @login_required
 def reserve_vehicle(request, vehicle_id):
-    from django.contrib import messages
-    from django.shortcuts import redirect
-
     vehicle = get_object_or_404(Vehicle, id=vehicle_id)
     form = ReservationForm(request.POST or None)
 
@@ -119,18 +118,7 @@ def reserve_vehicle(request, vehicle_id):
         elif overlapping:
             form.add_error(None, "This vehicle is already reserved for the selected dates.")
         else:
-            strategy = select_strategy(start_date, active_count)
-            total_amount = strategy.calculate(vehicle.daily_rate, start_date, end_date)
-            score = reliability_score(request.user)
-            total_amount, discount_amt, _ = apply_discount(total_amount, score)
-            reservation = Reservation.objects.create(
-                user=request.user,
-                vehicle=vehicle,
-                start_date=start_date,
-                end_date=end_date,
-                total_amount=total_amount,
-                pricing_strategy=strategy.name,
-            )
+            reservation = ReservationService.create(request.user, vehicle, start_date, end_date, active_count)
             messages.success(request, "Vehicle reserved. Complete payment to confirm.")
             return redirect("reservation_payment", reservation_id=reservation.id)
 

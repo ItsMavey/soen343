@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from ..services import ParkingService, TransitFacade, CITY_COORDS
+from ..external_services import ParkingService, TransitFacade, CITY_COORDS
 
 _CITY_CHOICES = [
     ("MTL", "Montreal"), ("LAV", "Laval"), ("LON", "Longueuil"),

@@ -7,6 +7,7 @@ from ..factories import ProviderFactoryA, ProviderFactoryB
 from ..forms import ProviderVehicleForm
 from ..models import Vehicle, Reservation
 from ..observers import fire_overdue_notifications
+from ..services import VehicleService
 from ..states import InvalidTransitionError
 
 
@@ -25,27 +26,22 @@ def provider_fleet(request):
     guard = _require_provider(request)
     if guard:
         return guard
-    today = _tz.localdate()
-    vehicles = Vehicle.objects.filter(owner=request.user).order_by("make", "model")
-    overdue_vehicle_ids = set(
-        Reservation.objects.filter(
-            vehicle__owner=request.user,
-            status=Reservation.STATUS_CONFIRMED,
-            end_date__lt=today,
-        ).values_list("vehicle_id", flat=True)
-    )
-    for v in vehicles:
-        v.is_overdue = v.id in overdue_vehicle_ids
-    overdue_count = len(overdue_vehicle_ids)
-    if overdue_vehicle_ids:
+
+    vehicles = list(Vehicle.objects.filter(owner=request.user).order_by("make", "model"))
+    overdue_ids = VehicleService.enrich_fleet(vehicles, request.user)
+
+    if overdue_ids:
         overdue_res = list(Reservation.objects.filter(
             vehicle__owner=request.user,
             status=Reservation.STATUS_CONFIRMED,
-            end_date__lt=today,
+            vehicle_id__in=overdue_ids,
         ).select_related("vehicle", "user"))
         fire_overdue_notifications(overdue_res)
+
     return render(request, "booking/provider_fleet.html", {
-        "vehicles": vehicles, "overdue_count": overdue_count, "today": today,
+        "vehicles": vehicles,
+        "overdue_count": len(overdue_ids),
+        "today": _tz.localdate(),
     })
 
 
@@ -128,20 +124,7 @@ def provider_edit_vehicle(request, vehicle_id):
         vehicle.daily_rate = form.cleaned_data["daily_rate"]
         vehicle.city = form.cleaned_data.get("city", vehicle.city)
         vehicle.save(update_fields=["make", "model", "year", "daily_rate", "city"])
-
-        if vehicle.vehicle_kind == Vehicle.KIND_CAR:
-            subtype.fuel_type = form.cleaned_data.get("fuel_type", subtype.fuel_type)
-            subtype.body_style = form.cleaned_data.get("body_style", subtype.body_style)
-            subtype.save(update_fields=["fuel_type", "body_style"])
-        elif vehicle.vehicle_kind == Vehicle.KIND_BIKE:
-            subtype.bike_type = form.cleaned_data.get("bike_type", subtype.bike_type)
-            subtype.has_motor = form.cleaned_data.get("has_motor", subtype.has_motor)
-            subtype.save(update_fields=["bike_type", "has_motor"])
-        elif vehicle.vehicle_kind == Vehicle.KIND_SCOOTER:
-            subtype.engine_cc = form.cleaned_data.get("engine_cc", subtype.engine_cc)
-            subtype.is_electric = form.cleaned_data.get("is_electric", subtype.is_electric)
-            subtype.save(update_fields=["engine_cc", "is_electric"])
-
+        VehicleService.update_subtype(vehicle, form.cleaned_data)
         messages.success(request, "Vehicle updated.")
         return redirect("provider_fleet")
 

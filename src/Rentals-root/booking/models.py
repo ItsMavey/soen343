@@ -96,16 +96,8 @@ class Vehicle(models.Model):
         self._notify_observers("AVAILABLE")
 
     def _notify_observers(self, event: str) -> None:
-        from .observers import Subject, UserNotifier, AdminDashboard, RecommendationService
-        subject = Subject()
-        subject.attach(UserNotifier())
-        subject.attach(AdminDashboard())
-        if event == "AVAILABLE":
-            subject.attach(RecommendationService())
-        # Temporarily bind this vehicle to the subject so notify() passes it
-        subject._vehicle = self
-        for observer in subject._observers:
-            observer.update(event, self)
+        from .services.vehicle_service import VehicleService
+        VehicleService.notify_observers(self, event)
 
     def display_name(self):
         return f"{self.year} {self.make} {self.model}"
