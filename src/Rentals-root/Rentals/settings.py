@@ -39,11 +39,9 @@ INSTALLED_APPS = [
     # Libraries
     'address',
     'phonenumber_field',
-    "django_components",
 
     # Our apps
     'users',
-    'core',
     'booking'
 ]
 
@@ -64,7 +62,6 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
             BASE_DIR / "Rentals" / "templates",
-            BASE_DIR / "components",
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -74,9 +71,6 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "booking.context_processors.unread_notifications",
-            ],
-            "builtins": [
-                "django_components.templatetags.component_tags",
             ],
         },
     },
@@ -126,13 +120,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-
-COMPONENTS = {
-    # Where to look for component files (relative to project root)
-    "dirs": [BASE_DIR / "components"],
-    # Also scan each installed app's `components/` subdirectory
-    "app_dirs": ["components"],
-}
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",   # your global static assets (images, videos, fonts, etc.)
