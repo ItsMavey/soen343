@@ -121,10 +121,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",   # your global static assets (images, videos, fonts, etc.)
-]
-
 STATIC_ROOT = BASE_DIR / "staticfiles"  # where collectstatic outputs to
 STATIC_URL = "/static/"
 
