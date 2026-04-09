@@ -23,6 +23,7 @@ class DashboardService:
         co2 = total_co2_saved(user)
 
         recommendation = None
+        # build quick recommendation
         pref_city = user.preferred_city
         pref_type = user.preferred_mobility_type
         if pref_city and pref_type:
@@ -81,6 +82,7 @@ class DashboardService:
         ).select_related("vehicle", "user")
         if city_filter:
             active_qs = active_qs.filter(vehicle__city=city_filter)
+        # recent active rentals
         active_list = [
             {
                 "id": r.id,
@@ -112,6 +114,7 @@ class DashboardService:
         # Parking utilization by city
         lots = ParkingService().get_lots()
         city_parking = {}
+        # group lots by city
         for lot in lots:
             c = lot.city
             if c not in city_parking:

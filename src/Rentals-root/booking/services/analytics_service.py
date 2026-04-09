@@ -39,6 +39,7 @@ class AnalyticsService:
         ).aggregate(total=Sum("total_amount"))["total"] or 0
 
         by_kind = []
+        # stats per vehicle type
         for kind_code, kind_label in Vehicle.KIND_CHOICES:
             kind_res = reservations.filter(vehicle__vehicle_kind=kind_code)
             kind_rev = kind_res.filter(
@@ -54,6 +55,7 @@ class AnalyticsService:
         recent = reservations.filter(created_at__gte=thirty_days_ago).count()
 
         rows = []
+        # rows for chart/table
         for r in reservations.select_related("vehicle", "user").order_by("-created_at"):
             rows.append({
                 "id": r.id,
@@ -92,6 +94,7 @@ class AnalyticsService:
         lat, lon = CITY_COORDS["MTL"]
         stops = TransitFacade().get_nearby_stops(lat=lat, lon=lon)
 
+        # parking totals
         total_spots = sum(lot.total_spots for lot in lots)
         available_spots = sum(lot.available_spots for lot in lots)
         occupied_spots = total_spots - available_spots

@@ -1,3 +1,4 @@
+# admin setup
 from django.contrib import admin
 
 from .models import Vehicle, Car, Bike, Scooter, Reservation

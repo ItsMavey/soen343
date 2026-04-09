@@ -1,3 +1,4 @@
+# template data
 from .models import Notification
 
 

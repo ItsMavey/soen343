@@ -23,10 +23,12 @@ class RewardsService:
         discount_rate, discount_label = loyalty_discount(score)
         co2 = total_co2_saved(user)
 
+        # only completed trips
         returned = Reservation.objects.filter(
             user=user, status=Reservation.STATUS_RETURNED
         ).select_related("vehicle").order_by("-returned_at")
 
+        # per-rental CO2 summary
         rental_co2 = [
             {
                 "reservation": r,
@@ -40,6 +42,7 @@ class RewardsService:
             status=Reservation.STATUS_PENDING
         ).count()
 
+        # mark current tier
         tiers = [
             {
                 "threshold": t,

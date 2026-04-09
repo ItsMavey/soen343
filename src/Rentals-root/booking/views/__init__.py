@@ -1,3 +1,4 @@
+# package
 from .vehicle_views import vehicle_list, vehicle_detail, reserve_vehicle
 from .reservation_views import (
     reservation_payment, reservation_detail, return_vehicle,
