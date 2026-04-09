@@ -4,8 +4,7 @@ metadata:
   name: soen343-web
   namespace: soen343
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
   rules:
     - host: soen343.adam-ousmer.dev

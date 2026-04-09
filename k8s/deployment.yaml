@@ -26,10 +26,11 @@ spec:
               value: "1"
             - name: PYTHONUNBUFFERED
               value: "1"
+            - name: DB_DIR
+              value: "/app/data"
           volumeMounts:
             - name: db-storage
-              mountPath: /app/db.sqlite3
-              subPath: db.sqlite3
+              mountPath: /app/data
           readinessProbe:
             httpGet:
               path: /
