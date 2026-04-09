@@ -29,3 +29,5 @@ media/
 dist/
 build/
 *.egg-info/
+.claude/
+CLAUDE.md
