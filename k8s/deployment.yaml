@@ -17,7 +17,8 @@ spec:
     spec:
       containers:
         - name: web
-          image: registry.adam-ousmer.dev/soen343:latest
+          image: soen343:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8000
           env:
