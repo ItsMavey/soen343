@@ -35,15 +35,18 @@ def vehicle_list(request):
     form = VehicleSearchForm(request.GET or None)
 
     if form.is_valid():
-        query = form.cleaned_data.get("query")
+        make = form.cleaned_data.get("make")
+        model = form.cleaned_data.get("model")
         vehicle_kind = form.cleaned_data.get("vehicle_kind")
         city = form.cleaned_data.get("city")
         fuel_type = form.cleaned_data.get("fuel_type")
         min_rate = form.cleaned_data.get("min_rate")
         max_rate = form.cleaned_data.get("max_rate")
 
-        if query:
-            vehicles = vehicles.filter(Q(make__icontains=query) | Q(model__icontains=query))
+        if make:
+            vehicles = vehicles.filter(make__icontains=make)
+        if model:
+            vehicles = vehicles.filter(model__icontains=model)
         if vehicle_kind:
             vehicles = vehicles.filter(vehicle_kind=vehicle_kind)
         if city:

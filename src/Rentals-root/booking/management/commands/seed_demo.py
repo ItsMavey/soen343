@@ -147,22 +147,50 @@ class Command(BaseCommand):
         self.stdout.write("  OK Extra commuters: demo_alice, demo_bob")
 
         # ── Vehicles (owned by provider qwer1) ────────────────────────────
-        tesla   = _car(provider, "Tesla",   "Model 3",  2023, 95,  "ELECTRIC", "MTL")
-        corolla = _car(provider, "Toyota",  "Corolla",  2022, 55,  "GASOLINE", "MTL")
-        civic   = _car(provider, "Honda",   "Civic",    2021, 60,  "HYBRID",   "MTL",
+        # MTL
+        tesla   = _car(provider, "Tesla",      "Model 3",        2023, 95,  "ELECTRIC", "MTL")
+        corolla = _car(provider, "Toyota",     "Corolla",         2022, 55,  "GASOLINE", "MTL")
+        civic   = _car(provider, "Honda",      "Civic",           2021, 60,  "HYBRID",   "MTL",
                        status=Vehicle.STATUS_RESERVED)
-        bmw     = _car(provider, "BMW",     "M3",       2023, 150, "GASOLINE", "MTL",
+        bmw     = _car(provider, "BMW",        "M3",              2023, 150, "GASOLINE", "MTL",
                        status=Vehicle.STATUS_MAINTENANCE)
-        ioniq   = _car(provider, "Hyundai", "Ioniq 5",  2022, 85,  "ELECTRIC", "LAV")
-        mazda   = _car(provider, "Mazda",   "CX-5",     2021, 65,  "GASOLINE", "QC")
-        mustang = _car(provider, "Ford",    "Mustang",  2020, 110, "GASOLINE", "SHE")
+        trek    = _bike(provider, "Trek",      "FX 3 Disc",       2023, 35,  "STANDARD", "MTL")
+        giant   = _bike(provider, "Giant",     "FastRoad E+1 Pro",2023, 48,  "EBIKE",    "MTL")
+        seg     = _scooter(provider, "Segway", "Ninebot Max G2",  2023, 30,  "MTL")
+        _bike(provider,    "Specialized", "Sirrus 2.0",           2022, 30,  "STANDARD", "MTL")
+        _scooter(provider, "NIU",         "NQi GT",               2022, 42,  "MTL")
 
-        trek    = _bike(provider, "Trek",  "FX 3 Disc", 2023, 35, "STANDARD", "MTL")
-        giant   = _bike(provider, "Giant", "FastRoad E+1 Pro", 2023, 48, "EBIKE", "MTL")
+        # LAV
+        ioniq   = _car(provider, "Hyundai",   "Ioniq 5",          2022, 85,  "ELECTRIC", "LAV")
+        _car(provider,     "Toyota",    "RAV4",                    2021, 70,  "HYBRID",   "LAV")
+        _bike(provider,    "Trek",      "Allant+ 7",               2023, 55,  "EBIKE",    "LAV")
+        _scooter(provider, "Vespa",     "GTS 300",                 2021, 55,  "LAV")
 
-        seg     = _scooter(provider, "Segway", "Ninebot Max G2", 2023, 30, "MTL")
+        # LON
+        _car(provider,     "Kia",       "EV6",                     2023, 80,  "ELECTRIC", "LON")
+        _car(provider,     "Honda",     "CR-V",                    2022, 65,  "GASOLINE", "LON")
+        _bike(provider,    "Giant",     "Escape 3",                2022, 20,  "STANDARD", "LON")
+        _scooter(provider, "Honda",     "PCX 150",                 2022, 45,  "LON")
 
-        self.stdout.write("  OK 10 vehicles created/verified")
+        # QC
+        mazda   = _car(provider, "Mazda",     "CX-5",              2021, 65,  "GASOLINE", "QC")
+        _car(provider,     "Volkswagen", "ID.4",                    2023, 90,  "ELECTRIC", "QC")
+        _bike(provider,    "Cannondale", "Quick 3",                 2022, 26,  "STANDARD", "QC")
+        _scooter(provider, "Yamaha",     "Zuma 125",                2021, 40,  "QC")
+
+        # GAT
+        _car(provider,     "Ford",      "Escape Hybrid",           2022, 72,  "HYBRID",   "GAT")
+        _car(provider,     "Chevrolet", "Bolt EV",                 2023, 78,  "ELECTRIC", "GAT")
+        _bike(provider,    "Norco",     "Search S2",               2022, 24,  "STANDARD", "GAT")
+        _scooter(provider, "NIU",       "MQi+ Sport",              2022, 38,  "GAT")
+
+        # SHE
+        mustang = _car(provider, "Ford",      "Mustang",           2020, 110, "GASOLINE", "SHE")
+        _car(provider,     "Subaru",    "Outback",                  2022, 68,  "GASOLINE", "SHE")
+        _bike(provider,    "Rad Power", "RadCity 5 Plus",           2023, 52,  "EBIKE",    "SHE")
+        _scooter(provider, "Gogoro",    "SuperSport",               2022, 48,  "SHE")
+
+        self.stdout.write("  OK 31 vehicles across all 6 cities created/verified")
 
         # ── Reservations for qwer2 (commuter) ─────────────────────────────
         # 1. RETURNED — 1 month ago, standard rate

@@ -133,6 +133,11 @@
                     <a href="{% url 'transit' %}"
                        class="nav-link-apex {% block nav_transit %}{% endblock %}">Transit</a>
 
+                    {% if user.is_commuter %}
+                    <a href="{% url 'trip' %}"
+                       class="nav-link-apex {% block nav_trip %}{% endblock %}">Trip Planner</a>
+                    {% endif %}
+
                     <div class="nav-divider d-none d-md-block"></div>
 
                     <a href="{% url 'role_dashboard' %}"

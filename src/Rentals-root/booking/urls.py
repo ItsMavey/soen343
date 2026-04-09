@@ -14,7 +14,12 @@ urlpatterns = [
 
     # External services
     path("parking/", views.parking, name="parking"),
+    path("parking/nearby/", views.parking_nearby, name="parking_nearby"),
     path("transit/", views.transit, name="transit"),
+    path("map/", views.map_view, name="map"),
+    path("map/data/", views.map_data, name="map_data"),
+    path("trip/", views.trip_view, name="trip"),
+    path("trip/plan/", views.trip_plan, name="trip_plan"),
 
     # Analytics
     path("analytics/rentals/", views.rental_analytics, name="rental_analytics"),

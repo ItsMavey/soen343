@@ -23,8 +23,8 @@ from datetime import datetime
 CITY_COORDS = {
     "MTL": (45.5017, -73.5673),
     "LAV": (45.6066, -73.7124),
-    "LON": (45.3875, -73.9736),
-    "QC":  (46.8139, -71.2082),
+    "LON": (45.5200, -73.5250),   # Longueuil city center, south of St. Lawrence
+    "QC":  (46.8322, -71.2453),   # Haute-Ville / Limoilou, away from St. Lawrence
     "GAT": (45.4765, -75.7013),
     "SHE": (45.4042, -71.8929),
 }
@@ -91,9 +91,9 @@ class GTFSAdapter(TransitProvider):
     """
 
     _FALLBACK = [
-        {"id": "STM-0001", "name": "Rue Berri / Sainte-Catherine", "distance_m": 95},
-        {"id": "STM-0002", "name": "Boul. René-Lévesque / Saint-Denis", "distance_m": 260},
-        {"id": "STM-0003", "name": "Rue Sherbrooke / Saint-Laurent",   "distance_m": 430},
+        {"id": "STM-0001", "name": "Rue Berri / Sainte-Catherine",    "lat": 45.5152, "lon": -73.5617, "distance_m": 95},
+        {"id": "STM-0002", "name": "Boul. René-Lévesque / Saint-Denis","lat": 45.5122, "lon": -73.5612, "distance_m": 260},
+        {"id": "STM-0003", "name": "Rue Sherbrooke / Saint-Laurent",   "lat": 45.5187, "lon": -73.5697, "distance_m": 430},
     ]
 
     _ROUTES = [
@@ -119,6 +119,8 @@ out 10;"""
             stops.append({
                 "id": f"STM-{el['id'] % 100000}",
                 "name": name,
+                "lat": el["lat"],
+                "lon": el["lon"],
                 "distance_m": _dist_m(lat, lon, el["lat"], el["lon"]),
             })
         return sorted(stops, key=lambda s: s["distance_m"])
@@ -140,9 +142,9 @@ class CityAPIAdapter(TransitProvider):
     """
 
     _FALLBACK = [
-        {"id": "MTL-0101", "name": "Berri-UQAM",      "distance_m": 210},
-        {"id": "MTL-0102", "name": "McGill",           "distance_m": 510},
-        {"id": "MTL-0103", "name": "Place-des-Arts",   "distance_m": 680},
+        {"id": "MTL-0101", "name": "Berri-UQAM",    "lat": 45.5193, "lon": -73.5617, "distance_m": 210},
+        {"id": "MTL-0102", "name": "McGill",         "lat": 45.5048, "lon": -73.5782, "distance_m": 510},
+        {"id": "MTL-0103", "name": "Place-des-Arts", "lat": 45.5077, "lon": -73.5686, "distance_m": 680},
     ]
 
     _LINES = [
@@ -167,6 +169,8 @@ out;"""
             stops.append({
                 "id": f"MTL-{el['id'] % 100000}",
                 "name": name,
+                "lat": el["lat"],
+                "lon": el["lon"],
                 "distance_m": _dist_m(lat, lon, el["lat"], el["lon"]),
             })
         stops.sort(key=lambda s: s["distance_m"])
@@ -203,6 +207,69 @@ class TransitFacade:
 # Parking service
 # ---------------------------------------------------------------------------
 
+
+class OSMParkingAdapter:
+    """
+    Fetches real parking facilities from OpenStreetMap (Overpass API).
+    Falls back to hardcoded ParkingService lots if the API is unreachable
+    or returns no results.
+    """
+
+    @staticmethod
+    def _parse_elements(elements: list, city: str) -> list["ParkingLot"]:
+        lots = []
+        for i, el in enumerate(elements[:25]):
+            if el["type"] == "node":
+                elat, elng = el.get("lat"), el.get("lon")
+            elif el["type"] == "way" and "center" in el:
+                elat, elng = el["center"]["lat"], el["center"]["lon"]
+            else:
+                continue
+            if elat is None or elng is None:
+                continue
+            tags = el.get("tags", {})
+            name = (tags.get("name") or tags.get("operator")
+                    or tags.get("brand") or f"Parking {i + 1}")
+            address = " ".join(filter(None, [
+                tags.get("addr:housenumber", ""),
+                tags.get("addr:street", ""),
+            ])).strip()
+            try:
+                capacity = int(tags.get("capacity") or 0) or 80
+            except ValueError:
+                capacity = 80
+            is_free = tags.get("fee", "yes").lower() in ("no", "false", "0")
+            hourly_rate = 0.0 if is_free else float(
+                tags.get("charge", "").replace("$", "").split("/")[0].strip() or "2.50"
+            )
+            lots.append(ParkingLot(f"OSM-{el['id']}", name, address,
+                                   capacity, hourly_rate, city, elat, elng))
+        return lots
+
+    def _fetch(self, lat: float, lon: float, city: str) -> list["ParkingLot"]:
+        query = f"""[out:json][timeout:15];
+(
+  node["amenity"="parking"](around:1500,{lat},{lon});
+  way["amenity"="parking"](around:1500,{lat},{lon});
+);
+out center 25;"""
+        data = _overpass_fetch(query)
+        if not data or not data.get("elements"):
+            return []
+        return self._parse_elements(data["elements"], city)
+
+    def get_lots(self, city: str) -> list["ParkingLot"]:
+        coords = CITY_COORDS.get(city)
+        if not coords:
+            return ParkingService().get_lots(city=city)
+        lots = self._fetch(coords[0], coords[1], city)
+        return lots if lots else ParkingService().get_lots(city=city)
+
+    def get_lots_near(self, lat: float, lng: float) -> list["ParkingLot"]:
+        """Fetch parking lots near arbitrary coordinates (used by map button)."""
+        lots = self._fetch(lat, lng, city="")
+        return lots
+
 def _simulated_available(lot_id: str, total: int) -> int:
     """
     Time-varying parking availability.
@@ -227,13 +294,16 @@ def _simulated_available(lot_id: str, total: int) -> int:
 
 class ParkingLot:
     def __init__(self, lot_id: str, name: str, address: str,
-                 total_spots: int, hourly_rate: float, city: str = "MTL"):
+                 total_spots: int, hourly_rate: float, city: str = "MTL",
+                 lat: float = 0.0, lng: float = 0.0):
         self.lot_id = lot_id
         self.name = name
         self.address = address
         self.total_spots = total_spots
         self.hourly_rate = hourly_rate
         self.city = city
+        self.lat = lat
+        self.lng = lng
         self.available_spots = _simulated_available(lot_id, total_spots)
 
     @property
@@ -246,33 +316,34 @@ class ParkingLot:
 class ParkingService:
     """Returns real Quebec parking lots with time-varying simulated availability."""
 
+    # (lot_id, name, address, total_spots, hourly_rate, city, lat, lng)
     _LOTS = [
         # Montreal
-        ("P1",  "Complexe Desjardins",        "150 Rue Sainte-Catherine O",  320, 3.50, "MTL"),
-        ("P2",  "Place Ville Marie",           "1 Pl. Ville Marie",           500, 4.00, "MTL"),
-        ("P3",  "Quartier des Spectacles",     "175 Rue Sainte-Catherine E",   80, 2.50, "MTL"),
-        ("P4",  "Vieux-Montréal / Commune",    "50 Rue de la Commune E",      180, 5.00, "MTL"),
+        ("P1",  "Complexe Desjardins",        "150 Rue Sainte-Catherine O",  320, 3.50, "MTL", 45.5088, -73.5618),
+        ("P2",  "Place Ville Marie",           "1 Pl. Ville Marie",           500, 4.00, "MTL", 45.5006, -73.5697),
+        ("P3",  "Quartier des Spectacles",     "175 Rue Sainte-Catherine E",   80, 2.50, "MTL", 45.5113, -73.5598),
+        ("P4",  "Vieux-Montréal / Commune",    "50 Rue de la Commune E",      180, 5.00, "MTL", 45.5065, -73.5536),
         # Laval
-        ("P5",  "Galeries Laval",              "1600 Boul. Le Corbusier",     450, 2.75, "LAV"),
-        ("P6",  "Centropolis Laval",           "2 Rue du Centropolis",        200, 3.00, "LAV"),
+        ("P5",  "Galeries Laval",              "1600 Boul. Le Corbusier",     450, 2.75, "LAV", 45.5634, -73.6920),
+        ("P6",  "Centropolis Laval",           "2 Rue du Centropolis",        200, 3.00, "LAV", 45.5580, -73.7200),
         # Longueuil
-        ("P7",  "Promenades Saint-Bruno",      "1855 Boul. Pelletier",        380, 2.00, "LON"),
-        ("P8",  "Station Longueuil P+R",       "200 Rue de la Province",      600, 1.50, "LON"),
+        ("P7",  "Promenades Saint-Bruno",      "1855 Boul. Pelletier",        380, 2.00, "LON", 45.5370, -73.3610),
+        ("P8",  "Station Longueuil P+R",       "200 Rue de la Province",      600, 1.50, "LON", 45.5257, -73.5190),
         # Quebec City
-        ("P9",  "Place de la Cité",            "2600 Boul. Laurier",          600, 3.75, "QC"),
-        ("P10", "Les Galeries de la Capitale", "5401 Boul. des Galeries",     700, 2.50, "QC"),
-        ("P11", "Vieux-Port de Québec",        "100 Rue Saint-André",         200, 4.50, "QC"),
+        ("P9",  "Place de la Cité",            "2600 Boul. Laurier",          600, 3.75, "QC",  46.7780, -71.2840),
+        ("P10", "Les Galeries de la Capitale", "5401 Boul. des Galeries",     700, 2.50, "QC",  46.8360, -71.2460),
+        ("P11", "Vieux-Port de Québec",        "100 Rue Saint-André",         200, 4.50, "QC",  46.8180, -71.2020),
         # Gatineau
-        ("P12", "Les Promenades Gatineau",     "50 Boul. Lorrain",            300, 2.25, "GAT"),
-        ("P13", "Centre-ville Gatineau",       "25 Rue Laurier",              150, 2.00, "GAT"),
+        ("P12", "Les Promenades Gatineau",     "50 Boul. Lorrain",            300, 2.25, "GAT", 45.4490, -75.7320),
+        ("P13", "Centre-ville Gatineau",       "25 Rue Laurier",              150, 2.00, "GAT", 45.4840, -75.7010),
         # Sherbrooke
-        ("P14", "Carrefour de l'Estrie",       "3050 Boul. de Portland",      400, 2.00, "SHE"),
-        ("P15", "Centre-ville Sherbrooke",     "1 Rue Wellington N",          120, 1.75, "SHE"),
+        ("P14", "Carrefour de l'Estrie",       "3050 Boul. de Portland",      400, 2.00, "SHE", 45.3810, -71.9260),
+        ("P15", "Centre-ville Sherbrooke",     "1 Rue Wellington N",          120, 1.75, "SHE", 45.4020, -71.8900),
     ]
 
     def get_lots(self, city: str | None = None) -> list[ParkingLot]:
         return [
-            ParkingLot(lid, name, addr, total, rate, c)
-            for lid, name, addr, total, rate, c in self._LOTS
+            ParkingLot(lid, name, addr, total, rate, c, lat, lng)
+            for lid, name, addr, total, rate, c, lat, lng in self._LOTS
             if city is None or c == city
         ]

@@ -25,8 +25,9 @@
             font-family: var(--font-body); font-size: 0.9rem;
         }
         .filter-input:focus { outline: none; border-color: rgba(255,107,26,0.5); box-shadow: 0 0 0 3px rgba(255,107,26,0.1); }
-        .btn-filter { background: var(--color-accent); color: #0d0d0d; border: none; border-radius: 3px; padding: 0.62rem 1.6rem; font-family: var(--font-body); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: var(--transition-base); }
+        .btn-filter { display: flex; align-items: center; justify-content: center; background: var(--color-accent); color: #0d0d0d; border: none; border-radius: 3px; padding: 0.62rem 1.6rem; font-family: var(--font-body); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: var(--transition-base); }
         .btn-filter:hover { background: var(--color-accent-hover); }
+        #fleet-map { height: 640px; border-radius: 6px; border: 1px solid var(--color-border); margin-bottom: 2.5rem; }
 
         /* CARDS */
         .car-card {
@@ -61,25 +62,30 @@
         <p class="page-subtitle">Find the right vehicle for your journey</p>
 
         <div class="filter-card">
-            <form method="get">
+            <form method="get" id="filter-form">
                 <div class="row g-3 align-items-end">
-                    <div class="col-12 col-md-3">
-                        <label class="filter-label">Search</label>
-                        <input class="filter-input" type="text" name="query" placeholder="Make or model" value="{{ request.GET.query }}">
+                    <div class="col-6 col-md-2">
+                        <label class="filter-label">Make</label>
+                        <input class="filter-input" type="text" name="make" placeholder="e.g. Toyota" value="{{ request.GET.make }}">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="filter-label">Model</label>
+                        <input class="filter-input" type="text" name="model" placeholder="e.g. Corolla" value="{{ request.GET.model }}">
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="filter-label">Kind</label>
                         <select class="filter-input" name="vehicle_kind">
                             <option value="">All Types</option>
-                            <option value="CAR" {% if request.GET.vehicle_kind == "CAR" %}selected{% endif %}>Car</option>
-                            <option value="BIKE" {% if request.GET.vehicle_kind == "BIKE" %}selected{% endif %}>Bike</option>
+                            <option value="CAR"     {% if request.GET.vehicle_kind == "CAR"     %}selected{% endif %}>Car</option>
+                            <option value="BIKE"    {% if request.GET.vehicle_kind == "BIKE"    %}selected{% endif %}>Bike</option>
                             <option value="SCOOTER" {% if request.GET.vehicle_kind == "SCOOTER" %}selected{% endif %}>Scooter</option>
                         </select>
                     </div>
                     <div class="col-6 col-md-2">
                         <label class="filter-label">City</label>
-                        <select class="filter-input" name="city">
+                        <select class="filter-input" name="city" id="city-select">
                             <option value="">All Cities</option>
+                            <option value="NEAR_ME">Near Me</option>
                             <option value="MTL" {% if request.GET.city == "MTL" %}selected{% endif %}>Montreal</option>
                             <option value="LAV" {% if request.GET.city == "LAV" %}selected{% endif %}>Laval</option>
                             <option value="LON" {% if request.GET.city == "LON" %}selected{% endif %}>Longueuil</option>
@@ -89,23 +95,32 @@
                         </select>
                     </div>
                     <div class="col-6 col-md-2">
-                        <label class="filter-label">Fuel (cars)</label>
-                        <input class="filter-input" type="text" name="fuel_type" placeholder="e.g. Electric" value="{{ request.GET.fuel_type }}">
+                        <label class="filter-label">Fuel</label>
+                        <select class="filter-input" name="fuel_type">
+                            <option value="">All Fuels</option>
+                            <option value="GASOLINE" {% if request.GET.fuel_type == "GASOLINE" %}selected{% endif %}>Gasoline</option>
+                            <option value="ELECTRIC" {% if request.GET.fuel_type == "ELECTRIC" %}selected{% endif %}>Electric</option>
+                            <option value="HYBRID"   {% if request.GET.fuel_type == "HYBRID"   %}selected{% endif %}>Hybrid</option>
+                            <option value="DIESEL"   {% if request.GET.fuel_type == "DIESEL"   %}selected{% endif %}>Diesel</option>
+                        </select>
                     </div>
-                    <div class="col-6 col-md-2">
+                    <div class="col-6 col-md-1">
                         <label class="filter-label">Min $/day</label>
-                        <input class="filter-input" type="number" step="0.01" name="min_rate" placeholder="0" value="{{ request.GET.min_rate }}">
+                        <input class="filter-input" type="number" step="10" min="0" name="min_rate" placeholder="0" value="{{ request.GET.min_rate }}">
                     </div>
-                    <div class="col-6 col-md-2">
+                    <div class="col-6 col-md-1">
                         <label class="filter-label">Max $/day</label>
-                        <input class="filter-input" type="number" step="0.01" name="max_rate" placeholder="Any" value="{{ request.GET.max_rate }}">
+                        <input class="filter-input" type="number" step="10" min="0" name="max_rate" placeholder="Any" value="{{ request.GET.max_rate }}">
                     </div>
-                    <div class="col-12 col-md-1">
+                    <div class="col-12 col-md-auto">
                         <button class="btn-filter w-100" type="submit">Filter</button>
                     </div>
                 </div>
             </form>
         </div>
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <div id="fleet-map"></div>
 
         <div class="row g-4">
             {% for vehicle in vehicles %}
@@ -142,4 +157,102 @@
 
     </div>
 </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    const CITY_CENTERS = {
+        "MTL": [45.5017, -73.5673], "LAV": [45.6066, -73.7124],
+        "LON": [45.5200, -73.5250], "QC":  [46.8322, -71.2453],
+        "GAT": [45.4765, -75.7013], "SHE": [45.4042, -71.8929],
+    };
+
+    const qs = new URLSearchParams(window.location.search);
+    const initCity = qs.get("city") || "MTL";
+    const center = CITY_CENTERS[initCity] || CITY_CENTERS["MTL"];
+
+    const map = L.map("fleet-map").setView(center, 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+    }).addTo(map);
+
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    });
+
+    function makeIcon(color, letter) {
+        return L.divIcon({
+            className: "",
+            html: `<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;background:${color};transform:rotate(-45deg);border:2px solid rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);color:#fff;font-size:10px;font-weight:700;">${letter}</span></div>`,
+            iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -28],
+        });
+    }
+    const ICONS = { CAR: makeIcon("#ff6b1a","C"), BIKE: makeIcon("#4ade80","B"), SCOOTER: makeIcon("#60a5fa","S") };
+
+    const markerLayer = L.layerGroup().addTo(map);
+
+    // ── Near Me — zoom map to user location, don't filter by city ────────
+    const citySelect = document.getElementById("city-select");
+    citySelect.addEventListener("change", function () {
+        if (this.value !== "NEAR_ME") return;
+        if (!navigator.geolocation) { this.value = ""; return; }
+        navigator.geolocation.getCurrentPosition(pos => {
+            const { latitude: lat, longitude: lng } = pos.coords;
+            map.setView([lat, lng], 14);
+            this.value = "";   // reset so form submits with no city filter
+        }, () => { this.value = ""; });
+    });
+
+    function load() {
+        const city  = document.getElementById("city-select").value;
+        const kind  = document.querySelector('[name="vehicle_kind"]').value;
+        const make  = document.querySelector('[name="make"]').value;
+        const model = document.querySelector('[name="model"]').value;
+        const fuel  = document.querySelector('[name="fuel_type"]').value;
+        const minR  = document.querySelector('[name="min_rate"]').value;
+        const maxR  = document.querySelector('[name="max_rate"]').value;
+
+        const params = new URLSearchParams({ parking: "0", transit: "0" });
+        if (city && city !== "NEAR_ME") params.set("city", city);
+        if (kind)  params.set("kinds", kind);
+        if (make)  params.set("make", make);
+        if (model) params.set("model", model);
+        if (fuel)  params.set("fuel_type", fuel);
+        if (minR)  params.set("min_rate", minR);
+        if (maxR)  params.set("max_rate", maxR);
+
+        fetch(`{% url 'map_data' %}?${params}`)
+            .then(r => r.json())
+            .then(data => {
+                markerLayer.clearLayers();
+                data.vehicles.forEach(v => {
+                    L.marker([v.lat, v.lng], { icon: ICONS[v.kind] || ICONS.CAR })
+                        .bindPopup(`<div style="font-family:'Outfit',sans-serif;font-size:0.82rem;min-width:140px;">
+                            <strong style="display:block;margin-bottom:0.25rem;">${v.name}</strong>
+                            <span style="color:#ff6b1a;font-weight:600;">$${v.rate.toFixed(2)}/day</span>
+                            <a href="${v.url}" style="display:block;margin-top:0.4rem;text-align:center;background:#ff6b1a;color:#0d0d0d;padding:0.25rem 0.5rem;border-radius:2px;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;">View Details</a>
+                        </div>`)
+                        .addTo(markerLayer);
+                });
+                if (city && CITY_CENTERS[city]) map.setView(CITY_CENTERS[city], 13);
+                else if (data.vehicles.length) {
+                    const bounds = data.vehicles.map(v => [v.lat, v.lng]);
+                    map.fitBounds(bounds, { padding: [30, 30] });
+                }
+            });
+    }
+
+    // Live update on filter changes (selects on change, text inputs debounced)
+    document.querySelectorAll('.filter-input[type="text"], .filter-input[type="number"]').forEach(el => {
+        let t; el.addEventListener('input', () => { clearTimeout(t); t = setTimeout(load, 400); });
+    });
+    document.querySelectorAll('select.filter-input').forEach(el => el.addEventListener('change', load));
+
+    load();
+})();
+</script>
 {% endblock %}

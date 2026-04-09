@@ -6,7 +6,8 @@ from .models import Vehicle, Car, Bike, Scooter
 
 
 class VehicleSearchForm(forms.Form):
-    query = forms.CharField(required=False, label="Search")
+    make = forms.CharField(required=False, label="Make")
+    model = forms.CharField(required=False, label="Model")
     vehicle_kind = forms.ChoiceField(
         required=False,
         choices=[("", "All Types")] + Vehicle.KIND_CHOICES,
@@ -15,7 +16,11 @@ class VehicleSearchForm(forms.Form):
         required=False,
         choices=[("", "All Cities")] + Vehicle.CITY_CHOICES,
     )
-    fuel_type = forms.CharField(required=False, label="Fuel (cars only)")
+    fuel_type = forms.ChoiceField(
+        required=False,
+        choices=[("", "All Fuels")] + Car.FUEL_CHOICES,
+        label="Fuel",
+    )
     min_rate = forms.DecimalField(required=False, min_value=0)
     max_rate = forms.DecimalField(required=False, min_value=0)
 
