@@ -1049,7 +1049,7 @@
     <div class="container">
         <div class="d-flex align-items-center justify-content-between">
 
-            <a href="#" class="nav-brand">TABAC <span>DRIVE</span></a>
+            <a href="{% url 'login' %}" class="nav-brand">TABAC <span>DRIVE</span></a>
 
             <div class="d-none d-lg-flex align-items-center gap-1">
                 <a href="#fleet" class="nav-link-apex">Fleet</a>
@@ -1213,9 +1213,9 @@
                             <span class="car-spec"><i class="bi bi-lightning-charge-fill"></i> Electric</span>
                         </div>
                         <div class="car-footer">
-                            <div class="car-price"><span class="amount">€89</span><span class="period">/ day</span>
+                            <div class="car-price"><span class="amount">$89</span><span class="period">/ day</span>
                             </div>
-                            <button class="btn-card">Book Now</button>
+                            <a href="{% if user.is_authenticated %}{% url 'vehicle_list' %}{% else %}{% url 'login' %}{% endif %}" class="btn-card" style="display:flex;justify-content:center;align-items:center;text-decoration:none;">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -1236,9 +1236,9 @@
                             <span class="car-spec"><i class="bi bi-speedometer2"></i> 300 hp</span>
                         </div>
                         <div class="car-footer">
-                            <div class="car-price"><span class="amount">€249</span><span class="period">/ day</span>
+                            <div class="car-price"><span class="amount">$249</span><span class="period">/ day</span>
                             </div>
-                            <button class="btn-card">Book Now</button>
+                            <a href="{% if user.is_authenticated %}{% url 'vehicle_list' %}{% else %}{% url 'login' %}{% endif %}" class="btn-card" style="display:flex;justify-content:center;align-items:center;text-decoration:none;">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -1259,9 +1259,9 @@
                             <span class="car-spec"><i class="bi bi-snow2"></i> AWD</span>
                         </div>
                         <div class="car-footer">
-                            <div class="car-price"><span class="amount">€165</span><span class="period">/ day</span>
+                            <div class="car-price"><span class="amount">$165</span><span class="period">/ day</span>
                             </div>
-                            <button class="btn-card">Book Now</button>
+                            <a href="{% if user.is_authenticated %}{% url 'vehicle_list' %}{% else %}{% url 'login' %}{% endif %}" class="btn-card" style="display:flex;justify-content:center;align-items:center;text-decoration:none;">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -1281,9 +1281,9 @@
                             <span class="car-spec"><i class="bi bi-fuel-pump-fill"></i> Petrol</span>
                         </div>
                         <div class="car-footer">
-                            <div class="car-price"><span class="amount">€39</span><span class="period">/ day</span>
+                            <div class="car-price"><span class="amount">$39</span><span class="period">/ day</span>
                             </div>
-                            <button class="btn-card">Book Now</button>
+                            <a href="{% if user.is_authenticated %}{% url 'vehicle_list' %}{% else %}{% url 'login' %}{% endif %}" class="btn-card" style="display:flex;justify-content:center;align-items:center;text-decoration:none;">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -1303,9 +1303,9 @@
                             <span class="car-spec"><i class="bi bi-star-fill"></i> Premium</span>
                         </div>
                         <div class="car-footer">
-                            <div class="car-price"><span class="amount">€310</span><span class="period">/ day</span>
+                            <div class="car-price"><span class="amount">$310</span><span class="period">/ day</span>
                             </div>
-                            <button class="btn-card">Book Now</button>
+                            <a href="{% if user.is_authenticated %}{% url 'vehicle_list' %}{% else %}{% url 'login' %}{% endif %}" class="btn-card" style="display:flex;justify-content:center;align-items:center;text-decoration:none;">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -1325,9 +1325,9 @@
                             <span class="car-spec"><i class="bi bi-bag-fill"></i> 615 L</span>
                         </div>
                         <div class="car-footer">
-                            <div class="car-price"><span class="amount">€79</span><span class="period">/ day</span>
+                            <div class="car-price"><span class="amount">$79</span><span class="period">/ day</span>
                             </div>
-                            <button class="btn-card">Book Now</button>
+                            <a href="{% if user.is_authenticated %}{% url 'vehicle_list' %}{% else %}{% url 'login' %}{% endif %}" class="btn-card" style="display:flex;justify-content:center;align-items:center;text-decoration:none;">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -1336,7 +1336,7 @@
         </div>
 
         <div class="text-center mt-5 reveal">
-            <a href="#" class="btn-ghost-apex">View Full Fleet <i class="bi bi-arrow-right ms-1"></i></a>
+            <a href="{% url 'login' %}" class="btn-ghost-apex">View Full Fleet <i class="bi bi-arrow-right ms-1"></i></a>
         </div>
 
     </div>
@@ -1610,32 +1610,32 @@
                     Premium car rental reimagined. We make every journey exceptional — from booking to drop-off.
                 </p>
                 <div class="footer-social">
-                    <a href="#" class="social-btn"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="social-btn"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="social-btn"><i class="bi bi-twitter-x"></i></a>
-                    <a href="#" class="social-btn"><i class="bi bi-linkedin"></i></a>
+                    <a href="{% url 'login' %}" class="social-btn"><i class="bi bi-instagram"></i></a>
+                    <a href="{% url 'login' %}" class="social-btn"><i class="bi bi-facebook"></i></a>
+                    <a href="{% url 'login' %}" class="social-btn"><i class="bi bi-twitter-x"></i></a>
+                    <a href="{% url 'login' %}" class="social-btn"><i class="bi bi-linkedin"></i></a>
                 </div>
             </div>
 
             <div class="col-6 col-lg-2 offset-lg-1">
                 <div class="footer-heading">Services</div>
                 <ul class="footer-links">
-                    <li><a href="#">Luxury Rentals</a></li>
-                    <li><a href="#">Corporate Fleet</a></li>
-                    <li><a href="#">Long-Term Lease</a></li>
-                    <li><a href="#">Wedding Cars</a></li>
-                    <li><a href="#">Airport Transfer</a></li>
+                    <li><a href="{% url 'login' %}">Luxury Rentals</a></li>
+                    <li><a href="{% url 'login' %}">Corporate Fleet</a></li>
+                    <li><a href="{% url 'login' %}">Long-Term Lease</a></li>
+                    <li><a href="{% url 'login' %}">Wedding Cars</a></li>
+                    <li><a href="{% url 'login' %}">Airport Transfer</a></li>
                 </ul>
             </div>
 
             <div class="col-6 col-lg-2">
                 <div class="footer-heading">Company</div>
                 <ul class="footer-links">
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Careers</a></li>
-                    <li><a href="#">Press</a></li>
-                    <li><a href="#">Partners</a></li>
-                    <li><a href="#">Blog</a></li>
+                    <li><a href="{% url 'login' %}">About Us</a></li>
+                    <li><a href="{% url 'login' %}">Careers</a></li>
+                    <li><a href="{% url 'login' %}">Press</a></li>
+                    <li><a href="{% url 'login' %}">Partners</a></li>
+                    <li><a href="{% url 'login' %}">Blog</a></li>
                 </ul>
             </div>
 
@@ -1663,11 +1663,11 @@
         </div>
 
         <div class="footer-bottom">
-            <span class="footer-copy">© 2025 <a href="#">TABAC</a>. All rights reserved.</span>
+            <span class="footer-copy">© 2025 <a href="{% url 'login' %}">TABAC</a>. All rights reserved.</span>
             <div class="d-flex gap-3">
-                <a href="#" style="font-size:0.75rem;color:var(--color-text-muted);">Privacy Policy</a>
-                <a href="#" style="font-size:0.75rem;color:var(--color-text-muted);">Terms of Service</a>
-                <a href="#" style="font-size:0.75rem;color:var(--color-text-muted);">Cookie Settings</a>
+                <a href="{% url 'login' %}" style="font-size:0.75rem;color:var(--color-text-muted);">Privacy Policy</a>
+                <a href="{% url 'login' %}" style="font-size:0.75rem;color:var(--color-text-muted);">Terms of Service</a>
+                <a href="{% url 'login' %}" style="font-size:0.75rem;color:var(--color-text-muted);">Cookie Settings</a>
             </div>
         </div>
 

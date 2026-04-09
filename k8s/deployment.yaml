@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: soen343:latest
+          image: docker.io/library/soen343:v7
           imagePullPolicy: Never
           ports:
             - containerPort: 8000

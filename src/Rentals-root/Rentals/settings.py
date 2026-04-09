@@ -26,6 +26,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = ['https://soen343.adam-ousmer.dev']
+
 # Application definition
 
 INSTALLED_APPS = [
