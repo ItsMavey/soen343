@@ -38,16 +38,23 @@
     .leg-card { padding: 0.75rem 0.85rem; border-left: 3px solid var(--color-border); background: var(--color-surface-raised); border-radius: 0 3px 3px 0; margin-bottom: 0.4rem; }
     .leg-card.walk    { border-left-color: #60a5fa; }
     .leg-card.drive   { border-left-color: #ff6b1a; }
+    .leg-card.ride    { border-left-color: #f59e0b; }
     .leg-card.transit { border-left-color: #4ade80; }
     .leg-mode { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.25rem; }
     .leg-card.walk    .leg-mode { color: #60a5fa; }
     .leg-card.drive   .leg-mode { color: #ff6b1a; }
+    .leg-card.ride    .leg-mode { color: #f59e0b; }
     .leg-card.transit .leg-mode { color: #4ade80; }
     .leg-label  { font-size: 0.85rem; font-weight: 500; color: var(--color-text-primary); margin-bottom: 0.15rem; }
     .leg-detail { font-size: 0.75rem; color: var(--color-text-secondary); }
     .leg-meta   { font-size: 0.7rem;  color: var(--color-text-secondary); margin-top: 0.3rem; }
     .leg-link { display: inline-block; margin-top: 0.4rem; background: rgba(255,107,26,0.12); color: var(--color-accent); border: 1px solid rgba(255,107,26,0.25); border-radius: 2px; padding: 0.2rem 0.5rem; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; }
     .leg-link:hover { background: rgba(255,107,26,0.2); }
+    .leg-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; flex-wrap: wrap; }
+    .btn-reserve { display: inline-block; background: var(--color-accent); color: #0d0d0d; border: none; border-radius: 2px; padding: 0.4rem 0.9rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+    .btn-reserve:hover { background: var(--color-accent-hover); color: #0d0d0d; }
+    .btn-details { display: inline-block; background: transparent; color: var(--color-text-secondary); border: 1px solid var(--color-border); border-radius: 2px; padding: 0.4rem 0.7rem; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; transition: all 0.15s; }
+    .btn-details:hover { border-color: var(--color-text-secondary); color: var(--color-text-primary); }
 
     #status-msg { font-size: 0.78rem; color: var(--color-text-secondary); text-align: center; padding: 0.5rem; }
     .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--color-border); border-top-color: var(--color-accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 0.4rem; }
@@ -101,7 +108,16 @@
         <div id="itinerary"></div>
     </div>
 
-    <div id="trip-map"></div>
+    <div id="trip-map" style="position:relative;">
+        <button id="btn-parking-here"
+            style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:1000;
+                   background:var(--color-accent);color:#0d0d0d;border:none;border-radius:3px;
+                   padding:0.5rem 1.1rem;font-family:inherit;font-size:0.72rem;font-weight:700;
+                   letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
+                   box-shadow:0 2px 12px rgba(0,0,0,0.5);white-space:nowrap;display:none;bottom:48px;">
+            Show parking here
+        </button>
+    </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -140,13 +156,61 @@
     let startCoords = null, endCoords = null;
     let routeLayers = [];   // polylines for active option
     let overlayLayers = []; // vehicle + parking pins (shared across options)
+    let parkingLayers = []; // on-demand parking search pins
     let allOptions = [];
     let activeOptionIdx = 0;
 
     function clearRoute() { routeLayers.forEach(l => map.removeLayer(l)); routeLayers = []; }
     function clearOverlays() { overlayLayers.forEach(l => map.removeLayer(l)); overlayLayers = []; }
+    function clearParkingSearch() { parkingLayers.forEach(l => map.removeLayer(l)); parkingLayers = []; }
     function addRoute(l) { l.addTo(map); routeLayers.push(l); }
     function addOverlay(l) { l.addTo(map); overlayLayers.push(l); }
+
+    // ── Parking icon (same as parking.html) ─────────────────────────────────
+    function parkingIcon(pct) {
+        const color = pct >= 90 ? "#f87171" : pct >= 60 ? "#fbbf24" : "#4ade80";
+        return L.divIcon({
+            className: "",
+            html: `<div style="width:28px;height:28px;border-radius:50% 50% 50% 0;background:${color};transform:rotate(-45deg);border:2px solid rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);color:#0d0d0d;font-size:10px;font-weight:800;">P</span></div>`,
+            iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -30],
+        });
+    }
+
+    // ── Show parking button ──────────────────────────────────────────────────
+    const btnParkingHere = document.getElementById("btn-parking-here");
+    btnParkingHere.style.display = "block";
+
+    btnParkingHere.addEventListener("click", () => {
+        btnParkingHere.textContent = "Searching…";
+        btnParkingHere.disabled = true;
+        clearParkingSearch();
+        const center = map.getCenter();
+        fetch(`{% url 'parking_nearby' %}?lat=${center.lat}&lng=${center.lng}`)
+            .then(r => r.json())
+            .then(data => {
+                (data.lots || []).forEach(p => {
+                    if (!p.lat) return;
+                    const avail = p.available === 0
+                        ? '<span style="color:#f87171;font-weight:600;">Full</span>'
+                        : `<span style="color:${p.occupancy >= 60 ? '#fbbf24' : '#4ade80'};font-weight:600;">${p.available} spots free</span>`;
+                    const rateStr = p.rate > 0 ? `$${p.rate}/hr` : 'Free';
+                    const m = L.marker([p.lat, p.lng], { icon: parkingIcon(p.occupancy || 0) })
+                        .bindPopup(`<div style="font-family:'Outfit',sans-serif;font-size:0.82rem;min-width:160px;">
+                            <strong style="display:block;margin-bottom:0.25rem;">${p.name}</strong>
+                            ${avail} / ${p.total || '?'} total<br>
+                            <span style="color:#ff6b1a;font-weight:600;">${rateStr}</span>
+                        </div>`);
+                    m.addTo(map);
+                    parkingLayers.push(m);
+                });
+                btnParkingHere.textContent = `${parkingLayers.length} lot${parkingLayers.length !== 1 ? 's' : ''} found — search again`;
+                btnParkingHere.disabled = false;
+            })
+            .catch(() => {
+                btnParkingHere.textContent = "Show parking here";
+                btnParkingHere.disabled = false;
+            });
+    });
 
     // ── Geocoding ───────────────────────────────────────────────────────────
     let geocodeTimers = {};
@@ -247,32 +311,41 @@
     // ── Draw a single option ──────────────────────────────────────────────────
     async function drawOption(option) {
         const legs   = option.legs;
-        const colors = { walk: "#60a5fa", drive: "#ff6b1a", transit: "#4ade80" };
+        const colors = { walk: "#38bdf8", drive: "#ff6b1a", ride: "#f59e0b", transit: "#4ade80" };
+        const weights = { walk: 4, drive: 7, ride: 6, transit: 5 };
         const osrmProfile = { walk: "foot", drive: "driving", transit: "foot" };
         const allCoords = [];
 
-        // Fetch routes for walk+drive legs in parallel; transit gets straight line
-        const routes = await Promise.all(legs.map(leg =>
-            leg.mode === "transit"
-                ? Promise.resolve({ coords: [[leg.from.lat, leg.from.lng], [leg.to.lat, leg.to.lng]], duration_s: null, distance_m: null })
-                : fetchRoute(osrmProfile[leg.mode] || "foot", leg.from, leg.to)
-        ));
+        // Fetch routes: use ORS geometry when available, OSRM for walk/drive, straight line fallback
+        const routes = await Promise.all(legs.map(leg => {
+            if (leg.geometry && leg.geometry.length >= 2) {
+                return Promise.resolve({ coords: leg.geometry, duration_s: null, distance_m: null });
+            }
+            if (leg.mode === "transit") {
+                return Promise.resolve({ coords: [[leg.from.lat, leg.from.lng], [leg.to.lat, leg.to.lng]], duration_s: null, distance_m: null });
+            }
+            return fetchRoute(osrmProfile[leg.mode] || "foot", leg.from, leg.to);
+        }));
 
         legs.forEach((leg, i) => {
-            const route = routes[i];
-            const line = L.polyline(route.coords, {
-                color: colors[leg.mode] || "#9a9590",
-                weight: leg.mode === "drive" ? 5 : 3,
-                opacity: leg.mode === "transit" ? 0.75 : 0.85,
-                dashArray: leg.mode === "walk" ? "8 6" : leg.mode === "transit" ? "12 5" : null,
-            });
-            addRoute(line);
+            const route  = routes[i];
+            const color  = colors[leg.mode]  || "#9a9590";
+            const weight = weights[leg.mode] || 4;
+            const dash   = leg.mode === "walk" ? "8 6" : leg.mode === "transit" ? "14 6" : null;
+
+            // Dark casing drawn first so the color line sits on top
+            addRoute(L.polyline(route.coords, {
+                color: "#000", weight: weight + 4, opacity: 0.35, dashArray: null,
+            }));
+            addRoute(L.polyline(route.coords, {
+                color, weight, opacity: 1, dashArray: dash,
+            }));
             route.coords.forEach(c => allCoords.push(c));
         });
 
         // Waypoint markers
-        const modeColor  = { walk: "#60a5fa", drive: "#ff6b1a", transit: "#4ade80" };
-        const modeLetter = { walk: "W", drive: "D", transit: "T" };
+        const modeColor  = { walk: "#60a5fa", drive: "#ff6b1a", ride: "#f59e0b", transit: "#4ade80" };
+        const modeLetter = { walk: "W", drive: "D", ride: "R", transit: "T" };
         addRoute(L.marker([legs[0].from.lat, legs[0].from.lng], { icon: pinIcon("#4ade80", "A") })
             .bindPopup(`<b>Start</b><br><small>${legs[0].from.name}</small>`));
         legs.forEach((leg, i) => {
@@ -293,16 +366,20 @@
             const timeTxt = fmtTime(route.duration_s);
             const distTxt = fmtDist(route.distance_m);
             const meta = [timeTxt, distTxt].filter(Boolean).join(" · ");
-            const modeLabel = { walk: "Walk", drive: "Drive", transit: "Transit" }[leg.mode] || leg.mode;
-            const linkHtml = leg.vehicle_url
-                ? `<a class="leg-link" href="${leg.vehicle_url}" target="_blank">View &amp; Reserve</a>`
-                : "";
+            const modeLabel = { walk: "Walk", drive: "Drive", ride: "Ride", transit: "Transit" }[leg.mode] || leg.mode;
+            let actionsHtml = "";
+            if (leg.vehicle_url) {
+                actionsHtml = `<div class="leg-actions">
+                    <a class="btn-reserve" href="${leg.vehicle_url}">Reserve</a>
+                    ${leg.vehicle_detail_url ? `<a class="btn-details" href="${leg.vehicle_detail_url}">Details</a>` : ""}
+                </div>`;
+            }
             return `<div class="leg-card ${leg.mode}">
                 <div class="leg-mode">${modeLabel}</div>
                 <div class="leg-label">${leg.label}</div>
                 <div class="leg-detail">${leg.detail}</div>
                 ${meta ? `<div class="leg-meta">${meta}</div>` : ""}
-                ${linkHtml}
+                ${actionsHtml}
             </div>`;
         }).join("");
     }
@@ -348,6 +425,8 @@
         itinerary.innerHTML = "";
         clearRoute();
         clearOverlays();
+        clearParkingSearch();
+        btnParkingHere.textContent = "Show parking here";
         document.getElementById("option-tabs-wrap").style.display = "none";
 
         try {

@@ -131,3 +131,14 @@ AUTH_USER_MODEL = 'users.User'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
+
+# OpenRouteService API key — free tier at https://openrouteservice.org/dev/#/signup
+# Set OPENROUTESERVICE_API_KEY env var or paste key here for local dev.
+OPENROUTESERVICE_API_KEY = os.environ.get("OPENROUTESERVICE_API_KEY", "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjMwMmM0N2E2MjgzYjQ2NzJhNGRmNTg5MGQzNzA2ZDk5IiwiaCI6Im11cm11cjY0In0=")
+
+STM_API_KEY = os.environ.get("STM_API_KEY", "l79d04007e84524e94a15edff697d1df8f")
+
+import sys
+if "test" in sys.argv:
+    OPENROUTESERVICE_API_KEY = ""
+    STM_API_KEY = ""

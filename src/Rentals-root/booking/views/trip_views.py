@@ -9,14 +9,13 @@ from ..external_services import ParkingService
 from ..models import Vehicle
 from ..trip_strategies import (
     TransitOnlyStrategy,
-    TransitFirstStrategy,
     VehicleOnlyStrategy,
     _haversine_km,
     nearest_vehicle,
 )
 from .map_views import _vehicle_coords
 
-_STRATEGY_ORDER = ["transit_only", "transit_vehicle", "vehicle_only"]
+_STRATEGY_ORDER = ["transit_only", "vehicle_only"]
 
 
 @login_required
@@ -35,9 +34,9 @@ def trip_plan(request):
         return JsonResponse({"error": "Provide slat, slng, elat, elng."}, status=400)
 
     # Run all strategies in parallel; collect feasible options in priority order
-    strategies = [TransitOnlyStrategy(), TransitFirstStrategy(), VehicleOnlyStrategy()]
+    strategies = [TransitOnlyStrategy(), VehicleOnlyStrategy()]
     results = {}
-    with ThreadPoolExecutor(max_workers=3) as ex:
+    with ThreadPoolExecutor(max_workers=2) as ex:
         futures = {ex.submit(s.plan, slat, slng, elat, elng): s for s in strategies}
         for fut in as_completed(futures):
             try:

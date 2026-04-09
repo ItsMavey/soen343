@@ -102,30 +102,34 @@ class VehicleOnlyStrategyTests(TestCase):
         self.car = make_car()
         self.strategy = VehicleOnlyStrategy()
 
-    @patch("booking.trip_strategies.ParkingService")
-    def test_returns_dict_with_legs(self, MockPS):
-        lot = MagicMock(); lot.lat, lot.lng = 45.505, -73.570; lot.name = "Lot A"
-        MockPS.return_value.get_lots.return_value = [lot]
+    def test_returns_dict_with_legs(self):
         result = self.strategy.plan(*MTL, *LAV)
         self.assertIsNotNone(result)
         self.assertIn("legs", result)
         self.assertGreater(len(result["legs"]), 0)
 
-    @patch("booking.trip_strategies.ParkingService")
-    def test_returns_none_when_no_vehicle(self, MockPS):
-        MockPS.return_value.get_lots.return_value = []
+    def test_returns_none_when_no_vehicle(self):
         self.car.vehicle_status = Vehicle.STATUS_MAINTENANCE
         self.car.save()
         result = self.strategy.plan(*MTL, *LAV)
         self.assertIsNone(result)
 
-    @patch("booking.trip_strategies.ParkingService")
-    def test_result_has_type_and_label(self, MockPS):
-        lot = MagicMock(); lot.lat, lot.lng = 45.505, -73.570; lot.name = "Lot A"
-        MockPS.return_value.get_lots.return_value = [lot]
+    def test_result_has_type_and_label(self):
         result = self.strategy.plan(*MTL, *LAV)
         self.assertIn("type", result)
         self.assertIn("label", result)
+
+    def test_two_legs_walk_then_drive(self):
+        result = self.strategy.plan(*MTL, *LAV)
+        self.assertEqual(len(result["legs"]), 2)
+        self.assertEqual(result["legs"][0]["mode"], "walk")
+        self.assertIn(result["legs"][1]["mode"], ("drive", "ride"))
+
+    def test_drive_leg_has_reserve_url(self):
+        result = self.strategy.plan(*MTL, *LAV)
+        drive_leg = result["legs"][1]
+        self.assertIn("vehicle_url", drive_leg)
+        self.assertIn("/reserve/", drive_leg["vehicle_url"])
 
 
 class TransitFirstStrategyTests(TestCase):
@@ -156,12 +160,14 @@ class TransitFirstStrategyTests(TestCase):
 
 
 class TransitOnlyStrategyTests(TestCase):
+    """Tests exercise the nearest-stop fallback path (ORS stubbed as None)."""
 
     def setUp(self):
         self.strategy = TransitOnlyStrategy()
 
     @patch("booking.trip_strategies.TransitFacade")
     def test_returns_none_when_no_stops(self, MockTF):
+        MockTF.return_value.get_journey.return_value = None
         MockTF.return_value.get_nearby_stops.return_value = []
         result = self.strategy.plan(*MTL, *LAV)
         self.assertIsNone(result)
@@ -169,6 +175,7 @@ class TransitOnlyStrategyTests(TestCase):
     @patch("booking.trip_strategies.TransitFacade")
     def test_returns_transit_only_type(self, MockTF):
         stop = {"id": "s1", "name": "Stop A", "lat": 45.503, "lon": -73.568, "distance_m": 200}
+        MockTF.return_value.get_journey.return_value = None
         MockTF.return_value.get_nearby_stops.return_value = [stop]
         result = self.strategy.plan(*MTL, *LAV)
         self.assertIsNotNone(result)
@@ -178,6 +185,7 @@ class TransitOnlyStrategyTests(TestCase):
     @patch("booking.trip_strategies.TransitFacade")
     def test_returns_three_legs(self, MockTF):
         stop = {"id": "s1", "name": "Stop A", "lat": 45.503, "lon": -73.568, "distance_m": 200}
+        MockTF.return_value.get_journey.return_value = None
         MockTF.return_value.get_nearby_stops.return_value = [stop]
         result = self.strategy.plan(*MTL, *LAV)
         self.assertIsNotNone(result)
@@ -188,7 +196,20 @@ class TransitOnlyStrategyTests(TestCase):
     @patch("booking.trip_strategies.TransitFacade")
     def test_no_vehicle_url_in_legs(self, MockTF):
         stop = {"id": "s1", "name": "Stop A", "lat": 45.503, "lon": -73.568, "distance_m": 200}
+        MockTF.return_value.get_journey.return_value = None
         MockTF.return_value.get_nearby_stops.return_value = [stop]
         result = self.strategy.plan(*MTL, *LAV)
         for leg in result["legs"]:
             self.assertNotIn("vehicle_url", leg)
+
+    @patch("booking.trip_strategies.TransitFacade")
+    def test_uses_ors_legs_when_available(self, MockTF):
+        ors_legs = [
+            {"mode": "walk",    "label": "Walk",    "from": {}, "to": {}, "detail": "5 min", "dist_km": 0.3},
+            {"mode": "transit", "label": "Take 211","from": {}, "to": {}, "detail": "211 → Angrignon · ~35 min", "dist_km": 18.0},
+            {"mode": "walk",    "label": "Walk",    "from": {}, "to": {}, "detail": "3 min", "dist_km": 0.2},
+        ]
+        MockTF.return_value.get_journey.return_value = ors_legs
+        result = self.strategy.plan(*MTL, *LAV)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["legs"], ors_legs)
