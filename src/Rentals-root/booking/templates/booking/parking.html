@@ -21,6 +21,9 @@
         .bar-wrap { margin-top: 0.8rem; height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
         .bar-fill { height: 100%; border-radius: 2px; background: var(--color-accent); }
         .service-note { font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 2rem; padding: 0.8rem 1rem; border: 1px solid var(--color-border); border-radius: 4px; }
+        #parking-map { height: 640px; border-radius: 6px; border: 1px solid var(--color-border); margin-bottom: 2rem; position: relative; }
+        .lot-card { cursor: pointer; }
+        .lot-card.active { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
 {% endblock %}
 
 {% block content %}
@@ -35,13 +38,26 @@
                 <option value="{{ code }}" {% if city == code %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
-            <span style="font-size:0.78rem;color:var(--color-text-secondary);">{{ lots|length }} lot{{ lots|length|pluralize }} found</span>
+            <span id="lot-count" style="font-size:0.78rem;color:var(--color-text-secondary);">{{ lots|length }} lot{{ lots|length|pluralize }} found</span>
         </form>
 
-        <div class="row g-4">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <div style="position:relative;">
+            <div id="parking-map"></div>
+            <button id="btn-search-here" onclick="searchHere()" style="
+                position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:1000;
+                background:var(--color-accent);color:#0d0d0d;border:none;border-radius:3px;
+                padding:0.55rem 1.2rem;font-family:inherit;font-size:0.78rem;font-weight:700;
+                letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
+                box-shadow:0 2px 12px rgba(0,0,0,0.5);white-space:nowrap;">
+                Show parking spots here
+            </button>
+        </div>
+
+        <div class="row g-4" id="lots-grid">
             {% for lot in lots %}
             <div class="col-12 col-md-6 col-lg-4">
-                <div class="lot-card">
+                <div class="lot-card" data-lot-idx="{{ forloop.counter0 }}" onclick="focusLot({{ forloop.counter0 }})"  title="Show on map">
                     <div class="lot-name">{{ lot.name }}</div>
                     <div class="lot-address">{{ lot.address }}</div>
                     <div class="lot-stats">
@@ -64,4 +80,130 @@
         <p class="service-note">Availability is simulated using a time-of-day occupancy model (ParkingService · Adapter pattern). No public real-time parking API exists for these Quebec cities.</p>
     </div>
 </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let _map, _markerLayer;
+
+(function () {
+    const CITY_CENTERS = {
+        "MTL": [45.5017, -73.5673], "LAV": [45.6066, -73.7124],
+        "LON": [45.5200, -73.5250], "QC":  [46.8322, -71.2453],
+        "GAT": [45.4765, -75.7013], "SHE": [45.4042, -71.8929],
+    };
+
+    const currentCity = "{{ city }}";
+    const center = CITY_CENTERS[currentCity] || CITY_CENTERS["MTL"];
+
+    const map = L.map("parking-map").setView(center, 14);
+    _map = map;
+    _markerLayer = L.layerGroup().addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+    }).addTo(map);
+
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    });
+
+    const initialLots = [
+        {% for lot in lots %}
+        {% if lot.lat %}{ name: "{{ lot.name|escapejs }}", address: "{{ lot.address|escapejs }}", available: {{ lot.available_spots }}, total: {{ lot.total_spots }}, rate: {{ lot.hourly_rate }}, occupancy: {{ lot.occupancy_pct }}, lat: {{ lot.lat }}, lng: {{ lot.lng }} },{% endif %}
+        {% endfor %}
+    ];
+
+    renderLots(initialLots, true);
+})();
+
+function renderLots(lots, fitBounds) {
+    _markerLayer.clearLayers();
+    const markers = [];
+    const bounds = [];
+
+    function parkingIcon(pct) {
+        const color = pct >= 90 ? "#f87171" : pct >= 60 ? "#fbbf24" : "#4ade80";
+        return L.divIcon({
+            className: "",
+            html: `<div style="width:30px;height:30px;border-radius:50% 50% 50% 0;background:${color};transform:rotate(-45deg);border:2px solid rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);color:#0d0d0d;font-size:11px;font-weight:800;">P</span></div>`,
+            iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -32],
+        });
+    }
+
+    lots.forEach((p, idx) => {
+        if (!p.lat) return;
+        const avail = p.available === 0
+            ? '<span style="color:#f87171;font-weight:600;">Full</span>'
+            : `<span style="color:${p.occupancy >= 60 ? '#fbbf24' : '#4ade80'};font-weight:600;">${p.available} spots free</span>`;
+        const rateStr = p.rate > 0 ? `$${p.rate}/hr` : 'Free';
+        const addrStr = p.address ? `<span style="color:#9a9590;font-size:0.75rem;">${p.address}</span><br>` : '';
+        const m = L.marker([p.lat, p.lng], { icon: parkingIcon(p.occupancy) })
+            .bindPopup(`<div style="font-family:'Outfit',sans-serif;font-size:0.82rem;min-width:160px;">
+                <strong style="display:block;margin-bottom:0.2rem;">${p.name}</strong>
+                ${addrStr}${avail} / ${p.total} total<br>
+                <span style="color:#ff6b1a;font-weight:600;">${rateStr}</span>
+                &nbsp;·&nbsp;<small>${p.occupancy}% full</small>
+            </div>`)
+            .addTo(_markerLayer);
+        markers[idx] = m;
+        bounds.push([p.lat, p.lng]);
+    });
+
+    if (fitBounds && bounds.length > 1) _map.fitBounds(bounds, { padding: [40, 40] });
+
+    // Rebuild cards
+    const grid = document.getElementById("lots-grid");
+    if (grid) {
+        grid.innerHTML = lots.length === 0
+            ? '<div class="col-12"><div class="msg-bar msg-info">No parking lots found here.</div></div>'
+            : lots.map((p, idx) => {
+                const pctColor = p.occupancy >= 90 ? 'avail-full' : p.occupancy >= 60 ? 'avail-low' : 'avail-ok';
+                const spotsLabel = p.available === 0 ? 'Full' : p.available;
+                const rateStr = p.rate > 0 ? `$${p.rate}/hr` : 'Free';
+                return `<div class="col-12 col-md-6 col-lg-4">
+                  <div class="lot-card" data-lot-idx="${idx}" onclick="focusLot(${idx})" title="Show on map">
+                    <div class="lot-name">${p.name}</div>
+                    <div class="lot-address">${p.address || ''}</div>
+                    <div class="lot-stats">
+                      <div class="stat"><strong class="${pctColor}">${spotsLabel}</strong>Available</div>
+                      <div class="stat"><strong>${p.total}</strong>Total</div>
+                      <div class="stat"><strong>${rateStr}</strong>Rate</div>
+                    </div>
+                    <div class="bar-wrap"><div class="bar-fill" style="width:${p.occupancy}%"></div></div>
+                  </div>
+                </div>`;
+            }).join('');
+        document.getElementById("lot-count").textContent =
+            `${lots.length} lot${lots.length !== 1 ? 's' : ''} found`;
+    }
+
+    window.focusLot = function (idx) {
+        const m = markers[idx];
+        if (!m) return;
+        document.querySelectorAll('.lot-card').forEach(c => c.classList.remove('active'));
+        const card = document.querySelector(`[data-lot-idx="${idx}"]`);
+        if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+        _map.setView(m.getLatLng(), 16);
+        m.openPopup();
+    };
+}
+
+function searchHere() {
+    const btn = document.getElementById("btn-search-here");
+    btn.textContent = "Searching…";
+    btn.disabled = true;
+    const center = _map.getCenter();
+    fetch(`{% url 'parking_nearby' %}?lat=${center.lat}&lng=${center.lng}`)
+        .then(r => r.json())
+        .then(data => {
+            renderLots(data.lots || [], false);
+            btn.textContent = "Show parking spots here";
+            btn.disabled = false;
+        })
+        .catch(() => { btn.textContent = "Show parking spots here"; btn.disabled = false; });
+}
+</script>
 {% endblock %}
