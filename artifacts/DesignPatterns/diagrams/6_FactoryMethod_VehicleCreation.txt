@@ -1,0 +1,49 @@
+@startuml
+title Factory Method Pattern — Vehicle Creation
+
+abstract class VehicleFactory {
+  + createVehicle() : Vehicle
+}
+
+class CarFactory {
+  + createVehicle() : Vehicle
+}
+
+class BikeFactory {
+  + createVehicle() : Vehicle
+}
+
+class ScooterFactory {
+  + createVehicle() : Vehicle
+}
+
+abstract class Vehicle {
+  + kind : String
+  + dailyRate : Decimal
+}
+
+class Car {
+  + fuelType : String
+  + bodyStyle : String
+}
+
+class Bike {
+  + bikeType : String
+  + hasMotor : Boolean
+}
+
+class Scooter {
+  + engineCC : Integer
+  + isElectric : Boolean
+}
+
+VehicleFactory <|-- CarFactory
+VehicleFactory <|-- BikeFactory
+VehicleFactory <|-- ScooterFactory
+Vehicle <|-- Car
+Vehicle <|-- Bike
+Vehicle <|-- Scooter
+CarFactory     ..> Car     : creates
+BikeFactory    ..> Bike    : creates
+ScooterFactory ..> Scooter : creates
+@enduml

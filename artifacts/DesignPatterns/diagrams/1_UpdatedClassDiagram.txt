@@ -1,0 +1,309 @@
+@startuml
+allowmixing
+left to right direction
+title SUMMS — Updated Class Diagram
+
+' ── User Management ──────────────────────────────────────────
+package "User Management" {
+
+  abstract class User {
+    + username : String
+    + email : String
+    + role : String
+    + preferredCity : String
+  }
+
+  class Commuter {
+    + reliabilityScore : Float
+    + co2Saved : Float
+  }
+
+  class MobilityProvider {
+    + companyName : String
+  }
+
+  class CityAdministrator {
+    + city : String
+    + accessLevel : String
+  }
+
+  User <|-- Commuter
+  User <|-- MobilityProvider
+  User <|-- CityAdministrator
+}
+
+' ── Observer Pattern ─────────────────────────────────────────
+package "Observer Pattern" {
+
+  abstract class Subject {
+    - observers : List<Observer>
+    + attach(observer : Observer) : void
+    + detach(observer : Observer) : void
+    + notify(event : String) : void
+  }
+
+  interface Observer {
+    + update(vehicle : Vehicle, event : String) : void
+  }
+
+  class UserNotifier {
+    + update(vehicle : Vehicle, event : String) : void
+  }
+
+  class AdminDashboard {
+    + update(vehicle : Vehicle, event : String) : void
+  }
+
+  class RecommendationService {
+    + update(vehicle : Vehicle, event : String) : void
+  }
+
+  Observer <|.. UserNotifier
+  Observer <|.. AdminDashboard
+  Observer <|.. RecommendationService
+  Subject "1" --> "0..*" Observer : notifies
+}
+
+' ── Vehicle + State + Factory ─────────────────────────────────
+package "Vehicle Management" {
+
+  abstract class Vehicle {
+    + kind : String
+    + status : String
+    + dailyRate : Decimal
+    + city : String
+    + reserve() : void
+    + returnVehicle() : void
+    + sendToMaintenance() : void
+    + completeMaintenance() : void
+  }
+
+  class Car {
+    + fuelType : String
+    + bodyStyle : String
+  }
+
+  class Bike {
+    + bikeType : String
+    + hasMotor : Boolean
+  }
+
+  class Scooter {
+    + engineCC : Integer
+    + isElectric : Boolean
+  }
+
+  Vehicle <|-- Car
+  Vehicle <|-- Bike
+  Vehicle <|-- Scooter
+  Vehicle --|> Subject
+
+  ' State Pattern
+  abstract class VehicleState {
+    + reserve(v : Vehicle) : void
+    + confirm(v : Vehicle) : void
+    + returnVehicle(v : Vehicle) : void
+    + sendToMaintenance(v : Vehicle) : void
+    + completeMaintenance(v : Vehicle) : void
+  }
+
+  class AvailableState {
+    + reserve(v : Vehicle) : void
+    + sendToMaintenance(v : Vehicle) : void
+  }
+
+  class ReservedState {
+    + confirm(v : Vehicle) : void
+  }
+
+  class InUseState {
+    + returnVehicle(v : Vehicle) : void
+  }
+
+  class MaintenanceState {
+    + completeMaintenance(v : Vehicle) : void
+  }
+
+  VehicleState <|-- AvailableState
+  VehicleState <|-- ReservedState
+  VehicleState <|-- InUseState
+  VehicleState <|-- MaintenanceState
+  Vehicle --> VehicleState : delegates to >
+
+  ' Factory Pattern
+  abstract class VehicleFactory {
+    + createVehicle() : Vehicle
+  }
+
+  class CarFactory {
+    + createVehicle() : Vehicle
+  }
+
+  class BikeFactory {
+    + createVehicle() : Vehicle
+  }
+
+  class ScooterFactory {
+    + createVehicle() : Vehicle
+  }
+
+  VehicleFactory <|-- CarFactory
+  VehicleFactory <|-- BikeFactory
+  VehicleFactory <|-- ScooterFactory
+  CarFactory     ..> Car     : creates
+  BikeFactory    ..> Bike    : creates
+  ScooterFactory ..> Scooter : creates
+}
+
+' ── Rental + Pricing Strategy ────────────────────────────────
+package "Rental System" {
+
+  class Reservation {
+    + startDate : Date
+    + endDate : Date
+    + status : String
+    + totalAmount : Decimal
+    + calculateTotal() : Decimal
+  }
+
+  interface PricingStrategy {
+    + calculate(rate : Decimal, days : Integer) : Decimal
+  }
+
+  class StandardPricing {
+    + calculate(rate : Decimal, days : Integer) : Decimal
+  }
+
+  class WeekendPricing {
+    + calculate(rate : Decimal, days : Integer) : Decimal
+  }
+
+  class SurgePricing {
+    + calculate(rate : Decimal, days : Integer) : Decimal
+  }
+
+  PricingStrategy <|.. StandardPricing
+  PricingStrategy <|.. WeekendPricing
+  PricingStrategy <|.. SurgePricing
+  Reservation --> PricingStrategy : uses >
+
+  class Notification {
+    + message : String
+    + eventType : String
+    + isRead : Boolean
+    + createdAt : DateTime
+  }
+}
+
+' ── Trip Planning + Itinerary Strategy ───────────────────────
+package "Trip Planning" {
+
+  class TripPlanner {
+    + origin : String
+    + destination : String
+    + planTrip() : Itinerary
+  }
+
+  interface ItineraryStrategy {
+    + plan(origin : Coordinates, destination : Coordinates) : Itinerary
+  }
+
+  class VehicleOnlyStrategy {
+    + plan(origin : Coordinates, destination : Coordinates) : Itinerary
+  }
+
+  class TransitFirstStrategy {
+    + plan(origin : Coordinates, destination : Coordinates) : Itinerary
+  }
+
+  ItineraryStrategy <|.. VehicleOnlyStrategy
+  ItineraryStrategy <|.. TransitFirstStrategy
+  TripPlanner --> ItineraryStrategy : uses >
+}
+
+' ── Parking ──────────────────────────────────────────────────
+package "Parking" {
+
+  class ParkingLot {
+    + name : String
+    + address : String
+    + hourlyRate : Decimal
+    + capacity : Integer
+  }
+
+  class ParkingSpot {
+    + spotId : String
+    + isAvailable : Boolean
+  }
+
+  ParkingLot "1" *-- "1..*" ParkingSpot : contains
+}
+
+' ── Transit — Adapter + Facade ───────────────────────────────
+package "Public Transport (Adapter + Facade)" {
+
+  interface TransitProvider {
+    + getNearbyStops(lat : Float, lon : Float, radius : Integer) : List
+    + getNextDepartures(stopId : String) : List
+  }
+
+  class GTFSAdapter {
+    + getNearbyStops(lat : Float, lon : Float, radius : Integer) : List
+    + getNextDepartures(stopId : String) : List
+  }
+
+  class CityAPIAdapter {
+    + getNearbyStops(lat : Float, lon : Float, radius : Integer) : List
+    + getNextDepartures(stopId : String) : List
+  }
+
+  class TransitFacade {
+    - bus : GTFSAdapter
+    - metro : CityAPIAdapter
+    + getNearbyStops(lat : Float, lon : Float, radius : Integer) : List
+    + getNextDepartures(stopId : String) : List
+  }
+
+  class TransitStop {
+    + name : String
+    + location : String
+  }
+
+  class TransitSchedule {
+    + route : String
+    + destination : String
+    + departureTime : Time
+  }
+
+  TransitProvider <|.. GTFSAdapter
+  TransitProvider <|.. CityAPIAdapter
+  TransitFacade o-- GTFSAdapter    : bus
+  TransitFacade o-- CityAPIAdapter : metro
+  TransitFacade "1" --> "1..*" TransitStop : serves
+  TransitStop "1" --> "0..*" TransitSchedule : schedules
+}
+
+' ── City ─────────────────────────────────────────────────────
+class City {
+  + name : String
+  + code : String
+}
+
+' ── Cross-package relationships ───────────────────────────────
+Commuter "1" -- "0..*" Reservation         : makes
+Reservation "0..*" --> "1" Vehicle         : for
+MobilityProvider "1" -- "0..*" Vehicle     : owns
+User "1" -- "0..*" Notification            : receives
+Notification "0..1" --> "0..1" Reservation : references
+
+Commuter "1" -- "0..*" TripPlanner         : plans
+TripPlanner "0..*" --> "0..1" ParkingLot   : ends at
+TripPlanner "0..*" --> "0..*" TransitStop  : passes through
+TripPlanner "0..*" --> "0..*" Vehicle      : uses
+
+City "1" -- "0..*" Vehicle                : registered in
+City "1" -- "0..*" ParkingLot             : has
+City "1" --> TransitFacade                : served by
+CityAdministrator "1" -- "1" City         : manages
+
+@enduml

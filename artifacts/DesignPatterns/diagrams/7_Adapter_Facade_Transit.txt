@@ -1,0 +1,43 @@
+@startuml
+title Adapter + Facade Pattern — Public Transit Integration
+
+interface TransitProvider {
+  + getNearbyStops(lat : Float, lon : Float, radius : Integer) : List
+  + getNextDepartures(stopId : String) : List
+}
+
+class GTFSAdapter {
+  - adaptee : OverpassAPI
+  + getNearbyStops(lat : Float, lon : Float, radius : Integer) : List
+  + getNextDepartures(stopId : String) : List
+}
+
+class CityAPIAdapter {
+  - adaptee : OverpassAPI
+  + getNearbyStops(lat : Float, lon : Float, radius : Integer) : List
+  + getNextDepartures(stopId : String) : List
+}
+
+class TransitFacade {
+  - bus : GTFSAdapter
+  - metro : CityAPIAdapter
+  + getNearbyStops(lat : Float, lon : Float, radius : Integer) : List
+  + getNextDepartures(stopId : String) : List
+}
+
+class OverpassAPI <<external>> {
+  + query(request : String) : Response
+}
+
+note bottom of TransitFacade
+  Clients depend only on TransitFacade.
+  Adapter selection is transparent.
+end note
+
+TransitProvider <|.. GTFSAdapter
+TransitProvider <|.. CityAPIAdapter
+TransitFacade o-- GTFSAdapter    : bus
+TransitFacade o-- CityAPIAdapter : metro
+GTFSAdapter    --> OverpassAPI   : queries
+CityAPIAdapter --> OverpassAPI   : queries
+@enduml

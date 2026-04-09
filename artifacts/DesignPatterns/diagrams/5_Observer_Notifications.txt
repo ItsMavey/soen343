@@ -1,0 +1,52 @@
+@startuml
+title Observer Pattern — Notifications
+
+abstract class Subject {
+  - observers : List<Observer>
+  + attach(o : Observer) : void
+  + detach(o : Observer) : void
+  + notify(event : String) : void
+}
+
+class Vehicle {
+  + sendToMaintenance() : void
+  + completeMaintenance() : void
+  + returnVehicle() : void
+}
+
+interface Observer {
+  + update(vehicle : Vehicle, event : String) : void
+}
+
+class UserNotifier {
+  + update(vehicle : Vehicle, event : String) : void
+}
+
+class AdminDashboard {
+  + update(vehicle : Vehicle, event : String) : void
+}
+
+class RecommendationService {
+  + update(vehicle : Vehicle, event : String) : void
+}
+
+class Notification {
+  + eventType : String
+  + message : String
+  + isRead : Boolean
+}
+
+note right of Vehicle
+  Fires MAINTENANCE, AVAILABLE,
+  and RETURNED events.
+end note
+
+Vehicle --|> Subject
+Subject --> Observer : notifies
+Observer <|.. UserNotifier
+Observer <|.. AdminDashboard
+Observer <|.. RecommendationService
+UserNotifier ..> Notification : creates
+AdminDashboard ..> Notification : creates
+RecommendationService ..> Notification : creates
+@enduml

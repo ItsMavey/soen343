@@ -1,0 +1,31 @@
+@startuml
+title Strategy Pattern — Multimodal Itinerary Planning
+
+class TripPlanner {
+  - strategy : ItineraryStrategy
+  + setStrategy(s : ItineraryStrategy) : void
+  + planTrip(origin : Coordinates, destination : Coordinates) : Itinerary
+}
+
+interface ItineraryStrategy {
+  + plan(origin : Coordinates, destination : Coordinates) : Itinerary
+}
+
+class VehicleOnlyStrategy {
+  + plan(origin : Coordinates, destination : Coordinates) : Itinerary
+}
+
+class TransitFirstStrategy {
+  + plan(origin : Coordinates, destination : Coordinates) : Itinerary
+}
+
+note right of TransitFirstStrategy
+  Returns null if no transit stops
+  found near origin. Caller falls
+  back to VehicleOnlyStrategy.
+end note
+
+TripPlanner o--> ItineraryStrategy : strategy
+ItineraryStrategy <|.. VehicleOnlyStrategy
+ItineraryStrategy <|.. TransitFirstStrategy
+@enduml

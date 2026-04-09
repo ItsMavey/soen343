@@ -1,0 +1,50 @@
+@startuml
+title State Pattern — Vehicle Lifecycle
+
+class Vehicle {
+  - state : VehicleState
+  + setState(s : VehicleState) : void
+  + reserve() : void
+  + confirm() : void
+  + returnVehicle() : void
+  + sendToMaintenance() : void
+  + completeMaintenance() : void
+}
+
+abstract class VehicleState {
+  + reserve(v : Vehicle) : void
+  + confirm(v : Vehicle) : void
+  + returnVehicle(v : Vehicle) : void
+  + sendToMaintenance(v : Vehicle) : void
+  + completeMaintenance(v : Vehicle) : void
+}
+
+class AvailableState {
+  + reserve(v : Vehicle) : void
+  + sendToMaintenance(v : Vehicle) : void
+}
+
+class ReservedState {
+  + confirm(v : Vehicle) : void
+}
+
+class InUseState {
+  + returnVehicle(v : Vehicle) : void
+}
+
+class MaintenanceState {
+  + completeMaintenance(v : Vehicle) : void
+}
+
+note right of Vehicle
+  All invalid transitions throw
+  InvalidTransitionError.
+  No status conditionals in Vehicle.
+end note
+
+Vehicle o--> VehicleState : state
+VehicleState <|-- AvailableState
+VehicleState <|-- ReservedState
+VehicleState <|-- InUseState
+VehicleState <|-- MaintenanceState
+@enduml

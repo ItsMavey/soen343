@@ -1,0 +1,38 @@
+@startuml
+title Strategy Pattern — Pricing
+
+class Reservation {
+  - strategy : PricingStrategy
+  - totalAmount : Decimal
+  - startDate : Date
+  - endDate : Date
+  + setStrategy(s : PricingStrategy) : void
+  + calculateTotal() : Decimal
+}
+
+interface PricingStrategy {
+  + calculate(rate : Decimal, days : Integer) : Decimal
+}
+
+class StandardPricing {
+  + calculate(rate : Decimal, days : Integer) : Decimal
+}
+
+class WeekendPricing {
+  + calculate(rate : Decimal, days : Integer) : Decimal
+}
+
+class SurgePricing {
+  + calculate(rate : Decimal, days : Integer) : Decimal
+}
+
+note right of Reservation
+  Strategy is selected at runtime
+  based on day-of-week and demand.
+end note
+
+Reservation o--> PricingStrategy : strategy
+PricingStrategy <|.. StandardPricing
+PricingStrategy <|.. WeekendPricing
+PricingStrategy <|.. SurgePricing
+@enduml
