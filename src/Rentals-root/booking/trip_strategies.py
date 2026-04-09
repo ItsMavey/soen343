@@ -156,9 +156,13 @@ class TransitFirstStrategy(ItineraryStrategy):
     """
 
     def plan(self, slat, slng, elat, elng):
+        from concurrent.futures import ThreadPoolExecutor
         facade = TransitFacade()
-        start_stops = facade.get_nearby_stops(lat=slat, lon=slng, radius_m=800)
-        end_stops   = facade.get_nearby_stops(lat=elat, lon=elng, radius_m=800)
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            f_start = ex.submit(facade.get_nearby_stops, slat, slng, 800)
+            f_end   = ex.submit(facade.get_nearby_stops, elat, elng, 800)
+            start_stops = f_start.result()
+            end_stops   = f_end.result()
 
         if not start_stops or not end_stops:
             return None  # no transit coverage — caller falls back
@@ -189,7 +193,7 @@ class TransitFirstStrategy(ItineraryStrategy):
             self._leg("transit", "Take transit",
                       start_stop["lat"], start_stop["lon"], start_stop["name"],
                       end_stop["lat"],   end_stop["lon"],   end_stop["name"],
-                      f"~{transit_min} min · {end_stop['id']}"),
+                      f"~{transit_min} min · {end_stop['name']}"),
             self._leg("walk", "Walk to vehicle",
                       end_stop["lat"], end_stop["lon"], end_stop["name"],
                       vlat, vlng, vehicle.display_name(),
@@ -208,3 +212,47 @@ class TransitFirstStrategy(ItineraryStrategy):
                                   f"~{round(_haversine_km(parking.lat, parking.lng, elat, elng) * 1000)}m on foot"))
 
         return {"type": "transit_vehicle", "label": "Transit + Vehicle", "legs": legs}
+
+
+class TransitOnlyStrategy(ItineraryStrategy):
+    """
+    Walk to the nearest transit stop → take transit → walk to destination.
+    No vehicle required.
+    """
+
+    def plan(self, slat, slng, elat, elng):
+        from concurrent.futures import ThreadPoolExecutor
+        facade = TransitFacade()
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            f_start = ex.submit(facade.get_nearby_stops, slat, slng, 800)
+            f_end   = ex.submit(facade.get_nearby_stops, elat, elng, 800)
+            start_stops = f_start.result()
+            end_stops   = f_end.result()
+
+        if not start_stops or not end_stops:
+            return None
+
+        start_stop = start_stops[0]
+        end_stop   = end_stops[0]
+        transit_km  = _haversine_km(start_stop["lat"], start_stop["lon"],
+                                     end_stop["lat"],   end_stop["lon"])
+        transit_min = max(5, round(transit_km / 20 * 60) + 2)
+
+        return {
+            "type": "transit_only",
+            "label": "Transit",
+            "legs": [
+                self._leg("walk", "Walk to stop",
+                          slat, slng, "Start",
+                          start_stop["lat"], start_stop["lon"], start_stop["name"],
+                          f"{start_stop['distance_m']} m on foot"),
+                self._leg("transit", f"Transit to {end_stop['name']}",
+                          start_stop["lat"], start_stop["lon"], start_stop["name"],
+                          end_stop["lat"],   end_stop["lon"],   end_stop["name"],
+                          f"~{transit_min} min"),
+                self._leg("walk", "Walk to destination",
+                          end_stop["lat"], end_stop["lon"], end_stop["name"],
+                          elat, elng, "Destination",
+                          f"~{round(_haversine_km(end_stop['lat'], end_stop['lon'], elat, elng) * 1000)} m on foot"),
+            ],
+        }

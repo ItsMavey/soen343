@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -6,12 +8,15 @@ from django.urls import reverse
 from ..external_services import ParkingService
 from ..models import Vehicle
 from ..trip_strategies import (
+    TransitOnlyStrategy,
     TransitFirstStrategy,
     VehicleOnlyStrategy,
     _haversine_km,
     nearest_vehicle,
 )
 from .map_views import _vehicle_coords
+
+_STRATEGY_ORDER = ["transit_only", "transit_vehicle", "vehicle_only"]
 
 
 @login_required
@@ -29,16 +34,19 @@ def trip_plan(request):
     except (KeyError, ValueError):
         return JsonResponse({"error": "Provide slat, slng, elat, elng."}, status=400)
 
-    # Run strategies in priority order; collect all feasible options
-    strategies = [TransitFirstStrategy(), VehicleOnlyStrategy()]
-    options = []
-    for strategy in strategies:
-        try:
-            result = strategy.plan(slat, slng, elat, elng)
-            if result:
-                options.append(result)
-        except Exception:
-            pass
+    # Run all strategies in parallel; collect feasible options in priority order
+    strategies = [TransitOnlyStrategy(), TransitFirstStrategy(), VehicleOnlyStrategy()]
+    results = {}
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        futures = {ex.submit(s.plan, slat, slng, elat, elng): s for s in strategies}
+        for fut in as_completed(futures):
+            try:
+                r = fut.result()
+                if r:
+                    results[r["type"]] = r
+            except Exception:
+                pass
+    options = [results[k] for k in _STRATEGY_ORDER if k in results]
 
     if not options:
         return JsonResponse(

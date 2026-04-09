@@ -5,7 +5,7 @@ from django.test import TestCase
 from booking.models import Vehicle
 from booking.trip_strategies import (
     _haversine_km, nearest_vehicle, nearest_parking,
-    VehicleOnlyStrategy, TransitFirstStrategy,
+    VehicleOnlyStrategy, TransitFirstStrategy, TransitOnlyStrategy,
 )
 from .helpers import make_car
 
@@ -153,3 +153,42 @@ class TransitFirstStrategyTests(TestCase):
         if result is not None:
             self.assertIn("legs", result)
             self.assertGreater(len(result["legs"]), 0)
+
+
+class TransitOnlyStrategyTests(TestCase):
+
+    def setUp(self):
+        self.strategy = TransitOnlyStrategy()
+
+    @patch("booking.trip_strategies.TransitFacade")
+    def test_returns_none_when_no_stops(self, MockTF):
+        MockTF.return_value.get_nearby_stops.return_value = []
+        result = self.strategy.plan(*MTL, *LAV)
+        self.assertIsNone(result)
+
+    @patch("booking.trip_strategies.TransitFacade")
+    def test_returns_transit_only_type(self, MockTF):
+        stop = {"id": "s1", "name": "Stop A", "lat": 45.503, "lon": -73.568, "distance_m": 200}
+        MockTF.return_value.get_nearby_stops.return_value = [stop]
+        result = self.strategy.plan(*MTL, *LAV)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["type"], "transit_only")
+        self.assertEqual(result["label"], "Transit")
+
+    @patch("booking.trip_strategies.TransitFacade")
+    def test_returns_three_legs(self, MockTF):
+        stop = {"id": "s1", "name": "Stop A", "lat": 45.503, "lon": -73.568, "distance_m": 200}
+        MockTF.return_value.get_nearby_stops.return_value = [stop]
+        result = self.strategy.plan(*MTL, *LAV)
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result["legs"]), 3)
+        modes = [leg["mode"] for leg in result["legs"]]
+        self.assertEqual(modes, ["walk", "transit", "walk"])
+
+    @patch("booking.trip_strategies.TransitFacade")
+    def test_no_vehicle_url_in_legs(self, MockTF):
+        stop = {"id": "s1", "name": "Stop A", "lat": 45.503, "lon": -73.568, "distance_m": 200}
+        MockTF.return_value.get_nearby_stops.return_value = [stop]
+        result = self.strategy.plan(*MTL, *LAV)
+        for leg in result["legs"]:
+            self.assertNotIn("vehicle_url", leg)
