@@ -1,0 +1,169 @@
+@startuml
+title SUMMS — Initial Design Class Diagram (Pre-Pattern)
+
+' ── User Management ──────────────────────────────────────────
+package "User Management" {
+
+  abstract class User {
+    + username : String
+    + email : String
+    + role : String
+    + preferred_city : String
+    + preferred_mobility_type : String
+    + is_commuter() : Boolean
+    + is_provider() : Boolean
+    + is_city_admin() : Boolean
+  }
+
+  note right of User
+    Role stored as a field.
+    No separate subtype classes
+    in the database — role-based
+    dispatch handled via conditionals.
+  end note
+}
+
+' ── Vehicle Management ────────────────────────────────────────
+package "Vehicle Management" {
+
+  class Vehicle {
+    + vehicle_kind : String
+    + vehicle_status : String
+    + city : String
+    + daily_rate : Decimal
+    + make : String
+    + model : String
+    + year : Integer
+    + rating : Float
+    + total_trips : Integer
+    + is_available() : Boolean
+    + reserve() : void
+    + return_vehicle() : void
+    + send_to_maintenance() : void
+    + complete_maintenance() : void
+  }
+
+  note right of Vehicle
+    Status transitions use
+    if/elif chains on
+    vehicle_status directly.
+    No dedicated state objects.
+  end note
+
+  class Car {
+    + fuel_type : String
+    + body_style : String
+  }
+
+  class Bike {
+    + bike_type : String
+    + has_motor : Boolean
+  }
+
+  class Scooter {
+    + engine_cc : Integer
+    + is_electric : Boolean
+  }
+
+  Vehicle <|-- Car
+  Vehicle <|-- Bike
+  Vehicle <|-- Scooter
+}
+
+' ── Rental System ─────────────────────────────────────────────
+package "Rental System" {
+
+  class Reservation {
+    + start_date : Date
+    + end_date : Date
+    + status : String
+    + pricing_strategy : String
+    + total_amount : Decimal
+    + created_at : DateTime
+    + paid_at : DateTime
+    + returned_at : DateTime
+  }
+
+  note right of Reservation
+    Pricing logic is embedded
+    directly in reserve_vehicle
+    view using if/elif on
+    day-of-week — no strategy
+    classes.
+  end note
+
+  class Notification {
+    + message : String
+    + event_type : String
+    + is_read : Boolean
+    + created_at : DateTime
+  }
+}
+
+' ── Trip Planning ─────────────────────────────────────────────
+package "Trip Planning" {
+
+  class Trip {
+    + origin : String
+    + destination : String
+    + date : Date
+  }
+
+  note right of Trip
+    Itinerary computed inline
+    in the trip_plan view.
+    No strategy abstraction.
+  end note
+}
+
+' ── External Services ─────────────────────────────────────────
+package "External Services" {
+
+  class ParkingLot {
+    + name : String
+    + address : String
+    + lat : Float
+    + lon : Float
+    + hourly_rate : Decimal
+    + capacity : Integer
+    + spots_available : Integer
+  }
+
+  class TransitStop {
+    + id : String
+    + name : String
+    + lat : Float
+    + lon : Float
+    + distance_m : Integer
+  }
+
+  class TransitSchedule {
+    + route : String
+    + destination : String
+    + departure_time : String
+  }
+
+  class PublicTransitService {
+    + get_nearby_stops(lat, lon) : list
+    + get_next_departures(stop_id) : list
+  }
+
+  note right of PublicTransitService
+    Direct Overpass API calls
+    inside this single class.
+    No adapter abstraction.
+  end note
+
+  TransitStop "1" --> "0..*" TransitSchedule : schedules
+}
+
+' ── Cross-package relationships ───────────────────────────────
+User "1" -- "0..*" Reservation    : makes
+Reservation "0..*" --> "1" Vehicle : for
+User "1" -- "0..*" Vehicle        : owns
+User "1" -- "0..*" Notification   : receives
+Notification "0..1" --> "0..1" Reservation : references
+Notification "0..1" --> "0..1" Vehicle     : about
+User "1" -- "0..*" Trip           : plans
+
+@enduml

@@ -1,0 +1,626 @@
+' ============================================================
+'  SUMMS Design Patterns
+'
+'  Diagram 1  — Updated Class Diagram (§3.2)
+'              Full system integrating domain model +
+'              all design patterns
+'
+'  Diagrams 2–7 — Individual pattern diagrams (§3.1)
+'                 One per implemented pattern
+' ============================================================
+
+
+' ────────────────────────────────────────────────────────────
+'  1. UPDATED CLASS DIAGRAM  (§3.2)
+'     Domain model + all design patterns integrated
+' ────────────────────────────────────────────────────────────
+@startuml
+title SUMMS — Updated Class Diagram
+
+' ── User Management ──────────────────────────────────────────
+package "User Management" {
+
+  abstract class User {
+    + username : String
+    + email : String
+    + role : String
+    + preferred_city : String
+  }
+
+  class Commuter {
+    + reliability_score : Float
+    + co2_saved : Float
+  }
+
+  class MobilityProvider {
+    + company_name : String
+  }
+
+  class CityAdministrator {
+    + city : String
+    + access_level : String
+  }
+
+  User <|-- Commuter
+  User <|-- MobilityProvider
+  User <|-- CityAdministrator
+}
+
+' ── Observer Pattern ─────────────────────────────────────────
+package "Observer Pattern" {
+
+  abstract class Subject {
+    + attach(observer : Observer) : void
+    + detach(observer : Observer) : void
+    + _notify_observers(event : str) : void
+  }
+
+  interface Observer {
+    + {abstract} update(vehicle : Vehicle, event : str) : void
+  }
+
+  class UserNotifier {
+    + update(vehicle, event) : void
+  }
+
+  class AdminDashboard {
+    + update(vehicle, event) : void
+  }
+
+  class RecommendationService {
+    + update(vehicle, event) : void
+  }
+
+  Observer <|.. UserNotifier
+  Observer <|.. AdminDashboard
+  Observer <|.. RecommendationService
+  Subject "1" --> "0..*" Observer : notifies
+}
+
+' ── Vehicle + State + Factory ─────────────────────────────────
+package "Vehicle Management" {
+
+  abstract class Vehicle {
+    + vehicle_kind : String
+    + vehicle_status : String
+    + daily_rate : Decimal
+    + city : String
+    + reserve() : void
+    + return_vehicle() : void
+    + send_to_maintenance() : void
+    + complete_maintenance() : void
+  }
+
+  class Car {
+    + fuel_type : String
+    + body_style : String
+  }
+
+  class Bike {
+    + bike_type : String
+    + has_motor : Boolean
+  }
+
+  class Scooter {
+    + engine_cc : Integer
+    + is_electric : Boolean
+  }
+
+  Vehicle <|-- Car
+  Vehicle <|-- Bike
+  Vehicle <|-- Scooter
+  Vehicle --|> Subject
+
+  ' State Pattern
+  abstract class VehicleState {
+    + {abstract} reserve(vehicle) : void
+    + {abstract} confirm(vehicle) : void
+    + {abstract} return_vehicle(vehicle) : void
+    + {abstract} send_to_maintenance(vehicle) : void
+    + {abstract} complete_maintenance(vehicle) : void
+  }
+
+  class AvailableState {
+    + reserve(vehicle) : void
+    + send_to_maintenance(vehicle) : void
+  }
+
+  class ReservedState {
+    + confirm(vehicle) : void
+  }
+
+  class InUseState {
+    + return_vehicle(vehicle) : void
+  }
+
+  class MaintenanceState {
+    + complete_maintenance(vehicle) : void
+  }
+
+  VehicleState <|-- AvailableState
+  VehicleState <|-- ReservedState
+  VehicleState <|-- InUseState
+  VehicleState <|-- MaintenanceState
+  Vehicle --> VehicleState : delegates to >
+
+  ' Factory Pattern
+  abstract class VehicleFactory {
+    + {abstract} create_vehicle(kwargs) : Vehicle
+  }
+
+  class ProviderFactoryA {
+    + create_vehicle(kwargs) : Vehicle
+  }
+
+  class ProviderFactoryB {
+    + create_vehicle(kwargs) : Vehicle
+  }
+
+  VehicleFactory <|-- ProviderFactoryA
+  VehicleFactory <|-- ProviderFactoryB
+  ProviderFactoryA ..> Car    : creates
+  ProviderFactoryA ..> Bike   : creates
+  ProviderFactoryB ..> Scooter : creates
+}
+
+' ── Rental + Pricing Strategy ────────────────────────────────
+package "Rental System" {
+
+  class Reservation {
+    + start_date : Date
+    + end_date : Date
+    + status : String
+    + total_amount : Decimal
+    + pricing_strategy : String
+  }
+
+  abstract class PricingStrategy {
+    + {abstract} calculate(daily_rate : Decimal, days : int) : Decimal
+  }
+
+  class StandardPricing {
+    + calculate(daily_rate, days) : Decimal
+  }
+
+  class WeekendPricing {
+    + calculate(daily_rate, days) : Decimal
+  }
+
+  class SurgePricing {
+    + calculate(daily_rate, days) : Decimal
+  }
+
+  PricingStrategy <|-- StandardPricing
+  PricingStrategy <|-- WeekendPricing
+  PricingStrategy <|-- SurgePricing
+
+  Reservation --> PricingStrategy : uses >
+
+  class Notification {
+    + message : String
+    + event_type : String
+    + is_read : Boolean
+    + created_at : DateTime
+  }
+}
+
+' ── Trip Planning + Itinerary Strategy ───────────────────────
+package "Trip Planning" {
+
+  class Trip {
+    + origin : String
+    + destination : String
+    + date : Date
+  }
+
+  abstract class ItineraryStrategy {
+    + {abstract} plan(slat, slng, elat, elng) : dict
+  }
+
+  class VehicleOnlyStrategy {
+    + plan(slat, slng, elat, elng) : dict
+  }
+
+  class TransitFirstStrategy {
+    + plan(slat, slng, elat, elng) : dict
+  }
+
+  ItineraryStrategy <|-- VehicleOnlyStrategy
+  ItineraryStrategy <|-- TransitFirstStrategy
+  Trip --> ItineraryStrategy : uses >
+}
+
+' ── Parking ──────────────────────────────────────────────────
+package "Parking" {
+
+  class ParkingLot {
+    + name : String
+    + address : String
+    + hourly_rate : Decimal
+    + capacity : Integer
+  }
+
+  class ParkingSpot {
+    + spot_id : String
+    + is_available : Boolean
+  }
+
+  ParkingLot "1" *-- "1..*" ParkingSpot : contains
+}
+
+' ── Transit — Adapter + Facade ───────────────────────────────
+package "Public Transport (Adapter + Facade)" {
+
+  interface TransitProvider {
+    + get_nearby_stops(lat, lon, radius_m) : list
+    + get_next_departures(stop_id) : list
+  }
+
+  class GTFSAdapter {
+    + get_nearby_stops(lat, lon, radius_m) : list
+    + get_next_departures(stop_id) : list
+  }
+
+  class CityAPIAdapter {
+    + get_nearby_stops(lat, lon, radius_m) : list
+    + get_next_departures(stop_id) : list
+  }
+
+  class TransitFacade {
+    - _bus : GTFSAdapter
+    - _metro : CityAPIAdapter
+    + get_nearby_stops(lat, lon, radius_m) : list
+    + get_next_departures(stop_id) : list
+  }
+
+  class TransitStop {
+    + name : String
+    + location : String
+  }
+
+  class TransitSchedule {
+    + route : String
+    + destination : String
+    + departure_time : Time
+  }
+
+  TransitProvider <|.. GTFSAdapter
+  TransitProvider <|.. CityAPIAdapter
+  TransitFacade o-- GTFSAdapter   : _bus
+  TransitFacade o-- CityAPIAdapter : _metro
+  TransitFacade "1" --> "1..*" TransitStop : serves
+  TransitStop "1" --> "0..*" TransitSchedule : schedules
+}
+
+' ── City ─────────────────────────────────────────────────────
+class City {
+  + name : String
+  + code : String
+}
+
+' ── Cross-package relationships ───────────────────────────────
+Commuter "1" -- "0..*" Reservation       : makes
+Reservation "0..*" --> "1" Vehicle       : for
+MobilityProvider "1" -- "0..*" Vehicle   : owns
+User "1" -- "0..*" Notification          : receives
+Notification "0..1" --> "0..1" Reservation : references
+
+Commuter "1" -- "0..*" Trip              : plans
+Trip "0..*" --> "0..1" ParkingLot        : ends at
+Trip "0..*" --> "0..*" TransitStop       : passes through
+Trip "0..*" --> "0..*" Vehicle           : uses
+
+City "1" -- "0..*" Vehicle              : registered in
+City "1" -- "0..*" ParkingLot           : has
+City "1" --> TransitFacade              : served by
+CityAdministrator "1" -- "1" City       : manages
+
+@enduml
+
+
+' ────────────────────────────────────────────────────────────
+'  2. STRATEGY — Pricing  (booking/pricing.py)
+' ────────────────────────────────────────────────────────────
+@startuml
+title Strategy Pattern — Pricing
+
+abstract class PricingStrategy {
+  + {abstract} calculate(daily_rate: Decimal, days: int): Decimal
+}
+
+class StandardPricing {
+  + calculate(daily_rate, days): Decimal
+  ' rate × days × 1.00
+}
+
+class WeekendPricing {
+  + calculate(daily_rate, days): Decimal
+  ' rate × days × 1.25
+}
+
+class SurgePricing {
+  + calculate(daily_rate, days): Decimal
+  ' rate × days × 1.50
+}
+
+class Reservation {
+  - pricing_strategy : String
+  - total_amount : Decimal
+  - start_date : Date
+  - end_date : Date
+}
+
+note bottom of Reservation
+  reserve_vehicle view selects the
+  active strategy at runtime based
+  on day-of-week / demand.
+end note
+
+PricingStrategy <|-- StandardPricing
+PricingStrategy <|-- WeekendPricing
+PricingStrategy <|-- SurgePricing
+Reservation --> PricingStrategy : uses
+@enduml
+
+
+' ────────────────────────────────────────────────────────────
+'  3. STRATEGY — Itinerary Planning
+'     (booking/trip_strategies.py)
+' ────────────────────────────────────────────────────────────
+@startuml
+title Strategy Pattern — Multimodal Itinerary Planning
+
+abstract class ItineraryStrategy {
+  + {abstract} plan(slat: float, slng: float,\n  elat: float, elng: float): dict
+  # _leg(mode, label, ...): dict
+}
+
+class VehicleOnlyStrategy {
+  + plan(...): dict
+  ' walk → drive → park → walk
+}
+
+class TransitFirstStrategy {
+  + plan(...): dict
+  ' walk → transit → walk → drive → park → walk
+}
+
+class "trip_plan()\n«view»" as TripView {
+  + run strategies in priority order
+  + return all feasible options
+}
+
+note right of TransitFirstStrategy
+  Falls back to None if no transit
+  stops found near origin/destination.
+  Caller skips None results.
+end note
+
+ItineraryStrategy <|-- VehicleOnlyStrategy
+ItineraryStrategy <|-- TransitFirstStrategy
+TripView ..> ItineraryStrategy : selects and runs
+@enduml
+
+
+' ────────────────────────────────────────────────────────────
+'  4. STATE — Vehicle Lifecycle  (booking/states.py)
+' ────────────────────────────────────────────────────────────
+@startuml
+title State Pattern — Vehicle Lifecycle
+
+abstract class VehicleState {
+  + {abstract} reserve(vehicle): void
+  + {abstract} confirm(vehicle): void
+  + {abstract} return_vehicle(vehicle): void
+  + {abstract} send_to_maintenance(vehicle): void
+  + {abstract} complete_maintenance(vehicle): void
+}
+
+class AvailableState {
+  + reserve(vehicle): void
+  + send_to_maintenance(vehicle): void
+}
+
+class ReservedState {
+  + confirm(vehicle): void
+}
+
+class InUseState {
+  + return_vehicle(vehicle): void
+  + send_to_maintenance(vehicle): void
+}
+
+class MaintenanceState {
+  + complete_maintenance(vehicle): void
+}
+
+class Vehicle {
+  - vehicle_status : String
+  + state : VehicleState
+  + reserve(): void
+  + confirm(): void
+  + return_vehicle(): void
+  + send_to_maintenance(): void
+  + complete_maintenance(): void
+}
+
+note bottom of Vehicle
+  All invalid transitions raise
+  InvalidTransitionError.
+  Vehicle never checks status
+  with conditionals.
+end note
+
+VehicleState <|-- AvailableState
+VehicleState <|-- ReservedState
+VehicleState <|-- InUseState
+VehicleState <|-- MaintenanceState
+Vehicle --> VehicleState : delegates to
+@enduml
+
+
+' ────────────────────────────────────────────────────────────
+'  5. OBSERVER — Notifications  (booking/observers.py)
+' ────────────────────────────────────────────────────────────
+@startuml
+title Observer Pattern — Notifications
+
+abstract class Subject {
+  - _observers : list
+  + attach(observer: Observer): void
+  + detach(observer: Observer): void
+  + _notify_observers(event: str): void
+}
+
+interface Observer {
+  + {abstract} update(vehicle: Vehicle, event: str): void
+}
+
+class UserNotifier {
+  + update(vehicle, event): void
+  ' fires on: AVAILABLE
+}
+
+class AdminDashboard {
+  + update(vehicle, event): void
+  ' fires on: MAINTENANCE
+}
+
+class RecommendationService {
+  + update(vehicle, event): void
+  ' fires on: RETURNED
+}
+
+class Vehicle {
+  + send_to_maintenance(): void
+  + complete_maintenance(): void
+  + return_vehicle(): void
+}
+
+class Notification {
+  + user : User
+  + event_type : String
+  + message : String
+  + is_read : Boolean
+}
+
+note right of Vehicle
+  Vehicle inherits Subject.
+  Each observer creates one
+  Notification record per event.
+end note
+
+Observer <|.. UserNotifier
+Observer <|.. AdminDashboard
+Observer <|.. RecommendationService
+Vehicle --|> Subject
+Subject --> Observer : notifies
+UserNotifier ..> Notification : creates
+AdminDashboard ..> Notification : creates
+RecommendationService ..> Notification : creates
+@enduml
+
+
+' ────────────────────────────────────────────────────────────
+'  6. FACTORY — Vehicle Creation  (booking/factories.py)
+' ────────────────────────────────────────────────────────────
+@startuml
+title Factory Pattern — Vehicle Creation
+
+abstract class VehicleFactory {
+  + {abstract} create_vehicle(kwargs): Vehicle
+}
+
+class ProviderFactoryA {
+  + create_vehicle(kwargs): Vehicle
+  ' produces Car or Bike
+}
+
+class ProviderFactoryB {
+  + create_vehicle(kwargs): Vehicle
+  ' produces Scooter
+}
+
+abstract class Vehicle {
+  + vehicle_kind : String
+  + daily_rate : Decimal
+}
+
+class Car {
+  + fuel_type : String
+  + body_style : String
+}
+
+class Bike {
+  + bike_type : String
+  + has_motor : Boolean
+}
+
+class Scooter {
+  + engine_cc : Integer
+  + is_electric : Boolean
+}
+
+note top of ProviderFactoryA
+  get_factory(vehicle_kind)
+  returns the correct factory.
+end note
+
+VehicleFactory <|-- ProviderFactoryA
+VehicleFactory <|-- ProviderFactoryB
+Vehicle <|-- Car
+Vehicle <|-- Bike
+Vehicle <|-- Scooter
+ProviderFactoryA ..> Car    : creates
+ProviderFactoryA ..> Bike   : creates
+ProviderFactoryB ..> Scooter : creates
+@enduml
+
+
+' ────────────────────────────────────────────────────────────
+'  7. ADAPTER + FACADE — Transit Integration
+'     (booking/external_services.py)
+' ────────────────────────────────────────────────────────────
+@startuml
+title Adapter + Facade Pattern — Public Transit Integration
+
+interface TransitProvider {
+  + get_nearby_stops(lat, lon, radius_m): list
+  + get_next_departures(stop_id): list
+}
+
+class GTFSAdapter {
+  + get_nearby_stops(lat, lon, radius_m): list
+  + get_next_departures(stop_id): list
+  ' fetches bus stops — Overpass API
+}
+
+class CityAPIAdapter {
+  + get_nearby_stops(lat, lon, radius_m): list
+  + get_next_departures(stop_id): list
+  ' fetches metro stations — Overpass API
+}
+
+class TransitFacade {
+  - _bus : GTFSAdapter
+  - _metro : CityAPIAdapter
+  + get_nearby_stops(lat, lon, radius_m): list
+  + get_next_departures(stop_id): list
+}
+
+component "Overpass API\n(OpenStreetMap)" as OverpassAPI <<external>>
+
+note bottom of TransitFacade
+  Clients (views, trip planner)
+  depend only on TransitFacade.
+  Internal adapter selection is
+  transparent to all callers.
+end note
+
+TransitProvider <|.. GTFSAdapter
+TransitProvider <|.. CityAPIAdapter
+TransitFacade o-- GTFSAdapter   : _bus
+TransitFacade o-- CityAPIAdapter : _metro
+GTFSAdapter    ..> OverpassAPI  : queries
+CityAPIAdapter ..> OverpassAPI  : queries
+@enduml
