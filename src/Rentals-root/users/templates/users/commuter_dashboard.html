@@ -68,42 +68,41 @@
                     <a href="{% url 'transit' %}" class="btn-card-action">View Transit</a>
                 </div>
             </div>
-            <div class="col-12 col-md-6 col-lg-4">
+            <div class="col-12">
                 <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
-                    <div class="dash-card-title">Reliability Score</div>
-                    <div class="dash-card-desc">Based on completed returns vs total reservations.</div>
-                    <div class="stat-val">{{ reliability_score }}<span style="font-size:1rem;color:var(--color-text-secondary)">/100</span></div>
-                    <div class="score-bar-wrap">
-                        <div class="score-bar" style="width:{{ reliability_score }}%"></div>
-                    </div>
-                    <div style="font-size:0.8rem;color:var(--color-text-secondary)">
-                        {% if reliability_score >= 90 %}Elite tier — 15% discount active
-                        {% elif reliability_score >= 75 %}Gold tier — 10% discount active
-                        {% elif reliability_score >= 50 %}Silver tier — 5% discount active
-                        {% else %}Complete more rentals to unlock discounts{% endif %}
-                    </div>
-                </a>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-                <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
-                    <div class="dash-card-title">Carbon Footprint</div>
-                    <div class="dash-card-desc">CO₂ saved vs a gasoline car across all your rentals.</div>
-                    <div class="co2-val">{{ co2_saved }} kg</div>
-                    <div class="co2-label" style="margin-bottom:1rem">CO₂ saved</div>
-                    <div style="font-size:0.8rem;color:var(--color-text-secondary)">Choose EVs, bikes, and scooters to increase your savings.</div>
-                </a>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4">
-                <a href="{% url 'my_rewards' %}" class="dash-card" style="display:block;text-decoration:none;color:inherit;">
-                    <div class="dash-card-title">Rewards &amp; Discounts</div>
-                    <div class="dash-card-desc">Your loyalty discount is applied automatically at checkout.</div>
-                    {% if discount_pct > 0 %}
-                        <div class="discount-badge">{{ discount_pct }}% off your next rental</div>
-                    {% else %}
-                        <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:1rem">No discount yet — return more rentals to earn rewards.</div>
-                    {% endif %}
-                    <div style="font-size:0.75rem;color:var(--color-text-secondary)">
-                        50+ score → 5% &nbsp;·&nbsp; 75+ → 10% &nbsp;·&nbsp; 90+ → 15%
+                    <div class="dash-card-title">Sustainability &amp; Rewards</div>
+                    <div class="dash-card-desc">Reliability score, carbon footprint, and loyalty discounts — all in one place.</div>
+                    <div class="row g-4 mt-1">
+                        <div class="col-12 col-md-4">
+                            <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:0.5rem;">Reliability Score</div>
+                            <div class="stat-val">{{ reliability_score }}<span style="font-size:1rem;color:var(--color-text-secondary)">/100</span></div>
+                            <div class="score-bar-wrap">
+                                <div class="score-bar" style="width:{{ reliability_score }}%"></div>
+                            </div>
+                            <div style="font-size:0.8rem;color:var(--color-text-secondary)">
+                                {% if reliability_score >= 90 %}Elite tier — 15% discount active
+                                {% elif reliability_score >= 75 %}Gold tier — 10% discount active
+                                {% elif reliability_score >= 50 %}Silver tier — 5% discount active
+                                {% else %}Complete more rentals to unlock discounts{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:0.5rem;">Carbon Footprint</div>
+                            <div class="co2-val">{{ co2_saved }} kg</div>
+                            <div class="co2-label" style="margin-bottom:0.5rem">CO₂ saved</div>
+                            <div style="font-size:0.8rem;color:var(--color-text-secondary)">Choose EVs, bikes, and scooters to increase your savings.</div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:0.5rem;">Rewards &amp; Discounts</div>
+                            {% if discount_pct > 0 %}
+                                <div class="discount-badge">{{ discount_pct }}% off your next rental</div>
+                            {% else %}
+                                <div style="font-size:0.8rem;color:var(--color-text-secondary);margin-bottom:1rem">No discount yet — return more rentals to earn rewards.</div>
+                            {% endif %}
+                            <div style="font-size:0.75rem;color:var(--color-text-secondary)">
+                                50+ score → 5% &nbsp;·&nbsp; 75+ → 10% &nbsp;·&nbsp; 90+ → 15%
+                            </div>
+                        </div>
                     </div>
                 </a>
             </div>

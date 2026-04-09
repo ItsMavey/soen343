@@ -72,19 +72,19 @@
         <div>
             <div class="sidebar-label">Start</div>
             <div class="addr-wrap">
-                <span class="addr-icon">🚶</span>
+                <span class="addr-icon" style="font-size:0.72rem;font-weight:700;">A</span>
                 <input id="start-input" class="addr-input" type="text" placeholder="Enter start address…" autocomplete="off"/>
                 <div id="start-suggestions" class="addr-suggestions" style="display:none;"></div>
             </div>
             <button class="btn-locate-sm" id="btn-use-location" style="margin-top:0.4rem;">
-                📍 Use my location
+                Use my location
             </button>
         </div>
 
         <div>
             <div class="sidebar-label">Destination</div>
             <div class="addr-wrap">
-                <span class="addr-icon">🏁</span>
+                <span class="addr-icon" style="font-size:0.72rem;font-weight:700;">B</span>
                 <input id="end-input" class="addr-input" type="text" placeholder="Enter destination…" autocomplete="off"/>
                 <div id="end-suggestions" class="addr-suggestions" style="display:none;"></div>
             </div>
@@ -271,13 +271,17 @@
         });
 
         // Waypoint markers
-        const modeEmoji = { walk: "🚶", drive: "🚗", transit: "🚌" };
-        addRoute(L.marker([legs[0].from.lat, legs[0].from.lng], { icon: emojiIcon("📍") })
+        const modeColor  = { walk: "#60a5fa", drive: "#ff6b1a", transit: "#4ade80" };
+        const modeLetter = { walk: "W", drive: "D", transit: "T" };
+        addRoute(L.marker([legs[0].from.lat, legs[0].from.lng], { icon: pinIcon("#4ade80", "A") })
             .bindPopup(`<b>Start</b><br><small>${legs[0].from.name}</small>`));
         legs.forEach((leg, i) => {
-            const isLast = i === legs.length - 1;
-            const emoji = isLast ? "🏁" : modeEmoji[legs[i + 1]?.mode] || "📌";
-            addRoute(L.marker([leg.to.lat, leg.to.lng], { icon: emojiIcon(emoji) })
+            const isLast   = i === legs.length - 1;
+            const nextMode = legs[i + 1]?.mode;
+            const icon     = isLast
+                ? pinIcon("#f87171", "B")
+                : pinIcon(modeColor[nextMode] || "#9a9590", modeLetter[nextMode] || "+");
+            addRoute(L.marker([leg.to.lat, leg.to.lng], { icon })
                 .bindPopup(`<b>${leg.to.name}</b>`));
         });
 
@@ -289,7 +293,7 @@
             const timeTxt = fmtTime(route.duration_s);
             const distTxt = fmtDist(route.distance_m);
             const meta = [timeTxt, distTxt].filter(Boolean).join(" · ");
-            const modeLabel = { walk: "🚶 Walk", drive: "🚗 Drive", transit: "🚌 Transit" }[leg.mode] || leg.mode;
+            const modeLabel = { walk: "Walk", drive: "Drive", transit: "Transit" }[leg.mode] || leg.mode;
             const linkHtml = leg.vehicle_url
                 ? `<a class="leg-link" href="${leg.vehicle_url}" target="_blank">View &amp; Reserve</a>`
                 : "";
