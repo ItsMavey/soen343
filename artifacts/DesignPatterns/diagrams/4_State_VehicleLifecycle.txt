@@ -1,4 +1,6 @@
 @startuml
+' Source: booking/states.py (state classes)
+'         booking/models.py (Vehicle.state property, transition methods)
 title State Pattern — Vehicle Lifecycle
 
 class Vehicle {

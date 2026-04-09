@@ -1,4 +1,6 @@
 @startuml
+' Source: booking/pricing.py (strategies)
+'         booking/views/reservation_views.py (strategy selection at runtime)
 title Strategy Pattern — Pricing
 
 class Reservation {

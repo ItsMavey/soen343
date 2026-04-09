@@ -1,4 +1,7 @@
 @startuml
+' Source: booking/observers.py (Subject, Observer, concrete observers)
+'         booking/services/vehicle_service.py (VehicleService.notify_observers)
+'         booking/models.py (Vehicle.send_to_maintenance / complete_maintenance / return_vehicle)
 title Observer Pattern — Notifications
 
 abstract class Subject {

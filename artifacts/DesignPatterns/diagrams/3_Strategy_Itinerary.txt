@@ -1,4 +1,6 @@
 @startuml
+' Source: booking/trip_strategies.py (strategies)
+'         booking/views/trip_views.py (strategy selection and execution)
 title Strategy Pattern — Multimodal Itinerary Planning
 
 class TripPlanner {

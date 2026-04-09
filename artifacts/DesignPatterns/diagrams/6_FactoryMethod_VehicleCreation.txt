@@ -1,4 +1,6 @@
 @startuml
+' Source: booking/factories.py (VehicleFactory, ProviderFactoryA, ProviderFactoryB)
+'         booking/models.py (Car, Bike, Scooter)
 title Factory Method Pattern — Vehicle Creation
 
 abstract class VehicleFactory {

@@ -1,4 +1,7 @@
 @startuml
+' Source: booking/external_services.py (TransitProvider, GTFSAdapter, CityAPIAdapter, TransitFacade)
+'         booking/views/external_views.py (transit view consumes TransitFacade)
+'         booking/trip_strategies.py (TransitFirstStrategy consumes TransitFacade)
 title Adapter + Facade Pattern — Public Transit Integration
 
 interface TransitProvider {
