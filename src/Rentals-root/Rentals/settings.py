@@ -28,6 +28,8 @@ ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = ['https://soen343.adam-ousmer.dev']
 
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
 # Application definition
 
 INSTALLED_APPS = [
