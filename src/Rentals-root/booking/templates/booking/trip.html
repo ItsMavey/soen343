@@ -203,11 +203,13 @@
                     m.addTo(map);
                     parkingLayers.push(m);
                 });
-                btnParkingHere.textContent = `${parkingLayers.length} lot${parkingLayers.length !== 1 ? 's' : ''} found — search again`;
+                btnParkingHere.textContent = parkingLayers.length > 0
+                    ? `${parkingLayers.length} lot${parkingLayers.length !== 1 ? 's' : ''} found — search again`
+                    : "No lots found — try another area";
                 btnParkingHere.disabled = false;
             })
             .catch(() => {
-                btnParkingHere.textContent = "Show parking here";
+                btnParkingHere.textContent = "Search failed — try again";
                 btnParkingHere.disabled = false;
             });
     });

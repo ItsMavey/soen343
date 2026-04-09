@@ -59,7 +59,7 @@ def _overpass_fetch(query: str) -> dict | None:
     req.add_header("Content-Type", "application/x-www-form-urlencoded")
     req.add_header("User-Agent", "SUMMS/1.0 (university project; danielganchev649@gmail.com)")
     try:
-        with urllib.request.urlopen(req, timeout=12) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp:
             result = json.loads(resp.read().decode())
             cache.set(key, result, _CACHE_TTL)
             return result
@@ -699,12 +699,12 @@ class OSMParkingAdapter:
         return lots
 
     def _fetch(self, lat: float, lon: float, city: str) -> list["ParkingLot"]:
-        query = f"""[out:json][timeout:15];
+        query = f"""[out:json][timeout:25];
 (
-  node["amenity"="parking"](around:1500,{lat},{lon});
-  way["amenity"="parking"](around:1500,{lat},{lon});
+  node["amenity"="parking"](around:2000,{lat},{lon});
+  way["amenity"="parking"](around:2000,{lat},{lon});
 );
-out center 25;"""
+out center 50;"""
         data = _overpass_fetch(query)
         if not data or not data.get("elements"):
             return []
@@ -720,6 +720,11 @@ out center 25;"""
     def get_lots_near(self, lat: float, lng: float) -> list["ParkingLot"]:
         """Fetch parking lots near arbitrary coordinates (used by map button)."""
         lots = self._fetch(lat, lng, city="")
+        if not lots:
+            # Overpass unavailable or returned nothing — fall back to hardcoded lots
+            # sorted by distance from the requested coordinates.
+            all_lots = ParkingService().get_lots()
+            lots = sorted(all_lots, key=lambda l: _dist_m(lat, lng, l.lat, l.lng))[:10]
         return lots
 
 def _simulated_available(lot_id: str, total: int) -> int:

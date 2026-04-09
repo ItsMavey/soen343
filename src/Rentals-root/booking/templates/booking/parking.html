@@ -199,11 +199,17 @@ function searchHere() {
     fetch(`{% url 'parking_nearby' %}?lat=${center.lat}&lng=${center.lng}`)
         .then(r => r.json())
         .then(data => {
-            renderLots(data.lots || [], false);
-            btn.textContent = "Show parking spots here";
+            const lots = data.lots || [];
+            renderLots(lots, lots.length > 0);
+            btn.textContent = lots.length > 0
+                ? `${lots.length} lot${lots.length !== 1 ? 's' : ''} found — search again`
+                : "No lots found — try another area";
             btn.disabled = false;
         })
-        .catch(() => { btn.textContent = "Show parking spots here"; btn.disabled = false; });
+        .catch(() => {
+            btn.textContent = "Search failed — try again";
+            btn.disabled = false;
+        });
 }
 </script>
 {% endblock %}
