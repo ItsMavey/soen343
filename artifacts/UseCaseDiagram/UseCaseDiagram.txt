@@ -1,0 +1,105 @@
+@startuml
+title SUMMS Use Case Diagram
+
+left to right direction
+
+' ── Actors ───────────────────────────────────────────────────────────────────
+actor "User"                as User
+actor "Commuter"            as Commuter
+actor "Mobility\nProvider"  as Provider
+actor "City\nAdministrator" as Admin
+
+Commuter  --|> User
+Provider  --|> User
+Admin     --|> User
+
+' ── System boundary ──────────────────────────────────────────────────────────
+rectangle "SUMMS" {
+
+  ' ── 1. User Access ─────────────────────────────────────────────────────────
+  package "User Access" {
+    usecase "Register Account" as UC_Register
+    usecase "Login / Logout"   as UC_Login
+    usecase "Manage Profile"   as UC_Profile
+  }
+
+  ' ── 2. Rental System ───────────────────────────────────────────────────────
+  package "Rental System" {
+    usecase "Search Vehicles"       as UC_Search
+    usecase "View Vehicle Details"  as UC_Detail
+    usecase "Reserve Vehicle"       as UC_Reserve
+    usecase "Process Payment"       as UC_Payment
+    usecase "Return Vehicle"        as UC_Return
+    usecase "Cancel Reservation"    as UC_Cancel
+    usecase "View My Reservations"  as UC_MyRes
+  }
+
+  ' ── 3. Commuter Services ───────────────────────────────────────────────────
+  package "Commuter Services" {
+    usecase "View Notifications"     as UC_Notif
+    usecase "View Loyalty Rewards"   as UC_Rewards
+    usecase "Access Parking Service" as UC_Parking
+    usecase "Access Public Transit"  as UC_Transit
+    usecase "Plan Multimodal Trip"   as UC_Trip
+  }
+
+  ' ── 4. Fleet Management ────────────────────────────────────────────────────
+  package "Fleet Management" {
+    usecase "View Fleet"            as UC_Fleet
+    usecase "Add Vehicle"           as UC_AddV
+    usecase "Edit Vehicle"          as UC_EditV
+    usecase "Remove Vehicle"        as UC_DelV
+    usecase "Schedule Maintenance"  as UC_Maint
+    usecase "Complete Maintenance"  as UC_MaintDone
+  }
+
+  ' ── 5. Analytics ───────────────────────────────────────────────────────────
+  package "Analytics" {
+    usecase "View Rental Analytics"  as UC_RentA
+    usecase "View Gateway Analytics" as UC_GWA
+  }
+
+}
+
+' ── User (base) → User Access ────────────────────────────────────────────────
+User --> UC_Register
+User --> UC_Login
+User --> UC_Profile
+
+' ── Commuter → Rental System ─────────────────────────────────────────────────
+Commuter --> UC_Search
+Commuter --> UC_Detail
+Commuter --> UC_Reserve
+Commuter --> UC_Payment
+Commuter --> UC_Return
+Commuter --> UC_Cancel
+Commuter --> UC_MyRes
+
+' ── Commuter → Commuter Services ─────────────────────────────────────────────
+Commuter --> UC_Notif
+Commuter --> UC_Rewards
+Commuter --> UC_Parking
+Commuter --> UC_Transit
+Commuter --> UC_Trip
+
+' ── Provider → Fleet Management ──────────────────────────────────────────────
+Provider --> UC_Fleet
+Provider --> UC_AddV
+Provider --> UC_EditV
+Provider --> UC_DelV
+Provider --> UC_Maint
+Provider --> UC_MaintDone
+Provider --> UC_RentA
+
+' ── Admin → Analytics ────────────────────────────────────────────────────────
+Admin --> UC_RentA
+Admin --> UC_GWA
+
+' ── Include / Extend ─────────────────────────────────────────────────────────
+UC_Reserve --> UC_Search   : <<include>>
+UC_Trip    --> UC_Parking  : <<include>>
+UC_Trip    --> UC_Transit  : <<include>>
+UC_Payment ..> UC_Reserve  : <<extend>>
+UC_Return  ..> UC_Payment  : <<extend>>
+
+@enduml
