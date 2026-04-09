@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from booking.models import Vehicle, Car, Reservation
+from booking.models import Vehicle, Car, Bike, Scooter, Reservation
 
 User = get_user_model()
 
@@ -21,6 +21,26 @@ def make_car(make="Toyota", model="Corolla", year=2022, daily_rate="50.00", fuel
         daily_rate=Decimal(daily_rate),
         fuel_type=fuel_type,
         vehicle_kind=Vehicle.KIND_CAR,
+    )
+
+
+def make_bike(make="Trek", model="FX3", year=2022, daily_rate="20.00", bike_type="STANDARD"):
+    return Bike.objects.create(
+        make=make, model=model, year=year,
+        daily_rate=Decimal(daily_rate),
+        bike_type=bike_type,
+        has_motor=False,
+        vehicle_kind=Vehicle.KIND_BIKE,
+    )
+
+
+def make_scooter(make="Vespa", model="Primavera", year=2022, daily_rate="30.00", engine_cc=125):
+    return Scooter.objects.create(
+        make=make, model=model, year=year,
+        daily_rate=Decimal(daily_rate),
+        engine_cc=engine_cc,
+        is_electric=False,
+        vehicle_kind=Vehicle.KIND_SCOOTER,
     )
 
 

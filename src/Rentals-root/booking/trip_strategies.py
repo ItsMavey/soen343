@@ -13,7 +13,11 @@ from django.urls import reverse
 
 from .external_services import ParkingService, TransitFacade
 from .models import Vehicle
-from .views.map_views import _vehicle_coords
+
+
+def _vehicle_coords(v):
+    from .views.map_views import _vehicle_coords as _vc
+    return _vc(v)
 
 
 # ---------------------------------------------------------------------------
