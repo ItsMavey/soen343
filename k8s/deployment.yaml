@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soen343-web
+  namespace: soen343
+  labels:
+    app: soen343
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: soen343
+  template:
+    metadata:
+      labels:
+        app: soen343
+    spec:
+      containers:
+        - name: web
+          image: soen343:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          volumeMounts:
+            - name: db-storage
+              mountPath: /app/db.sqlite3
+              subPath: db.sqlite3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: db-storage
+          persistentVolumeClaim:
+            claimName: soen343-db
