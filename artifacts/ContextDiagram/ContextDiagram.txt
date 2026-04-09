@@ -1,0 +1,48 @@
+@startuml
+left to right direction
+  title SUMMS Context Diagram
+
+  skinparam rectangle {
+    BackgroundColor #dbeafe
+    BorderColor #1d4ed8
+    FontStyle bold
+  }
+
+  skinparam actor {
+    BackgroundColor #f0fdf4
+    BorderColor #15803d
+  }
+
+  actor "User\n(Citizen / Commuter)" as User
+  actor "City Administrator" as CityAdmin
+  actor "System Administrator" as SysAdmin
+
+  rectangle "Mobility Service\n(Car / Bike / Scooter Providers)" as MobilityService
+  rectangle "Parking Service" as ParkingService
+  rectangle "Public Transport Service" as TransitService
+  rectangle "Payment Gateway" as PaymentGateway
+
+  rectangle "SUMMS\n(Smart Urban Mobility\nManagement System)" as SUMMS #lightblue
+
+  User --> SUMMS : Register / Login\nSearch & Reserve Vehicle\nRequest Parking / Transit Info\nReturn Vehicle
+  SUMMS --> User : Reservation Confirmation\nAvailability Results\nReceipts & Notifications\nLoyalty Rewards
+
+  CityAdmin --> SUMMS : Access Platform\nMonitor Activity
+  SUMMS --> CityAdmin : Analytics & Reports\nExternal Service Data
+
+  SysAdmin --> SUMMS : Manage System\nConfigure Users & Roles
+  SUMMS --> SysAdmin : System Status
+
+  MobilityService --> SUMMS : Vehicle Availability & Fleet Data
+  SUMMS --> MobilityService : Rental Requests\nVehicle Status Updates
+
+  ParkingService --> SUMMS : Parking Lot Availability
+  SUMMS --> ParkingService : Parking Queries
+
+  TransitService --> SUMMS : Routes & Stop Data
+  SUMMS --> TransitService : Transit Queries
+
+  SUMMS --> PaymentGateway : Payment Request
+  PaymentGateway --> SUMMS : Payment Confirmation / Failure
+
+  @enduml

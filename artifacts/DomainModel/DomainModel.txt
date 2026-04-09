@@ -1,0 +1,140 @@
+@startuml
+title SUMMS Domain Model
+
+' ── User roles ───────────────────────────────────────────────────────────────
+abstract class User {
+  + username : String
+  + email : String
+  + preferredCity : String
+}
+
+class Commuter {
+  + preferredMobility : String
+  + reliabilityScore : Float
+}
+
+class MobilityProvider {
+  + companyName : String
+  + serviceType : String
+}
+
+class CityAdministrator {
+  + city : String
+  + accessLevel : String
+}
+
+class SystemAdministrator {
+  + adminLevel : String
+}
+
+User <|-- Commuter
+User <|-- MobilityProvider
+User <|-- CityAdministrator
+User <|-- SystemAdministrator
+
+' ── Vehicle hierarchy ────────────────────────────────────────────────────────
+abstract class Vehicle {
+  + status : String
+  + dailyRate : Decimal
+  + city : String
+}
+
+class Car {
+  + fuelType : String
+  + bodyStyle : String
+}
+
+class Bike {
+  + bikeType : String
+  + hasMotor : Boolean
+}
+
+class Scooter {
+  + engineCC : Integer
+  + isElectric : Boolean
+}
+
+Vehicle <|-- Car
+Vehicle <|-- Bike
+Vehicle <|-- Scooter
+
+' ── Rental ───────────────────────────────────────────────────────────────────
+class Reservation {
+  + startDate : Date
+  + endDate : Date
+  + status : String
+  + totalAmount : Decimal
+}
+
+' ── Multimodal Trip ──────────────────────────────────────────────────────────
+class Trip {
+  + origin : String
+  + destination : String
+  + date : Date
+}
+
+' ── Notifications ────────────────────────────────────────────────────────────
+class Notification {
+  + message : String
+  + eventType : String
+  + isRead : Boolean
+}
+
+' ── Parking ──────────────────────────────────────────────────────────────────
+class ParkingLot {
+  + name : String
+  + address : String
+  + hourlyRate : Decimal
+}
+
+class ParkingSpot {
+  + spotId : String
+  + isAvailable : Boolean
+}
+
+' ── Public Transit ───────────────────────────────────────────────────────────
+class PublicTransportService {
+  + operator : String
+  + serviceType : String
+}
+
+class TransitStop {
+  + name : String
+  + location : String
+}
+
+class TransitSchedule {
+  + route : String
+  + destination : String
+  + departureTime : Time
+}
+
+' ── City ─────────────────────────────────────────────────────────────────────
+class City {
+  + name : String
+  + code : String
+}
+
+' ── Relationships ─────────────────────────────────────────────────────────────
+Commuter "1" -- "0..*" Reservation : makes
+Reservation "0..*" -- "1" Vehicle : for
+MobilityProvider "1" -- "0..*" Vehicle : owns
+
+Commuter "1" -- "0..*" Trip : plans
+Trip "0..*" -- "0..*" Vehicle : uses
+Trip "0..*" -- "0..*" TransitStop : passes through
+Trip "0..*" -- "0..1" ParkingLot : ends at
+
+User "1" -- "0..*" Notification : receives
+Notification "0..1" -- "0..1" Reservation : about
+
+City "1" -- "0..*" Vehicle : registered in
+City "1" -- "0..*" ParkingLot : has
+City "1" -- "0..*" PublicTransportService : operates
+CityAdministrator "1" -- "1" City : manages
+
+ParkingLot "1" *-- "1..*" ParkingSpot : contains
+PublicTransportService "1" -- "1..*" TransitStop : serves
+TransitStop "1" -- "0..*" TransitSchedule : schedules
+
+@enduml

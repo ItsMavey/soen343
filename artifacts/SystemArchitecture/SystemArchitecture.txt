@@ -1,0 +1,127 @@
+@startuml
+title SUMMS System Architecture
+
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+skinparam component {
+  BackgroundColor #1c1c1c
+  BorderColor #555555
+  FontColor #e0e0e0
+}
+skinparam package {
+  BackgroundColor #141414
+  BorderColor #444444
+  FontColor #cccccc
+}
+skinparam arrow {
+  Color #888888
+  FontColor #aaaaaa
+  FontSize 10
+}
+
+' ─────────────────────────────────────────────
+'  SUMMS Platform
+' ─────────────────────────────────────────────
+package "SUMMS Platform" {
+
+  package "Access Layer" {
+    [User Management] <<component>>
+    note right of [User Management]
+      Registration, authentication,
+      role-based access (Commuter,
+      Provider, Admin)
+    end note
+  }
+
+  package "Mobility Layer" {
+    [Mobility Management] <<component>>
+    note right of [Mobility Management]
+      Vehicle search, reservation
+      lifecycle, payment, return,
+      fleet management
+    end note
+
+    [Trip Management] <<component>>
+    note right of [Trip Management]
+      Multimodal itinerary planning,
+      Transit + Vehicle strategies,
+      route computation
+    end note
+  }
+
+  package "External Services Layer" {
+    [Parking Management] <<component>>
+    note right of [Parking Management]
+      Real-time parking availability,
+      OSM data integration,
+      occupancy simulation
+    end note
+
+    [Public Transport Integration] <<component>>
+    note right of [Public Transport Integration]
+      Transit stop discovery,
+      departure schedules,
+      GTFS + City API adapters
+    end note
+  }
+
+  package "Support Layer" {
+    [Notification & Recommendation] <<component>>
+    note right of [Notification & Recommendation]
+      Observer-driven alerts,
+      loyalty scoring, CO2 tracking,
+      personalized recommendations
+    end note
+
+    [Analytics] <<component>>
+    note right of [Analytics]
+      Rental analytics,
+      gateway usage metrics,
+      mobility trends per city
+    end note
+
+    [Admin Management] <<component>>
+    note right of [Admin Management]
+      Platform monitoring,
+      user oversight,
+      policy enforcement
+    end note
+  }
+}
+
+' ─────────────────────────────────────────────
+'  External Systems
+' ─────────────────────────────────────────────
+package "External Systems" {
+  [Overpass API\n(OpenStreetMap)] <<external>>
+  [OSRM Routing] <<external>>
+  [Nominatim\nGeocoding] <<external>>
+  [Payment Gateway] <<external>>
+  [Mobility Services\n(Fleet Providers)] <<external>>
+}
+
+' ─────────────────────────────────────────────
+'  Internal Dependencies
+' ─────────────────────────────────────────────
+[Mobility Management]            --> [User Management]               : authenticates via
+[Trip Management]                --> [Mobility Management]            : requests vehicles
+[Trip Management]                --> [Parking Management]             : requests parking
+[Trip Management]                --> [Public Transport Integration]   : requests transit stops
+[Notification & Recommendation]  --> [Mobility Management]            : observes events
+[Notification & Recommendation]  --> [User Management]               : delivers notifications
+[Analytics]                      --> [Mobility Management]            : reads rental data
+[Analytics]                      --> [Parking Management]             : reads occupancy data
+[Admin Management]               --> [Analytics]                      : consumes reports
+[Admin Management]               --> [User Management]               : manages users
+
+' ─────────────────────────────────────────────
+'  External Dependencies
+' ─────────────────────────────────────────────
+[Parking Management]             --> [Overpass API\n(OpenStreetMap)] : fetches parking lots
+[Public Transport Integration]   --> [Overpass API\n(OpenStreetMap)] : fetches transit stops
+[Trip Management]                --> [OSRM Routing]                   : fetches route geometry
+[Trip Management]                --> [Nominatim\nGeocoding]           : geocodes addresses
+[Mobility Management]            --> [Payment Gateway]                : processes payments
+[Mobility Management]            --> [Mobility Services\n(Fleet Providers)] : manages fleet data
+
+@enduml
