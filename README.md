@@ -25,17 +25,18 @@ TABAC DRIVE is a Django-based urban mobility platform that unites private vehicl
 
 | Role | Capabilities |
 |---|---|
-| **Commuter** | Browse/search/reserve vehicles, pay, return, view parking & transit, earn loyalty rewards |
+| **Commuter** | Browse/search/reserve vehicles, plan multimodal trips, view live parking & transit, earn loyalty rewards |
 | **Mobility Provider** | Add/edit/remove vehicles, view rental analytics, receive maintenance and overdue notifications |
 | **City Admin** | Monitor platform activity, view rental and gateway analytics, manage all users |
 
-**Phase 3 implemented features:**
+**Implemented features:**
 - Complete rental lifecycle: search → reserve → payment (simulated) → return
 - Role-based dashboards with analytics
-- External services: parking (city-filtered, time-varying occupancy) and public transit (live stop data from OpenStreetMap via Overpass API)
+- Interactive maps: vehicle fleet map, parking map with live OSM data, transit stop map
+- Multimodal trip planner: combines public transit + shared vehicles with OSRM-routed legs
+- External services: parking (live data via Overpass API, time-varying occupancy) and public transit (real stop data from OpenStreetMap)
 - Loyalty/gamification: reliability score, CO₂ savings, tiered discounts
 - Overdue detection and notification system
-- 31 unit tests covering all GOF patterns and sustainability module
 
 ---
 
@@ -48,8 +49,7 @@ TABAC DRIVE is a Django-based urban mobility platform that unites private vehicl
 | App | Responsibility |
 |---|---|
 | `users/` | Custom `User` model, registration, login/logout, role-based dashboard routing, profile settings |
-| `booking/` | Vehicle models, reservation lifecycle, pricing, state machine, observer/notification system, analytics, external services |
-| `core/` | Reserved for shared utilities |
+| `booking/` | Vehicle models, reservation lifecycle, pricing, state machine, observer/notification system, analytics, external services, maps, trip planning |
 
 **Key source files:**
 
@@ -57,28 +57,29 @@ TABAC DRIVE is a Django-based urban mobility platform that unites private vehicl
 |---|---|
 | Models (Vehicle, Reservation, Notification) | `booking/models.py` |
 | GOF — Strategy (pricing) | `booking/pricing.py` |
+| GOF — Strategy (itinerary planning) | `booking/trip_strategies.py` |
 | GOF — State (vehicle lifecycle) | `booking/states.py` |
 | GOF — Observer (notifications) | `booking/observers.py` |
 | GOF — Factory (vehicle creation) | `booking/factories.py` |
-| GOF — Adapter (parking + transit) | `booking/services.py` |
+| GOF — Adapter + Facade (parking, transit) | `booking/external_services.py` |
 | Pure Fabrication — Gamification | `booking/sustainability.py` |
-| All views / controllers | `booking/views.py`, `users/views.py` |
+| Views / controllers | `booking/views/` |
 | URL routing | `booking/urls.py`, `users/urls.py` |
 
 ---
 
 ## GOF Design Patterns
 
-All five patterns are fully implemented and wired into the live application. See the team report for full justification.
+All patterns are fully implemented and wired into the live application.
 
 | Pattern | File | Description |
 |---|---|---|
 | **Strategy** | `booking/pricing.py` | `PricingStrategy` ABC — `StandardPricing` (×1.00), `WeekendPricing` (×1.25), `SurgePricing` (×1.50) selected at reservation time |
+| **Strategy** | `booking/trip_strategies.py` | `ItineraryStrategy` ABC — `TransitFirstStrategy` (transit + vehicle) and `VehicleOnlyStrategy`; trip planner runs both and returns all feasible options |
 | **State** | `booking/states.py` | `VehicleState` ABC — `AvailableState`, `ReservedState`, `InUseState`, `MaintenanceState`; invalid transitions raise `InvalidTransitionError` |
 | **Observer** | `booking/observers.py` | `Vehicle._notify_observers()` fires `UserNotifier`, `AdminDashboard`, `RecommendationService`; `fire_overdue_notifications()` for overdue detection |
 | **Factory** | `booking/factories.py` | `ProviderFactoryA` (cars/EVs) and `ProviderFactoryB` (bikes/scooters) encapsulate vehicle creation |
-| **Adapter** | `booking/services.py` | `GTFSAdapter` + `CityAPIAdapter` implement `TransitProvider`; `TransitFacade` aggregates both; `ParkingService` follows same interface |
-
+| **Adapter + Facade** | `booking/external_services.py` | `GTFSAdapter` + `CityAPIAdapter` implement `TransitProvider`; `TransitFacade` aggregates both. `OSMParkingAdapter` wraps Overpass API with `ParkingService` fallback |
 
 ---
 
@@ -100,6 +101,31 @@ All five patterns are fully implemented and wired into the live application. See
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-6.0-092E20?style=for-the-badge&logo=django&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet.js-1.9-199900?style=for-the-badge&logo=leaflet&logoColor=white)
+![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?style=for-the-badge&logo=openstreetmap&logoColor=white)
+
+**Backend**
+| | |
+|---|---|
+| Python 3.10+ / Django 6.0.2 | Web framework, ORM, auth |
+| SQLite3 | Development database |
+| django-phonenumber-field | Phone number validation |
+| django-address | Structured address field on User |
+
+**Frontend**
+| | |
+|---|---|
+| Leaflet.js 1.9.4 | Interactive maps (no API key required) |
+| OpenStreetMap | Map tile layer |
+| Bootstrap 5 | Responsive grid and layout |
+
+**External APIs** (all free, no API key required)
+| API | Used for |
+|---|---|
+| [Overpass API](https://overpass-api.de) | Live parking lots and transit stops from OpenStreetMap data |
+| [Nominatim](https://nominatim.org) | Address geocoding in the trip planner |
+| [OSRM](https://router.project-osrm.org) | Turn-by-turn walk and drive route geometry |
+| Browser Geolocation API | "Use my location" in trip planner and fleet browse |
 
 ---
 
@@ -121,7 +147,6 @@ cd src/Rentals-root
 
 # 4. Apply migrations
 python manage.py migrate
-# If migrations fail, delete the database and retry: rm db.sqlite3 
 
 # 5. Seed demo data (creates all demo users + vehicles + reservations)
 python manage.py seed_demo
@@ -132,13 +157,19 @@ python manage.py runserver
 
 Open [http://localhost:8000](http://localhost:8000) in your browser and log in with the demo credentials below.
 
-### Optional: full fleet + user seed
+### Optional: full fleet seed
 
 ```bash
-python manage.py seed_cars ../../dataset/CarRentalData.csv
-python manage.py seed_bikes
-python manage.py seed_scooters
-python manage.py seed_user ../../dataset/person_10000.csv --limit 200
+# Seed 60 cars + 60 bikes + 60 scooters across all 6 cities, then demo data
+python manage.py seed_all
+
+# Or individually:
+python manage.py seed_cars_local     # 60 cars (no CSV needed)
+python manage.py seed_bikes          # 60 bikes
+python manage.py seed_scooters       # 60 scooters
+
+# Wipe all vehicles, reservations, and notifications
+python manage.py unseed_vehicles
 ```
 
 ---
@@ -153,7 +184,7 @@ python manage.py seed_user ../../dataset/person_10000.csv --limit 200
 
 The `seed_demo` command creates these accounts and pre-populates:
 - 10 vehicles (7 cars, 2 bikes, 1 scooter) owned by the provider
-- 14 reservations spanning all statuses: returned, confirmed, **overdue** (edge case), pending, cancelled
+- 14 reservations spanning all statuses: returned, confirmed, overdue, pending, cancelled
 - Notifications, maintenance vehicle, extra commuter users for richer analytics
 
 ---
@@ -170,19 +201,16 @@ python manage.py runserver
 python manage.py makemigrations
 python manage.py migrate
 
-# Seed demo data (idempotent, safe to re-run)
-python manage.py seed_demo
+# Seed / unseed
+python manage.py seed_demo           # demo users + vehicles (idempotent)
+python manage.py seed_all            # full fleet across all cities
+python manage.py unseed_vehicles     # wipe vehicles, reservations, notifications
 
 # Assign role to a user
 python manage.py set_role <username> admin      # or: commuter, provider
 
-# Run all tests (31 tests)
+# Run all tests
 python manage.py test booking
-
-# Run a specific test class
-python manage.py test booking.tests.PricingStrategyTests
-python manage.py test booking.tests.VehicleStateTests
-python manage.py test booking.tests.ObserverNotificationTests
 ```
 
 ---

@@ -16,6 +16,7 @@ urlpatterns = [
     path("parking/", views.parking, name="parking"),
     path("parking/nearby/", views.parking_nearby, name="parking_nearby"),
     path("transit/", views.transit, name="transit"),
+    path("transit/nearby/", views.transit_nearby, name="transit_nearby"),
     path("map/", views.map_view, name="map"),
     path("map/data/", views.map_data, name="map_data"),
     path("trip/", views.trip_view, name="trip"),

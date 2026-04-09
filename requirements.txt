@@ -1,5 +1,4 @@
 Django==6.0.2
 django-phonenumber-field==8.4.0
 django-address==0.2.8
-django-components==0.148.0
 phonenumbers==9.0.26

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Public Transit | TABAC DRIVE{% endblock %}
+{% block title %}Transit | TABAC DRIVE{% endblock %}
 
 {% block nav_transit %}active{% endblock %}
 
@@ -8,14 +8,15 @@
         .page-wrap { padding: 3rem 0 5rem; }
         .page-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; margin-bottom: 0.3rem; }
         .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; margin-bottom: 2.5rem; }
-        .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 1rem; }
-        .stop-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.2rem 1.4rem; transition: border-color 0.2s; display: flex; align-items: center; justify-content: space-between; }
+        .stop-card { background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface)); border: 1px solid var(--color-border); border-radius: 6px; padding: 1.2rem 1.4rem; transition: border-color 0.2s; cursor: pointer; }
         .stop-card:hover { border-color: rgba(255,107,26,0.2); }
-        .stop-name { font-size: 0.95rem; font-weight: 500; }
-        .stop-dist { font-size: 0.8rem; color: var(--color-text-secondary); }
-        .btn-stop { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.35rem 0.9rem; background: transparent; border: 1px solid var(--color-border); color: var(--color-text-secondary); border-radius: 2px; cursor: pointer; transition: 0.2s; }
-        .btn-stop:hover, .btn-stop.active { border-color: var(--color-accent); color: var(--color-accent); }
-        .dep-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .stop-card.active { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
+        .stop-name { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.2rem; }
+        .stop-meta { font-size: 0.78rem; color: var(--color-text-secondary); }
+        #transit-map { height: 640px; border-radius: 6px; border: 1px solid var(--color-border); margin-bottom: 2rem; position: relative; }
+        .dep-panel { margin-top: 2rem; }
+        .dep-panel-title { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 1rem; }
+        .dep-table { width: 100%; border-collapse: collapse; }
         .dep-table th { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.6rem 1rem; border-bottom: 1px solid var(--color-border); text-align: left; }
         .dep-table td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--color-border); font-size: 0.9rem; }
         .min-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 2px; background: rgba(255,107,26,0.1); color: var(--color-accent); font-size: 0.8rem; font-weight: 600; }
@@ -26,43 +27,171 @@
 <div class="page-wrap">
     <div class="container">
         <p class="page-title">Public Transit</p>
-        <p class="page-subtitle">Nearby stops — select a stop to view next departures</p>
-        {% if city %}<p style="font-size:0.78rem;color:var(--color-text-secondary);margin-bottom:1.5rem;">Showing stops near your preferred city. Update in <a href="{% url 'profile_settings' %}" style="color:var(--color-accent)">settings</a>.</p>{% endif %}
+        <p class="page-subtitle">Nearby stops — click a stop to view next departures</p>
 
-        <div class="section-label">Nearby Stops</div>
-        <div class="d-flex flex-column gap-2 mb-4">
+        <form method="get" class="mb-4" style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+            <select name="city" onchange="this.form.submit()" style="background:#1c1c1c;border:1px solid var(--color-border);color:var(--color-text-primary);border-radius:4px;padding:0.5rem 0.8rem;font-family:inherit;font-size:0.85rem;">
+                {% for code, label in city_choices %}
+                <option value="{{ code }}" {% if city == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <span id="stop-count" style="font-size:0.78rem;color:var(--color-text-secondary);">{{ stops|length }} stop{{ stops|length|pluralize }} found</span>
+        </form>
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <div style="position:relative;">
+            <div id="transit-map"></div>
+            <button id="btn-search-here" onclick="searchHere()" style="
+                position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:1000;
+                background:var(--color-accent);color:#0d0d0d;border:none;border-radius:3px;
+                padding:0.55rem 1.2rem;font-family:inherit;font-size:0.78rem;font-weight:700;
+                letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
+                box-shadow:0 2px 12px rgba(0,0,0,0.5);white-space:nowrap;">
+                Show stops here
+            </button>
+        </div>
+
+        <div class="row g-3 mt-1" id="stops-grid">
             {% for stop in stops %}
-            <div class="stop-card">
-                <div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="stop-card" data-stop-idx="{{ forloop.counter0 }}" data-stop-id="{{ stop.id }}" onclick="focusStop({{ forloop.counter0 }})">
                     <div class="stop-name">{{ stop.name }}</div>
-                    <div class="stop-dist">{{ stop.distance_m }}m away &middot; {{ stop.id }}</div>
+                    <div class="stop-meta">{{ stop.distance_m }}m away &middot; {{ stop.id }}</div>
                 </div>
-                <a href="?stop_id={{ stop.id }}" class="btn-stop {% if stop_id == stop.id %}active{% endif %}">
-                    View Departures
-                </a>
             </div>
             {% endfor %}
         </div>
 
-        {% if departures %}
-        <div class="section-label">Next Departures — Stop {{ stop_id }}</div>
-        <table class="dep-table">
-            <thead><tr><th>Route</th><th>Destination</th><th>Departs</th></tr></thead>
-            <tbody>
-                {% for dep in departures %}
-                <tr>
-                    <td>{{ dep.route }}</td>
-                    <td>{{ dep.destination }}</td>
-                    <td><span class="min-badge">{{ dep.minutes }} min</span></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% elif stop_id %}
-        <p style="color:var(--color-text-secondary);font-size:0.9rem;">No departures found for this stop.</p>
-        {% endif %}
+        <div class="dep-panel" id="dep-panel" style="display:none;">
+            <div class="dep-panel-title">Next Departures — <span id="dep-stop-name"></span></div>
+            <table class="dep-table">
+                <thead><tr><th>Route</th><th>Destination</th><th>Departs</th></tr></thead>
+                <tbody id="dep-tbody"></tbody>
+            </table>
+        </div>
 
         <p class="service-note">Stop names are live data from OpenStreetMap via the Overpass API (GTFSAdapter + CityAPIAdapter · Adapter pattern). Departure times are time-of-day simulations — no free real-time STM API is publicly available.</p>
     </div>
 </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let _map, _markerLayer, _stopMarkers = [];
+
+(function () {
+    const map = L.map("transit-map").setView([{{ center_lat }}, {{ center_lng }}], 14);
+    _map = map;
+    _markerLayer = L.layerGroup().addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+    }).addTo(map);
+
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    });
+
+    const initialStops = [
+        {% for stop in stops %}
+        { id: "{{ stop.id|escapejs }}", name: "{{ stop.name|escapejs }}", lat: {{ stop.lat }}, lon: {{ stop.lon }}, distance_m: {{ stop.distance_m }} },
+        {% endfor %}
+    ];
+
+    renderStops(initialStops, true);
+})();
+
+function transitIcon() {
+    return L.divIcon({
+        className: "",
+        html: `<div style="width:28px;height:28px;border-radius:50% 50% 50% 0;background:#94a3b8;transform:rotate(-45deg);border:2px solid rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);color:#0d0d0d;font-size:11px;font-weight:800;">T</span></div>`,
+        iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -30],
+    });
+}
+
+function renderStops(stops, fitBounds) {
+    _markerLayer.clearLayers();
+    _stopMarkers = [];
+    const bounds = [];
+
+    stops.forEach((s, idx) => {
+        if (!s.lat || !s.lon) return;
+        const m = L.marker([s.lat, s.lon], { icon: transitIcon() })
+            .bindPopup(`<div style="font-family:'Outfit',sans-serif;font-size:0.82rem;min-width:150px;">
+                <strong style="display:block;margin-bottom:0.2rem;">${s.name}</strong>
+                <span style="color:#94a3b8;font-size:0.75rem;">${s.id}</span><br>
+                <span style="color:#9a9590;font-size:0.75rem;">${s.distance_m}m away</span>
+            </div>`)
+            .addTo(_markerLayer);
+        m.on("click", () => focusStop(idx));
+        _stopMarkers[idx] = m;
+        bounds.push([s.lat, s.lon]);
+    });
+
+    if (fitBounds && bounds.length > 1) _map.fitBounds(bounds, { padding: [40, 40] });
+    else if (fitBounds && bounds.length === 1) _map.setView(bounds[0], 15);
+
+    const grid = document.getElementById("stops-grid");
+    if (grid) {
+        grid.innerHTML = stops.length === 0
+            ? '<div class="col-12"><div class="msg-bar msg-info">No stops found here.</div></div>'
+            : stops.map((s, idx) => `
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="stop-card" data-stop-idx="${idx}" data-stop-id="${s.id}" onclick="focusStop(${idx})">
+                        <div class="stop-name">${s.name}</div>
+                        <div class="stop-meta">${s.distance_m}m away &middot; ${s.id}</div>
+                    </div>
+                </div>`).join('');
+        document.getElementById("stop-count").textContent =
+            `${stops.length} stop${stops.length !== 1 ? 's' : ''} found`;
+    }
+
+    document.getElementById("dep-panel").style.display = "none";
+}
+
+window.focusStop = function (idx) {
+    const m = _stopMarkers[idx];
+    if (!m) return;
+    document.querySelectorAll('.stop-card').forEach(c => c.classList.remove('active'));
+    const card = document.querySelector(`[data-stop-idx="${idx}"]`);
+    if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    _map.setView(m.getLatLng(), 16);
+    m.openPopup();
+
+    const stopId = card ? card.dataset.stopId : null;
+    const stopName = card ? card.querySelector('.stop-name').textContent : stopId;
+    if (!stopId) return;
+
+    fetch(`{% url 'transit' %}?stop_id=${encodeURIComponent(stopId)}&format=json`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("dep-stop-name").textContent = stopName;
+            const tbody = document.getElementById("dep-tbody");
+            tbody.innerHTML = (data.departures && data.departures.length)
+                ? data.departures.map(d =>
+                    `<tr><td>${d.route}</td><td>${d.destination}</td><td><span class="min-badge">${d.minutes} min</span></td></tr>`
+                  ).join('')
+                : '<tr><td colspan="3" style="color:var(--color-text-secondary);font-size:0.85rem;">No departures found.</td></tr>';
+            document.getElementById("dep-panel").style.display = "block";
+        })
+        .catch(() => {});
+};
+
+function searchHere() {
+    const btn = document.getElementById("btn-search-here");
+    btn.textContent = "Searching…";
+    btn.disabled = true;
+    const center = _map.getCenter();
+    fetch(`{% url 'transit_nearby' %}?lat=${center.lat}&lng=${center.lng}`)
+        .then(r => r.json())
+        .then(data => {
+            renderStops(data.stops || [], false);
+            btn.textContent = "Show stops here";
+            btn.disabled = false;
+        })
+        .catch(() => { btn.textContent = "Show stops here"; btn.disabled = false; });
+}
+</script>
 {% endblock %}

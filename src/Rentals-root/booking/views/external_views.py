@@ -38,12 +38,33 @@ def parking_nearby(request):
 
 @login_required
 def transit(request):
-    city = getattr(request.user, "preferred_city", "") or "MTL"
+    city = request.GET.get("city") or getattr(request.user, "preferred_city", "") or "MTL"
     lat, lon = CITY_COORDS.get(city, CITY_COORDS["MTL"])
     facade = TransitFacade()
     stops = facade.get_nearby_stops(lat=lat, lon=lon)
     stop_id = request.GET.get("stop_id")
     departures = facade.get_next_departures(stop_id) if stop_id else []
+
+    if request.GET.get("format") == "json":
+        return JsonResponse({"departures": departures})
+
     return render(request, "booking/transit.html", {
-        "stops": stops, "departures": departures, "stop_id": stop_id, "city": city,
+        "stops": stops, "departures": departures, "stop_id": stop_id,
+        "city": city, "city_choices": _CITY_CHOICES,
+        "center_lat": lat, "center_lng": lon,
     })
+
+
+@login_required
+def transit_nearby(request):
+    try:
+        lat = float(request.GET["lat"])
+        lng = float(request.GET["lng"])
+    except (KeyError, ValueError):
+        return JsonResponse({"error": "Provide lat and lng."}, status=400)
+    stops = TransitFacade().get_nearby_stops(lat=lat, lon=lng, radius_m=1500)
+    return JsonResponse({"stops": [
+        {"id": s["id"], "name": s["name"], "lat": s["lat"], "lon": s["lon"],
+         "distance_m": s["distance_m"]}
+        for s in stops
+    ]})

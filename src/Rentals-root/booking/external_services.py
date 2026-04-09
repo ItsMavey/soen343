@@ -76,7 +76,7 @@ def _dist_m(lat1: float, lon1: float, lat2: float, lon2: float) -> int:
 class TransitProvider:
     """Interface all transit adapters must implement."""
 
-    def get_nearby_stops(self, lat: float, lon: float) -> list[dict]:
+    def get_nearby_stops(self, lat: float, lon: float, radius_m: int = 1000) -> list[dict]:
         raise NotImplementedError
 
     def get_next_departures(self, stop_id: str) -> list[dict]:
@@ -104,9 +104,9 @@ class GTFSAdapter(TransitProvider):
         ("STM 47", "Saint-Denis / Jean-Talon"),
     ]
 
-    def get_nearby_stops(self, lat: float, lon: float) -> list[dict]:
+    def get_nearby_stops(self, lat: float, lon: float, radius_m: int = 700) -> list[dict]:
         query = f"""[out:json][timeout:12];
-node["highway"="bus_stop"](around:700,{lat},{lon});
+node["highway"="bus_stop"](around:{radius_m},{lat},{lon});
 out 10;"""
         data = _overpass_fetch(query)
         if not data or not data.get("elements"):
@@ -154,7 +154,7 @@ class CityAPIAdapter(TransitProvider):
         ("Ligne Bleue",  "Saint-Michel"),
     ]
 
-    def get_nearby_stops(self, lat: float, lon: float) -> list[dict]:
+    def get_nearby_stops(self, lat: float, lon: float, radius_m: int = 1500) -> list[dict]:
         # Pull all STM metro stations (sparse enough to sort by distance client-side)
         query = """[out:json][timeout:12];
 node["station"="subway"]["network"="STM"](45.40,45.63,-73.97,-73.45);
@@ -193,8 +193,8 @@ class TransitFacade:
         self._bus = GTFSAdapter()
         self._metro = CityAPIAdapter()
 
-    def get_nearby_stops(self, lat: float = 45.5017, lon: float = -73.5673) -> list[dict]:
-        results = self._bus.get_nearby_stops(lat, lon) + self._metro.get_nearby_stops(lat, lon)
+    def get_nearby_stops(self, lat: float = 45.5017, lon: float = -73.5673, radius_m: int = 1000) -> list[dict]:
+        results = self._bus.get_nearby_stops(lat, lon, radius_m) + self._metro.get_nearby_stops(lat, lon, radius_m)
         return sorted(results, key=lambda s: s["distance_m"])
 
     def get_next_departures(self, stop_id: str) -> list[dict]:
