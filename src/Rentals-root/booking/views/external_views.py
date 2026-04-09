@@ -13,7 +13,7 @@ _CITY_CHOICES = [
 @login_required
 def parking(request):
     city = request.GET.get("city") or getattr(request.user, "preferred_city", "") or "MTL"
-    lots = ParkingService().get_lots(city=city)
+    lots = OSMParkingAdapter().get_lots(city=city)
     return render(request, "booking/parking.html", {
         "lots": lots, "city": city, "city_choices": _CITY_CHOICES,
     })

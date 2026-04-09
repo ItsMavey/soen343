@@ -1,0 +1,290 @@
+============================================================
+  SUMMS — PRESENTATION SCRIPT
+  Team TABAC — SOEN 343
+  8 minutes total
+============================================================
+
+
+────────────────────────────────────────────────────────────
+ SLIDE 1 — TITLE + HOOK  (45 sec)  [Person 1]
+────────────────────────────────────────────────────────────
+
+Title: Smart Urban Mobility Management System (SUMMS)
+       Team TABAC — SOEN 343
+
+Hook (say out loud):
+  "Montreal has STM, Communauto, and a dozen parking apps
+   that don't talk to each other. A commuter planning a trip
+   has to open three apps, guess which bus to take, and hope
+   there's parking at the destination.
+   We built one platform that does all of it."
+
+What the system does:
+  - Three user roles: Commuter, Mobility Provider, City Admin
+  - Commuters search and reserve vehicles (cars, bikes, scooters),
+    plan multimodal trips, and see live parking and transit data
+  - Providers manage their fleet and receive maintenance alerts
+  - City Admins oversee the platform with analytics dashboards
+
+
+────────────────────────────────────────────────────────────
+ SLIDE 2 — AS-IS → TO-BE  (1 min)  [Person 1]
+────────────────────────────────────────────────────────────
+
+BEFORE (current reality):
+  - No single app connects transit, vehicle rental, and parking
+  - Trip planning requires manual coordination across services
+  - No real-time data: bus times, vehicle availability, parking
+    occupancy are all separate and disconnected
+
+AFTER (what SUMMS provides):
+  - One query: enter start + destination → get Transit
+    and Vehicle step by step trips
+  - Live STM departure times pulled directly from the
+    STM iBUS GTFS-RT v2 protobuf feed
+  - Transit route lines follow actual STM bus/metro geometry
+    (578 route polylines loaded from GTFS shapes.txt)
+  - Vehicle reservation + parking overlay in the same interface
+
+Diagram suggestion:
+  Left: 3 separate app icons with arrows going nowhere
+  Right: one map with layered pins (transit, vehicle, parking)
+
+
+────────────────────────────────────────────────────────────
+ SLIDE 3 — ARCHITECTURE  (2 min)  [Person 2]
+────────────────────────────────────────────────────────────
+
+System: Layered MVC monolith — two Django apps (users, booking)
+        sharing one SQLite database.
+
+LAYERS (top to bottom):
+
+  Browser — Leaflet.js map, DTL templates
+      │
+  Presentation — booking/views/ (function-based views)
+      │
+  Service — ReservationService, VehicleService,
+            AnalyticsService, RewardsService
+      │
+  Domain / Patterns — models.py, states.py, pricing.py,
+                      observers.py, factories.py,
+                      trip_strategies.py
+      │
+  External Integration — external_services.py
+      ├── STMStopsCache     (GTFS stops.txt — 8,897 stops)
+      ├── STMShapesCache    (GTFS shapes.txt — 578 geometries)
+      ├── STMGTFSRTAdapter  (live departures, 30 s cache)
+      ├── ORSTransitAdapter (end-to-end routing, 5 min cache)
+      ├── ParkingService    (hardcoded lots + simulated occupancy)
+      └── OSRM              (walk/drive polylines — public API)
+      │
+  Persistence — Django ORM → SQLite
+
+KEY DATA FLOW (say out loud):
+  "User enters A to B.
+   Two strategies run in parallel using a ThreadPoolExecutor:
+   TransitOnlyStrategy and VehicleOnlyStrategy.
+   Each returns a dict of legs with coordinates.
+   For transit legs, the geometry comes from the 578 GTFS
+   route shapes loaded at startup — no straight lines.
+   The frontend renders each leg as a polyline on Leaflet."
+
+
+────────────────────────────────────────────────────────────
+ SLIDE 4 — DESIGN DECISIONS  (1.5 min)  [Person 3]
+────────────────────────────────────────────────────────────
+
+We applied 6 design patterns. Presenting the two most central:
+
+──────────────────────────────
+PATTERN 1 — Strategy (×2 uses)
+──────────────────────────────
+
+Use case A — Pricing  (booking/pricing.py)
+  Problem: reservation cost varies by day/demand. Without a
+  pattern, the reserve_vehicle view would have if/elif blocks
+  for Standard, Weekend, Surge pricing. Adding a new tier
+  would require editing and re-testing the view.
+  Solution: StandardPricing, WeekendPricing (×1.25),
+  SurgePricing (×1.50) each implement PricingStrategy.
+  The Reservation holds a reference and calls calculate().
+  New pricing rule = new class, zero changes elsewhere.
+
+Use case B — Trip Planning  (booking/trip_strategies.py)
+  Problem: transit and vehicle routing have completely different
+  logic, data sources, and failure modes. Merging them into
+  one function would make it untestable and unextendable.
+  Solution: TransitOnlyStrategy and VehicleOnlyStrategy both
+  implement ItineraryStrategy.plan(). The trip_plan view
+  calls both in parallel and shows only feasible results.
+  We dropped a broken strategy mid-project (TransitFirst)
+  by simply removing it from the list — nothing else changed.
+
+──────────────────────────────────────────────────────────
+PATTERN 2 — Adapter + Facade  (booking/external_services.py)
+──────────────────────────────────────────────────────────
+
+  Problem: SUMMS integrates 4 external data sources
+  (STM GTFS stops, STM GTFS-RT real-time, ORS routing,
+  Overpass parking). Each has a different API, auth method,
+  and response format. Every view would need to know all of
+  them. A change to one API would cascade everywhere.
+
+  Adapter: GTFSAdapter, CityAPIAdapter, ORSTransitAdapter,
+  STMGTFSRTAdapter each implement TransitProvider.
+  They translate raw API responses into a common dict format.
+  Callers never touch HTTP directly.
+
+  Facade: TransitFacade composes all adapters, merges results,
+  and exposes one interface. All callers (trip planner, transit
+  view, map) depend only on TransitFacade.
+  Swapping an adapter = zero changes to any caller.
+
+Other patterns (briefly):
+  - State:    AvailableState / ReservedState / InUseState /
+              MaintenanceState — invalid transitions raise
+              InvalidTransitionError (booking/states.py)
+  - Observer: Vehicle fires events to UserNotifier,
+              AdminDashboard, RecommendationService
+              (booking/observers.py)
+  - Factory:  CarFactory / BikeFactory / ScooterFactory
+              override createVehicle() — provider dashboard
+              never calls model constructors directly
+              (booking/factories.py)
+  - Singleton: STMStopsCache, STMShapesCache, STMRoutesCache
+               loaded once at startup, shared across all requests
+
+
+────────────────────────────────────────────────────────────
+ SLIDE 5 — IMPLEMENTATION LINK  (1 min)  [Person 3]
+────────────────────────────────────────────────────────────
+
+Tech Stack:
+  Python 3.10+ / Django 6.0.2  — backend, ORM, auth
+  SQLite3                       — database
+  Leaflet.js 1.9.4              — interactive maps (no API key)
+  STM GTFS static files         — 8,897 stops, 578 route shapes
+  STM iBUS GTFS-RT v2           — live departure times (protobuf)
+  OpenSourceRouting Machine OSRM (public)                 — walk and drive polylines
+  Nominatim                     — address geocoding
+  Browser Geolocation API       — "Use my location"
+
+Pattern → Implementation mapping:
+  ItineraryStrategy.plan()  →  ThreadPoolExecutor in trip_plan view
+  STMStopsCache / STMShapesCache  →  Python singletons, loaded once
+  STMGTFSRTAdapter           →  protobuf via gtfs-realtime-bindings,
+                                 30 s Django cache
+  TransitFacade.get_journey()  →  ORS public-transport API,
+                                   5 min cache to protect free quota
+  PricingStrategy.calculate()  →  called inside ReservationService
+                                   at booking time
+
+
+────────────────────────────────────────────────────────────
+ SLIDE 6 — DEMO  (1.5 min)  [Person 4]
+────────────────────────────────────────────────────────────
+
+Login: qwer2 / qwerqwer!  (Commuter role)
+
+DEMO FLOW:
+
+  1. Go to Trip Planner
+     Enter: "Concordia University" → "Parc Olympique"
+     Click Plan My Trip
+
+  2. Transit tab:
+     - Route line follows the actual STM bus shape on the map
+       (not a straight line — real GTFS geometry)
+     - Sidebar shows "route 80 in X min" (live from GTFS-RT)
+     - Walk legs follow actual sidewalks (OSRM)
+
+  3. Vehicle tab:
+     - Walk to nearest available car (within 2 km)
+     - Reserve button → goes to reservation flow
+     - "Show parking here" button → overlays nearby lots
+       with live occupancy color (green / amber / red)
+
+  4. Switch to Provider role (qwer1 / qwerqwer!)
+     - Show fleet dashboard, maintenance alert from Observer
+
+  5. Switch to Admin (qwer / qwerqwer!)
+     - Show analytics dashboard
+
+Pre-record if live demo risk is too high.
+Key visual: the transit line hugging the actual street grid.
+
+
+────────────────────────────────────────────────────────────
+ SLIDE 7 — VALUE + CONCLUSION  (45 sec)  [Person 4]
+────────────────────────────────────────────────────────────
+
+What makes SUMMS different:
+  1. Real STM data end-to-end — 8,897 stops, 578 route shapes,
+     live departures from the official GTFS-RT feed.
+     Not simulated, not hardcoded stops.
+  2. GOF patterns are load-bearing, not decorative.
+     Dropping TransitFirstStrategy mid-project required
+     removing one line from a list. Nothing else changed.
+     That is the Strategy pattern working as intended.
+
+Lessons learned:
+  - Free-tier APIs have hidden constraints (ORS public-transport
+    profile, Overpass rate limits). Graceful degradation is not
+    optional — it is the feature.
+  - Pattern selection should follow the problem, not the
+    pattern catalogue. Every pattern in SUMMS was adopted
+    because a concrete pain point forced it.
+
+Closing line:
+  "The best architecture is one that lets you change your mind
+   cheaply. SUMMS does that — and it runs on real Montreal data."
+
+
+────────────────────────────────────────────────────────────
+ TEAM SPLIT — 4 people, ~2 min each
+────────────────────────────────────────────────────────────
+
+  Person 1 — Slide 1 + 2   (hook, as-is/to-be)
+  Person 2 — Slide 3        (architecture + data flow)
+  Person 3 — Slide 4 + 5   (patterns + implementation)
+  Person 4 — Slide 6 + 7   (demo + conclusion)
+
+
+────────────────────────────────────────────────────────────
+ TIMING GUIDE
+────────────────────────────────────────────────────────────
+
+  0:00 – 0:45   Slide 1 — Title + Hook
+  0:45 – 1:45   Slide 2 — As-Is → To-Be
+  1:45 – 3:45   Slide 3 — Architecture  ← most time here
+  3:45 – 5:15   Slide 4 — Design Patterns
+  5:15 – 6:15   Slide 5 — Implementation
+  6:15 – 7:45   Slide 6 — Demo
+  7:45 – 8:00   Slide 7 — Conclusion
+
+============================================================
+ QUICK REFERENCE — credentials, key files, key numbers
+============================================================
+
+  Admin:     qwer    / qwerqwer!
+  Provider:  qwer1   / qwerqwer!
+  Commuter:  qwer2   / qwerqwer!
+
+  Key numbers to mention:
+    8,897  STM bus stops (GTFS stops.txt)
+      578  route polylines (GTFS shapes.txt)
+      216  routes (GTFS routes.txt)
+       68  metro stations
+    30 s   GTFS-RT cache TTL
+     5 min ORS cache TTL
+      179  passing tests
+
+  Key files:
+    booking/trip_strategies.py    — Strategy pattern
+    booking/external_services.py  — Adapter + Facade + Singletons
+    booking/pricing.py            — Strategy (pricing)
+    booking/states.py             — State pattern
+    booking/observers.py          — Observer pattern
+    booking/factories.py          — Factory Method
+    booking/static_data/          — GTFS files (stops, shapes, routes)
