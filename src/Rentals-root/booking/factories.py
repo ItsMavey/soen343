@@ -1,6 +1,8 @@
 from .models import Car, Bike, Scooter
 
-
+"""
+Vehicle Factory Class
+"""
 class VehicleFactory:
     provider_name = ""
 
